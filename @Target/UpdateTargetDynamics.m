@@ -9,7 +9,7 @@ sRandom;
 % chosen from the multivariate normal distribution with 1-by-D mean
 % vector MU, and D-by-D covariance matrix SIGMA.
 o.vt = mvnrnd(zeros(1,2),o.Qt,1);  % mvnrnd(MU(N-by-D Matrix),SIGMA(Gaussian Cov.),N)
-o.x = o.x + CLOCK.dt*o.vt';
+o.x = o.Ft*o.x + o.Gt*o.vt';
 
 % store current state to history 
 o.hist.x(:,end+1) = o.x;

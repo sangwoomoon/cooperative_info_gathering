@@ -27,17 +27,17 @@ for iAgent = 1 : SIMULATION.nAgent
 end
 
 %--- Individual TARGET CLASS setting ----
-TARGET(1).x = [1.0,1.0]';
+TARGET(1).x = [0.3,0.3,1.0,-0.1,1.0,0.1]';
 TARGET(1).hist.x = TARGET(1).x;
 TARGET(1).hist.stamp = 0;
 
-TARGET(2).x = [-1.0,-1.0]';
-TARGET(2).hist.x = TARGET(2).x;
-TARGET(2).hist.stamp = 0;
+% TARGET(2).x = [0.5,0.3,-1.0,0.1,-1.0,-0.1]';
+% TARGET(2).hist.x = TARGET(2).x;
+% TARGET(2).hist.stamp = 0;
 
 % tricky part : Is it better to insert Qt in the measurement class?
 TARGET(1).Qt = diag([0.2; 0.2]); 
-TARGET(2).Qt = diag([0.2; 0.2]); 
+% TARGET(2).Qt = diag([0.2; 0.2]); 
 
 %--- Individual AGENT CLASS setting ----
 AGENT(1).s = [-2.5,0,2, 0]';
@@ -48,21 +48,17 @@ AGENT(2).s = [1.5,0,-5, 0]';
 AGENT(2).hist.s = AGENT(2).s;
 AGENT(2).hist.stamp = 0;
 
-AGENT(3).s = [2.5,0,-3, 0]';
-AGENT(3).hist.s = AGENT(3).s;
-AGENT(3).hist.stamp = 0;
-
-AGENT(1).MEASURE.Rp = diag([50.15 1.15]);
-AGENT(2).MEASURE.Rp = diag([1.15 50.15]);
-AGENT(3).MEASURE.Rp = diag([20.15 1.15]);
+% AGENT(3).s = [2.5,0,-3, 0]';
+% AGENT(3).hist.s = AGENT(3).s;
+% AGENT(3).hist.stamp = 0;
 
 AGENT(1).MEASURE.Rt{1} = diag([0.085; 5.85]); % relative target 1 - agent 1
 AGENT(2).MEASURE.Rt{1} = diag([5.85; 0.085]); % relative target 1 - agent 2
-AGENT(3).MEASURE.Rt{1} = diag([0.085; 5.85]); % relative target 1 - agent 3
+% AGENT(3).MEASURE.Rt{1} = diag([0.085; 5.85]); % relative target 1 - agent 3
 
-AGENT(1).MEASURE.Rt{2} = diag([5.85; 0.085]); % relative target 2 - agent 1
-AGENT(2).MEASURE.Rt{2} = diag([0.085; 5.85]); % relative target 2 - agent 2
-AGENT(3).MEASURE.Rt{2} = diag([5.85; 0.085]); % relative target 2 - agent 3
+% AGENT(1).MEASURE.Rt{2} = diag([5.85; 0.085]); % relative target 2 - agent 1
+% AGENT(2).MEASURE.Rt{2} = diag([0.085; 5.85]); % relative target 2 - agent 2
+% AGENT(3).MEASURE.Rt{2} = diag([5.85; 0.085]); % relative target 2 - agent 3
 
 %--- Centralized KF subclass initialization ----
 SIMULATION.CENTRAL_KF = KalmanFilter(SIMULATION,AGENT,TARGET,CLOCK,'central'); 
@@ -78,7 +74,7 @@ end
 
 % for test.. should be removed.
 load('AccelerationInput.mat');
-AccInput(5:6,:) = 0.5*AccInput(1:2,:);
+% AccInput(5:6,:) = 0.5*AccInput(1:2,:);
 
 for iClock = 1 : CLOCK.nt
     

@@ -6,13 +6,11 @@ for iSender = 1 : SIMULATION.nAgent
         Z(iComm).id = iSender;
         Z(iComm).y = AGENT(iSender).MEASURE.y;
         Z(iComm).u = AGENT(iSender).CONTROL.u;
-        Z(iComm).Rp = AGENT(iSender).MEASURE.Rp;
         Z(iComm).Rt = AGENT(iSender).MEASURE.Rt;
     else % Receiver and Sender should be different
         Z(iComm).id = [];
         Z(iComm).y = [];
         Z(iComm).u = [];
-        Z(iComm).Rp = [];
         Z(iComm).Rt = [];
     end
     iComm = iComm + 1;

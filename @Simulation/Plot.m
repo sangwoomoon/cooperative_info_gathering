@@ -11,8 +11,9 @@ for iAgent = 1 : o.nAgent
     AGENT(iAgent).Plot();
     legend([get(legend(gca),'string'),AGENT(iAgent).plot.legend]);
     AGENT(iAgent).MEASURE.Plot(AGENT(iAgent));
-    legend([get(legend(gca),'string'),AGENT(iAgent).MEASURE.plot.legend]);
+    legend([get(legend(gca),'string'),AGENT(iAgent).MEASURE.plot.legend]);    
 end
+axis equal;
 
 % Centralized Estimation plot
 % FIGURE 2- : TARGET POSITION ERROR PLOT

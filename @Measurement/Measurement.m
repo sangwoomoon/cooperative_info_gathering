@@ -3,12 +3,11 @@ classdef Measurement < handle
         
         y       % measurement [e_rel,n_rel,e_abs,n_abs]
         
-        Hp      % Ownship sensor measurement matrix
+        Hp      % Ownship sensor measurement matrix (agent part)
+        Ht      % Ownship sensor measurement matrix (target part)
         
-        rp      % Random variable wrt position of agent
         rt      % Random variable wrt target-agent relation
         
-        Rp      % absolute position measurment accuracy
         Rt      % platform to target measurement noise variances (CELL FORM :: [# of target]*[2x2 array])
                 
         hist    % History 

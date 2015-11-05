@@ -5,8 +5,8 @@ function o = Default( o )
 %
 % output : set Simulation Class
 
-o.nTarget = 2;
-o.nAgent = 3;
+o.nTarget = 1;
+o.nAgent = 2;
 
 o.sRandom = rng(333555533);
 

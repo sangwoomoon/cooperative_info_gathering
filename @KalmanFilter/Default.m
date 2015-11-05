@@ -3,8 +3,8 @@
 
 % 1. CENTRALIZED FORM
 % % State, measurement and input vector definitions:
-% % xhat = [xt_1; xt_2;...;xt_m; xp_1;xp_2;...;xp_n]
-% %          = [et_1;nt_1;et_2;nt_2;...et_m;nt_m; ep_1;ep_1dot;np_1;np_1dot; ... ep_n; ep_ndot; np_n; np_ndot];
+% % xhat = [xt_1; xt_2;...;xt_m]
+% %          = [be_1;bn_2;et_1;et1_dot;nt_1;nt1_dot...be_m;bn_m;et_m;etm_dot;nt_m;ntm_dot];
 % % z = [z_1;z_2;...;z_n] = [xt_k_rel_1; xp_abs_1; xt_k_rel_2; xp_abs_2 ... ];
 % % u = [up_1;up_2;...;up_n] = [ep1_ddot; np1_ddot; ep2_ddot; np2_ddot; ... ; epn_ddot; npn_ddot ];
 
@@ -30,21 +30,13 @@ function o = Default ( o , SIMULATION, AGENT, TARGET, CLOCK, option )
 % output : set CentralKF Class
 
 tl=length(TARGET(1).x);  % number of state for targets
-al=length(AGENT(1).s);   % number of state for agents
-yl=length(AGENT(1).MEASURE.y); % number of measurements
 
-o.nState = al*length(AGENT)+tl*length(TARGET);           % one target to all agents
-o.nY = yl*length(AGENT);                    % NEED TO FIND OUT!
+o.nState = tl*length(TARGET);           
 
 o.F = [];
 o.Gamma = [];
 o.Gu = [];
 o.H = [];  
-
-HpartTgt = [eye(tl*SIMULATION.nTarget);zeros(tl,tl*SIMULATION.nTarget)];
-HpartTgtk = [];
-HpartAgt = [];
-HpartAgtk = [];
 
 o.Q = [];
 o.R = [];
@@ -57,41 +49,21 @@ o.hist.Y = [];
 o.hist.Xhat = [];
 o.hist.Phat = [];
 
-for iTgtAgt = 1 : length(TARGET)+length(AGENT) % w.r.t total target - total agent (centralized case)
-    if iTgtAgt < length(TARGET)+1 % target index
-        o.Xhat = [o.Xhat; TARGET(iTgtAgt).x];
-        
-        o.F = blkdiag(o.F,TARGET(iTgtAgt).Ft);
-        o.Gamma = blkdiag(o.Gamma,TARGET(iTgtAgt).Gt); 
-        o.Q = blkdiag(o.Q,TARGET(iTgtAgt).Qt); 
-    else % agent index
-        o.Xhat = [o.Xhat; AGENT(iTgtAgt-length(TARGET)).s];
-        
-        o.F = blkdiag(o.F,AGENT(iTgtAgt-length(TARGET)).Fp);             % [Ft_{iTarget} 0 0; 0 Fp_1 0; 0 0 Fp_2]
-        o.Gamma = blkdiag(o.Gamma,AGENT(iTgtAgt-length(TARGET)).Gamp);   % [Gt_{iTarget} 0 0; 0 Gamp_1 0; 0 0 Gamp_2]
-        o.Gu = blkdiag(o.Gu,AGENT(iTgtAgt-length(TARGET)).Gu);             % [Gu1, zeros(4,2); zeros(4,2),Gu2]
-        o.Q = blkdiag(o.Q,AGENT(iTgtAgt-length(TARGET)).Qp);
-    end
+for iTarget = 1 : length(TARGET) % w.r.t total target (centralized case)
+    o.Xhat = [o.Xhat; TARGET(iTarget).x];
+    
+    o.F = blkdiag(o.F,TARGET(iTarget).Ft);
+    o.Gamma = blkdiag(o.Gamma,TARGET(iTarget).Gt);
+    o.Q = blkdiag(o.Q,TARGET(iTarget).Qt); 
 end
-o.Gu = [zeros(tl*SIMULATION.nTarget,length(o.Gu(1,:)));o.Gu]; % no input for target
 
 for iAgent = 1 : length(AGENT)
-   
-   for iTarget = 1 : SIMULATION.nTarget
-       o.R = blkdiag(o.R,AGENT(iAgent).MEASURE.Rt{iTarget});
-       HpartAgt = [HpartAgt;-AGENT(iAgent).MEASURE.Hp];
-   end
-   
-   o.R = blkdiag(o.R,AGENT(iAgent).MEASURE.Rp);
-   
-   HpartAgt = [HpartAgt;AGENT(iAgent).MEASURE.Hp];
-   HpartAgtk = blkdiag(HpartAgtk,HpartAgt);
-   HpartAgt = [];
-   
-   HpartTgtk = [HpartTgtk; HpartTgt];
+    for iTarget = 1 : length(TARGET)
+        o.R = blkdiag(o.R,AGENT(iAgent).MEASURE.Rt{iTarget});
+    end
+   o.H = [o.H;AGENT(iAgent).MEASURE.Ht];
 end
 
-o.H = [HpartTgtk, HpartAgtk];
 o.Phat = 100*eye(o.nState);                                           
 
 switch option
