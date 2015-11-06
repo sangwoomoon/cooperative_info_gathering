@@ -4,8 +4,9 @@ classdef Target < handle
         
         x       % current state of target [e,e_dot,n,n_dot];
           
-        % Target motion parameters (x_t(k) = [e(k),n(k)]^T -- stationary random walk)
+        % Target motion parameters (random walk)
         Ft      % State transition matrix
+        
         Gt      % Process noise input matrix
         Gu      % target input matrix
         
@@ -19,8 +20,8 @@ classdef Target < handle
     end % Properties
     
     methods
-        function o = Target( Clock, iTarget )
-            o = Default( o, Clock , iTarget);
+        function o = Target( Simulation, Clock, iTarget )
+            o = Default( o, Simulation, Clock , iTarget);
         end
         
         o = get( o, varargin );

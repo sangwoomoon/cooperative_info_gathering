@@ -5,6 +5,7 @@ classdef Measurement < handle
         
         Hp      % Ownship sensor measurement matrix (agent part)
         Ht      % Ownship sensor measurement matrix (target part)
+        Hb      % Ownship sensor measurement matrix (target bias part) 
         
         rt      % Random variable wrt target-agent relation
         

@@ -33,9 +33,13 @@ tl=length(TARGET(1).x);  % number of state for targets
 
 o.nState = tl*length(TARGET);           
 
+
 o.F = [];
 o.Gamma = [];
+
 o.Gu = [];
+
+Htilde = []; % each agent part
 o.H = [];  
 
 o.Q = [];
@@ -54,6 +58,7 @@ for iTarget = 1 : length(TARGET) % w.r.t total target (centralized case)
     
     o.F = blkdiag(o.F,TARGET(iTarget).Ft);
     o.Gamma = blkdiag(o.Gamma,TARGET(iTarget).Gt);
+    
     o.Q = blkdiag(o.Q,TARGET(iTarget).Qt); 
 end
 
@@ -61,7 +66,18 @@ for iAgent = 1 : length(AGENT)
     for iTarget = 1 : length(TARGET)
         o.R = blkdiag(o.R,AGENT(iAgent).MEASURE.Rt{iTarget});
     end
-   o.H = [o.H;AGENT(iAgent).MEASURE.Ht];
+    
+    for jAgent = 1 : SIMULATION.nAgent
+        if jAgent == AGENT(iAgent).id
+            Htilde = [Htilde, AGENT(iAgent).MEASURE.Hb];
+        else
+            Htilde = [Htilde, zeros(2)];
+        end
+    end
+    Htilde = [Htilde,AGENT(iAgent).MEASURE.Ht];
+    
+    o.H = [o.H;Htilde];
+    Htilde = [];
 end
 
 o.Phat = 100*eye(o.nState);                                           

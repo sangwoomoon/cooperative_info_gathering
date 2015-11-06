@@ -1,4 +1,4 @@
-function o = Default( o, CLOCK ,iTarget)
+function o = Default( o, SIMULATION, CLOCK ,iTarget)
 
 % default setting for targets
 % input : empty Target Class
@@ -10,15 +10,18 @@ function o = Default( o, CLOCK ,iTarget)
 
 
 o.id = iTarget;
-o.Ft = blkdiag(eye(2),[1 CLOCK.dt; 0 1],[1 CLOCK.dt; 0 1]); 
-o.Gt = [             0               0   ;
-                     0               0   ;
-          0.5*CLOCK.dt^2             0   ;
-              CLOCK.dt               0   ;
-                     0    0.5*CLOCK.dt^2 ;
-                     0        CLOCK.dt  ]; % constant bias (1st/2nd row)
+o.Ft = blkdiag(eye(2*SIMULATION.nAgent),[1 CLOCK.dt; 0 1],[1 CLOCK.dt; 0 1]);
+
+Gt_d = [0.5*CLOCK.dt^2             0   ;
+            CLOCK.dt               0   ;
+                   0    0.5*CLOCK.dt^2 ;
+                   0        CLOCK.dt  ]; % only for target part (beware that w/o bias!)
+               
+o.Gt = [zeros(2*SIMULATION.nAgent,2);Gt_d];
+ 
 o.Gu = zeros(2); % 2 state - 2 state
-o.x = [0.4,0.4,1.0,0.1,1.0,0.1]';
+
+o.x = [0.4,0.4,0.2,0.2,1.0,0.1,1.0,0.1]'; % just for default (may be changed in the main script)
 o.hist.x = o.x; % store initial condition
 
 o.Qt = diag([0.2; 0.2]); 

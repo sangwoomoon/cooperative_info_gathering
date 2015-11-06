@@ -18,7 +18,7 @@ ENVIRONMENT = Environment(clock);
 
 %--- Target Classes Setting ----
 for iTarget = 1 : SIMULATION.nTarget
-    TARGET(iTarget) = Target(CLOCK, iTarget);
+    TARGET(iTarget) = Target(SIMULATION, CLOCK, iTarget);
 end
 
 %--- Agent Classes Setting ----
@@ -27,7 +27,7 @@ for iAgent = 1 : SIMULATION.nAgent
 end
 
 %--- Individual TARGET CLASS setting ----
-TARGET(1).x = [0.3,0.3,1.0,-0.1,1.0,0.1]';
+TARGET(1).x = [0.3,0.3,0.2,0.2,1.0,-0.1,1.0,0.1]';
 TARGET(1).hist.x = TARGET(1).x;
 TARGET(1).hist.stamp = 0;
 

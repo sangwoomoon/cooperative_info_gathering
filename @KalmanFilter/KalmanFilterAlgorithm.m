@@ -20,7 +20,7 @@ switch (option)
 end
     
 %%Prediction
-Xbar = o.F*o.Xhat;
+Xbar = o.F*o.Xhat; % no input matrix.
 Pbar = o.F*o.Phat*o.F' + o.Gamma*o.Q*o.Gamma';
 
 %%Measurement update

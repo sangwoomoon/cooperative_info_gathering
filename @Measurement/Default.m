@@ -3,8 +3,11 @@ function o = Default (o, TARGET, CLOCK, iAgent)
 o.Hp =[1 0 0 0 ;
        0 0 1 0]; % used for input for measurement of target (rel.position)
    
-o.Ht =[1 0 1 0 0 0;
-       0 1 0 0 1 0]; % used for input for measurement of target (rel.position) with bias
+o.Ht =[1 0 0 0;
+       0 0 1 0]; % used for input for measurement of target (rel.position) without bias
+   
+o.Hb = eye(2); % used for input for measurement of target (rel.position) bias
+   
 
 for iTarget = 1 : length(TARGET)
     o.y(2*(iTarget-1)+1:2*iTarget) = nan(2,1);
