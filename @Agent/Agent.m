@@ -5,6 +5,9 @@ classdef Agent < handle
         
         s       % current state [e,edot,n,ndot]
         
+        bKFs    % binary array of state for using KF process.
+
+        
         % Platform motion model: platform states are [e,edot,n,ndot]
         Fp      % State transition matrix
         Gamp    % Process noise input matrix

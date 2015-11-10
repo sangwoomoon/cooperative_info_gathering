@@ -18,7 +18,7 @@ ENVIRONMENT = Environment(clock);
 
 %--- Target Classes Setting ----
 for iTarget = 1 : SIMULATION.nTarget
-    TARGET(iTarget) = Target(SIMULATION, CLOCK, iTarget);
+    TARGET(iTarget) = Target(CLOCK, iTarget);
 end
 
 %--- Agent Classes Setting ----
@@ -27,38 +27,47 @@ for iAgent = 1 : SIMULATION.nAgent
 end
 
 %--- Individual TARGET CLASS setting ----
-TARGET(1).x = [0.3,0.3,0.2,0.2,1.0,-0.1,1.0,0.1]';
+TARGET(1).x = [1.0,-0.1,1.0,0.1]';
+TARGET(1).bKFx = [1 1 1 1];
 TARGET(1).hist.x = TARGET(1).x;
 TARGET(1).hist.stamp = 0;
 
-% TARGET(2).x = [0.5,0.3,-1.0,0.1,-1.0,-0.1]';
-% TARGET(2).hist.x = TARGET(2).x;
-% TARGET(2).hist.stamp = 0;
+TARGET(2).x = [-1.0,0.1,-1.0,-0.1]';
+TARGET(2).bKFx = [1 1 1 1];
+TARGET(2).hist.x = TARGET(2).x;
+TARGET(2).hist.stamp = 0;
 
 % tricky part : Is it better to insert Qt in the measurement class?
 TARGET(1).Qt = diag([0.2; 0.2]); 
-% TARGET(2).Qt = diag([0.2; 0.2]); 
+TARGET(2).Qt = diag([0.2; 0.2]); 
 
 %--- Individual AGENT CLASS setting ----
-AGENT(1).s = [-2.5,0,2, 0]';
+AGENT(1).s = [0.3,0.1,-2.5,0,2, 0]';
+AGENT(1).bKFs = [1 1 0 0 0 0];
 AGENT(1).hist.s = AGENT(1).s;
 AGENT(1).hist.stamp = 0;
 
-AGENT(2).s = [1.5,0,-5, 0]';
+AGENT(2).s = [0.2,0.5,1.5,0,-5, 0]';
+AGENT(2).bKFs = [1 1 0 0 0 0];
 AGENT(2).hist.s = AGENT(2).s;
 AGENT(2).hist.stamp = 0;
 
-% AGENT(3).s = [2.5,0,-3, 0]';
-% AGENT(3).hist.s = AGENT(3).s;
-% AGENT(3).hist.stamp = 0;
+AGENT(3).s = [0.4,0.3,2.5,0,-3, 0]';
+AGENT(3).bKFs = [1 1 0 0 0 0];
+AGENT(3).hist.s = AGENT(3).s;
+AGENT(3).hist.stamp = 0;
+
+AGENT(1).MEASURE.Rp = diag([50.15 1.15]);
+AGENT(2).MEASURE.Rp = diag([1.15 50.15]);
+AGENT(3).MEASURE.Rp = diag([20.15 1.15]);
 
 AGENT(1).MEASURE.Rt{1} = diag([0.085; 5.85]); % relative target 1 - agent 1
 AGENT(2).MEASURE.Rt{1} = diag([5.85; 0.085]); % relative target 1 - agent 2
-% AGENT(3).MEASURE.Rt{1} = diag([0.085; 5.85]); % relative target 1 - agent 3
+AGENT(3).MEASURE.Rt{1} = diag([0.085; 5.85]); % relative target 1 - agent 3
 
-% AGENT(1).MEASURE.Rt{2} = diag([5.85; 0.085]); % relative target 2 - agent 1
-% AGENT(2).MEASURE.Rt{2} = diag([0.085; 5.85]); % relative target 2 - agent 2
-% AGENT(3).MEASURE.Rt{2} = diag([5.85; 0.085]); % relative target 2 - agent 3
+AGENT(1).MEASURE.Rt{2} = diag([5.85; 0.085]); % relative target 2 - agent 1
+AGENT(2).MEASURE.Rt{2} = diag([0.085; 5.85]); % relative target 2 - agent 2
+AGENT(3).MEASURE.Rt{2} = diag([5.85; 0.085]); % relative target 2 - agent 3
 
 %--- Centralized KF subclass initialization ----
 SIMULATION.CENTRAL_KF = KalmanFilter(SIMULATION,AGENT,TARGET,CLOCK,'central'); 
@@ -67,14 +76,14 @@ SIMULATION.CENTRAL_KF = KalmanFilter(SIMULATION,AGENT,TARGET,CLOCK,'central');
 for iAgent = 1 : SIMULATION.nAgent
     SIMULATION.iAgent = iAgent;
     AGENT(iAgent).LOCAL_KF = KalmanFilter(SIMULATION,AGENT(iAgent),TARGET,CLOCK,'local');
-    AGENT(iAgent).DECEN_KF = KalmanFilter(SIMULATION,AGENT,TARGET,CLOCK,'decentral');
+    AGENT(iAgent).DECEN_KF = KalmanFilter(SIMULATION,AGENT(iAgent),TARGET,CLOCK,'decentral');
 end
 
 %% MAIN PROCEDURE %%%%
 
 % for test.. should be removed.
 load('AccelerationInput.mat');
-% AccInput(5:6,:) = 0.5*AccInput(1:2,:);
+AccInput(5:6,:) = 0.5*AccInput(1:2,:);
 
 for iClock = 1 : CLOCK.nt
     
@@ -115,21 +124,26 @@ for iClock = 1 : CLOCK.nt
        AGENT(iAgent).MEASURE.TakeMeasurement(AGENT(iAgent),TARGET,ENVIRONMENT,CLOCK,SIMULATION.sRandom); 
     end
     
+    %--- Filter Update :: Centralized KF ----
+    SIMULATION.CENTRAL_KF.KalmanFilterAlgorithm(SIMULATION,AGENT,'central');
+    
+    %--- Filter Update :: Individual KF :: Local KF ----
+    for iAgent = 1 : SIMULATION.nAgent
+        % Local KF Process
+        AGENT(iAgent).LOCAL_KF.KalmanFilterAlgorithm(SIMULATION,AGENT(iAgent),'local'); 
+    end
+    
     %--- Communicate ----
     for iAgent = 1 : SIMULATION.nAgent
        AGENT(iAgent).COMM.CommunicationProcedure(AGENT, SIMULATION, AGENT(iAgent).id); 
     end
-    
-    %--- Filter Update :: Centralized KF ----
-    SIMULATION.CENTRAL_KF.KalmanFilterAlgorithm(SIMULATION,AGENT,'central');
-    
-    %--- Filter Update :: Individual KF :: Local KF / Decentralized KF ----
+   
+    %--- Filter Update :: Individual KF :: Decentralized KF (using the averaging data) ----
     for iAgent = 1 : SIMULATION.nAgent
-        % Local KF Process
-        AGENT(iAgent).LOCAL_KF.KalmanFilterAlgorithm(SIMULATION,AGENT(iAgent),'local'); 
         % Decentralized KF Process
         AGENT(iAgent).DECEN_KF.KalmanFilterAlgorithm(SIMULATION,AGENT(iAgent),'decentral');
     end
+    
 end
 
 %% PLOT %%%%

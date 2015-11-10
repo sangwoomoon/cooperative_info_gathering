@@ -3,6 +3,8 @@ classdef Target < handle
         id      % Target id (integers)
         
         x       % current state of target [e,e_dot,n,n_dot];
+        
+        bKFx    % binary array of state for using KF process.
           
         % Target motion parameters (random walk)
         Ft      % State transition matrix
@@ -20,8 +22,8 @@ classdef Target < handle
     end % Properties
     
     methods
-        function o = Target( Simulation, Clock, iTarget )
-            o = Default( o, Simulation, Clock , iTarget);
+        function o = Target( Clock, iTarget )
+            o = Default( o, Clock , iTarget);
         end
         
         o = get( o, varargin );

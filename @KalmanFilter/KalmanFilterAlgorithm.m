@@ -8,15 +8,19 @@ switch (option)
             o.Y = [o.Y;AGENT(iAgent).MEASURE.y];
         end
     case 'local'        
-            o.Y = [o.Y;AGENT.MEASURE.y];
+            o.Y = AGENT.MEASURE.y;
     case 'decentral'
+        % averaging of measurements and measurement cov. matrix
+        o.Y = AGENT.MEASURE.y;
+        o.R = AGENT.DECEN_KF.R;
         for iAgent = 1 : SIMULATION.nAgent
-            if AGENT.id == iAgent % if index is the agent itself
-                o.Y = [o.Y;AGENT.MEASURE.y];
-            else
-                o.Y = [o.Y;AGENT.COMM.Z(iAgent).y];
+            if iAgent ~= AGENT.id
+                o.Y = o.Y + AGENT.COMM.Z(iAgent).y;
+                o.R = o.R + AGENT.COMM.Z(iAgent).R;
             end
         end
+        o.Y = o.Y./SIMULATION.nAgent;
+        o.R = o.R./SIMULATION.nAgent;
 end
     
 %%Prediction

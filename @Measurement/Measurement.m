@@ -9,6 +9,7 @@ classdef Measurement < handle
         
         rt      % Random variable wrt target-agent relation
         
+        Rp      % platform measurement noise variances
         Rt      % platform to target measurement noise variances (CELL FORM :: [# of target]*[2x2 array])
                 
         hist    % History 

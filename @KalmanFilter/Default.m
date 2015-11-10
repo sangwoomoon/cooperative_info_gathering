@@ -29,17 +29,28 @@ function o = Default ( o , SIMULATION, AGENT, TARGET, CLOCK, option )
 %
 % output : set CentralKF Class
 
-tl=length(TARGET(1).x);  % number of state for targets
+tl=sum(TARGET(1).bKFx);  % number of state for targets which will be handled in KF
+al=sum(AGENT(1).bKFs);  % number of state for agents which will be handled in KF
 
-o.nState = tl*length(TARGET);           
+o.nState = tl*length(TARGET)+al*length(AGENT);           
 
+KFidx = []; % indices of state for KF process
 
+FTempRow = [];
+FTemp = [];
 o.F = [];
+
+GammaTemp = [];
 o.Gamma = [];
 
 o.Gu = [];
 
-Htilde = []; % each agent part
+HpTemp = [];
+HpTempMem = [];
+HtTemp = [];
+HtTempMem = [];
+Hagent = [];
+Htarget = [];
 o.H = [];  
 
 o.Q = [];
@@ -53,33 +64,134 @@ o.hist.Y = [];
 o.hist.Xhat = [];
 o.hist.Phat = [];
 
-for iTarget = 1 : length(TARGET) % w.r.t total target (centralized case)
-    o.Xhat = [o.Xhat; TARGET(iTarget).x];
+for iAgtTgt = 1 : length(AGENT) + length(TARGET) % w.r.t total agent and target (centralized case)
     
-    o.F = blkdiag(o.F,TARGET(iTarget).Ft);
-    o.Gamma = blkdiag(o.Gamma,TARGET(iTarget).Gt);
-    
-    o.Q = blkdiag(o.Q,TARGET(iTarget).Qt); 
+    if iAgtTgt < length(TARGET) + 1 % target index
+        
+        if tl ~= 0 % if there are states considered as the entries of KF process,
+           
+            % filter F,Gamma matrix to make KF process
+            for iTgtState = 1 : length(TARGET(iAgtTgt).x)
+                if (TARGET(iAgtTgt).bKFx(iTgtState)==1)
+                    o.Xhat = [o.Xhat;TARGET(iAgtTgt).x(iTgtState)];
+                    KFidx = [KFidx, iTgtState];
+                end
+            end
+            
+            for iKFstateRow = 1 : length(KFidx)
+                for iKFstateCol = 1 : length(KFidx)
+                    FTempRow = [FTempRow, TARGET(iAgtTgt).Ft(KFidx(iKFstateRow),KFidx(iKFstateCol))];
+                end
+                FTemp = [FTemp;FTempRow];
+                GammaTemp = [GammaTemp; TARGET(iAgtTgt).Gt(KFidx(iKFstateRow),:)];
+                FTempRow = [];
+            end
+            
+            o.F = blkdiag(o.F,FTemp);
+            o.Gamma = blkdiag(o.Gamma,GammaTemp);
+            FTemp = [];
+            GammaTemp = [];
+            
+            o.Q = blkdiag(o.Q,TARGET(iAgtTgt).Qt);
+            KFidx = [];
+
+        end
+        
+    else % agent index
+        
+        if al ~= 0 % if there are states considered as the entries of KF process,
+            
+            % filter F,Gamma matrix to make KF process
+            for iAgtState = 1 : length(AGENT(iAgtTgt-length(TARGET)).s)
+                if (AGENT(iAgtTgt-length(TARGET)).bKFs(iAgtState)==1)
+                    o.Xhat = [o.Xhat;AGENT(iAgtTgt-length(TARGET)).s(iAgtState)];
+                    KFidx = [KFidx, iAgtState];
+                end
+            end
+            
+            for iKFstateRow = 1 : length(KFidx)
+                for iKFstateCol = 1 : length(KFidx)
+                    FTempRow = [FTempRow, AGENT(iAgtTgt-length(TARGET)).Fp(KFidx(iKFstateRow),KFidx(iKFstateCol))];
+                end
+                FTemp = [FTemp;FTempRow];
+                GammaTemp = [GammaTemp; AGENT(iAgtTgt-length(TARGET)).Gamp(KFidx(iKFstateRow),:)];
+                FTempRow = [];
+            end
+            
+            o.F = blkdiag(o.F,FTemp);
+            o.Gamma = blkdiag(o.Gamma,GammaTemp);
+            FTemp = [];
+            GammaTemp = [];
+            
+            o.Q = blkdiag(o.Q,AGENT(iAgtTgt-length(TARGET)).Qp);
+            KFidx = [];
+            
+        end
+        
+    end
+ 
 end
 
 for iAgent = 1 : length(AGENT)
+    
+    % target part
     for iTarget = 1 : length(TARGET)
-        o.R = blkdiag(o.R,AGENT(iAgent).MEASURE.Rt{iTarget});
-    end
-    
-    for jAgent = 1 : SIMULATION.nAgent
-        if jAgent == AGENT(iAgent).id
-            Htilde = [Htilde, AGENT(iAgent).MEASURE.Hb];
-        else
-            Htilde = [Htilde, zeros(2)];
+        
+        if tl ~= 0 % if there are states considered as the entries of KF process,
+           
+            % filter H matrix to make KF process
+            for iTgtState = 1 : length(TARGET(iTarget).x)
+                if (TARGET(iTarget).bKFx(iTgtState)==1)
+                    KFidx = [KFidx, iTgtState];
+                end
+            end
+            
+            for iKFstateCol = 1 : length(KFidx)
+                HtTempMem = [HtTempMem,AGENT(iAgent).MEASURE.Ht(:,KFidx(iKFstateCol))];
+            end
+            HtTemp = blkdiag(HtTemp,HtTempMem);
+            KFidx = [];
+            HtTempMem = [];
+            
+            o.R = blkdiag(o.R,AGENT(iAgent).MEASURE.Rt{iTarget});
+
         end
+        
+        if al ~= 0 % if there are states considered as the entries of KF process,
+           
+            % filter H matrix to make KF process
+            for iTgtState = 1 : length(AGENT(iAgent).s)
+                if (AGENT(iAgent).bKFs(iTgtState)==1)
+                    KFidx = [KFidx, iTgtState];
+                end
+            end
+            
+            for iKFstateCol = 1 : length(KFidx)
+                HpTempMem = [HpTempMem,AGENT(iAgent).MEASURE.Hp(:,KFidx(iKFstateCol))];
+            end
+            HpTemp = [HpTemp;HpTempMem];
+            KFidx = [];
+            HpTempMem = [];
+
+        end
+       
+%         o.R = blkdiag(o.R,AGENT(iAgent).MEASURE.Rp);
+        
     end
-    Htilde = [Htilde,AGENT(iAgent).MEASURE.Ht];
     
-    o.H = [o.H;Htilde];
-    Htilde = [];
+    if isempty(Htarget)
+        Htarget = HtTemp;
+    else
+        Htarget = [Htarget; HtTemp];
+    end
+    
+    Hagent = blkdiag(Hagent,HpTemp);
+    HtTemp = [];
+    HpTemp = [];
+    
 end
 
+o.H = [Htarget, Hagent];
 o.Phat = 100*eye(o.nState);                                           
 
 switch option
@@ -95,8 +207,8 @@ switch option
         o.plot.htcolor = rand(1,3);
         o.plot.hpcolor = rand(1,3);
         o.plot.phatcolor = rand(1,3);
-        o.plot.htmarker = 'none';
-        o.plot.hpmarker = 'none';
+        o.plot.htmarker = 'o';
+        o.plot.hpmarker = 'o';
         o.plot.phatmarker = '--';
         o.plot.legend = [{strcat('Agent ',num2str(AGENT.id),' Local KF xhat')},...
             {strcat('Agent ',num2str(AGENT.id),' Local KF Phat')},...
@@ -108,9 +220,17 @@ switch option
         o.plot.htmarker = '+';
         o.plot.hpmarker = '+';
         o.plot.phatmarker = '--';
-        o.plot.legend = [{strcat('Agent ',num2str(AGENT(SIMULATION.iAgent).id),' Decentral KF xhat')},...
-            {strcat('Agent ',num2str(AGENT(SIMULATION.iAgent).id),' Decentral KF Phat')},...
-            {strcat('Agent ',num2str(AGENT(SIMULATION.iAgent).id),' Decentral KF Phat')}];
+        o.plot.legend = [{strcat('Agent ',num2str(AGENT.id),' Decentral KF xhat')},...
+            {strcat('Agent ',num2str(AGENT.id),' Decentral KF Phat')},...
+            {strcat('Agent ',num2str(AGENT.id),' Decentral KF Phat')}];
 end
+
+o.plot.xlabel = {'time (secs)'};
+o.plot.ylabeltarget = [{'Target Easting error (m)'},{'Target Northing error (m)'},...
+    {'Target Easting Velocity error (m/s)'},{'Target Northing Velocity error (m/s)'},...
+    {'Target Easting error (%)'},{'Target Northing error (%)'},...
+    {'Target Easting Velocity error (%)'},{'Target Northing Velocity error (%)'}];
+o.plot.ylabelagent = [{'Sensor Easting Bias error (m)'},{'Sensor Northing Bias error (m)'},...
+    {'Sensor Easting Bias error (%)'},{'Sensor Northing Bias error (%)'}];
 
 end

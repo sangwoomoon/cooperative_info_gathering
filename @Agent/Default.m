@@ -7,18 +7,16 @@ function o = Default ( o, TARGET, ENVIRONMENT, SIMULATION, CLOCK, iAgent)
 
 o.id = iAgent;
 
-o.Fp = [1 CLOCK.dt  0        0 ;
-        0        1  0        0 ;
-        0        0  1 CLOCK.dt ;
-        0        0  0        1];
+o.Fp = blkdiag(eye(2),[1 CLOCK.dt; 0 1],[1 CLOCK.dt; 0 1]);
 
-o.Gamp = [0.5*CLOCK.dt^2             0   ;
+o.Gamp = [          0                0   ;
+                    0                0   ;
+          0.5*CLOCK.dt^2             0   ;
               CLOCK.dt               0   ;
                      0    0.5*CLOCK.dt^2 ;
                      0        CLOCK.dt  ];
 
 o.Gu = o.Gamp;
-
 
 o.Qp = diag([0.05 0.05]);
 
