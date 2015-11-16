@@ -3,11 +3,9 @@ function o = Plot (o, AGENT, TARGET, CLOCK, SIMULATION, option)
 tl=sum(TARGET(1).bKFx);  % number of state for targets concerned with KF process
 al=sum(AGENT(1).bKFs);   % number of state for agents concerned with KF process
 
-AgentStateList = [];
 AgentStateList1 = [];
 AgentStateList2 = [];
 
-TargetStateList = [];
 TargetStateList1 = [];
 TargetStateList2 = [];
 
@@ -46,14 +44,14 @@ for iTarget = 1 : length(TARGET)
     for iKFstate = 1 : 2*tl
         if iKFstate < tl+1 % actual
             subplot(TargetStateList(iKFstate)), hold on;
-            plot(CLOCK.tvec,o.hist.Xhat(tl*(iTarget-1)+iKFstate,:)-TARGET(iTarget).hist.x(iKFidxt(iKFstate),2:end),'marker',o.plot.htmarker,'color',o.plot.htcolor);
+            plot(CLOCK.tvec,o.hist.Xhat(tl*(iTarget-1)+iKFstate,2:end)-TARGET(iTarget).hist.x(iKFidxt(iKFstate),2:end),'marker',o.plot.htmarker,'color',o.plot.htcolor);
             plot(CLOCK.tvec,2*sqrt(squeeze(o.hist.Phat(tl*(iTarget-1)+iKFstate,tl*(iTarget-1)+iKFstate,2:end))),o.plot.phatmarker,'color',o.plot.phatcolor)
             plot(CLOCK.tvec,-2*sqrt(squeeze(o.hist.Phat(tl*(iTarget-1)+iKFstate,tl*(iTarget-1)+iKFstate,2:end))),o.plot.phatmarker,'color',o.plot.phatcolor)
         else % percentage
             subplot(TargetStateList(iKFstate)), hold on;
             plot(CLOCK.tvec,...
-                (o.hist.Xhat(tl*(iTarget-1)+iKFstate-tl,:)-TARGET(iTarget).hist.x(iKFidxt(iKFstate-tl),2:end))...
-                ./TARGET(iTarget).hist.x(iKFidxt(iKFstate-tl),2:end)*100,...
+                (o.hist.Xhat(tl*(iTarget-1)+iKFstate-tl,2:end)-TARGET(iTarget).hist.x(iKFidxt(iKFstate-tl),2:end))...
+                ./((abs(o.hist.Xhat(tl*(iTarget-1)+iKFstate-tl,2:end))+abs(TARGET(iTarget).hist.x(iKFidxt(iKFstate-tl),2:end)))./2)*100,...
                 'marker',o.plot.htmarker,'color',o.plot.htcolor);
         end
     
@@ -68,6 +66,8 @@ for iTarget = 1 : length(TARGET)
                     legend([get(legend(gca),'string'),AGENT.LOCAL_KF.plot.legend]);
                 case 'decentral' % decentralized case
                     legend([get(legend(gca),'string'),AGENT.DECEN_KF.plot.legend]);
+                case 'fDDF' % fDDF based local case
+                    legend([get(legend(gca),'string'),AGENT.FDDF_KF.plot.legend]);
                     
             end
         end
@@ -84,24 +84,20 @@ for iAgent = 1 : length(AGENT)
         idx = iAgent;
     else % local/decentralized Case
         figure(length(TARGET)+1+AGENT.id), hold on;
-        if strcmp(option,'local')
-            idx = iAgent;
-        elseif strcmp(option,'decentral')
-            idx = iAgent;
-        end
+        idx = iAgent;
     end
     
     for iKFstate = 1 : 2*al
         if iKFstate < al + 1
             subplot(AgentStateList(iKFstate)), hold on
-            plot(CLOCK.tvec,o.hist.Xhat(length(TARGET)*tl+al*(idx-1)+iKFstate,:)-AGENT(iAgent).hist.s(iKFidxp(iKFstate),2:end),'marker',o.plot.hpmarker,'color',o.plot.hpcolor);
+            plot(CLOCK.tvec,o.hist.Xhat(length(TARGET)*tl+al*(idx-1)+iKFstate,2:end)-AGENT(iAgent).hist.s(iKFidxp(iKFstate),2:end),'marker',o.plot.hpmarker,'color',o.plot.hpcolor);
             plot(CLOCK.tvec,2*sqrt(squeeze(o.hist.Phat(length(TARGET)*tl+al*(idx-1)+iKFstate,length(TARGET)*tl+al*(iAgent-1)+iKFstate,2:end))),o.plot.phatmarker,'color',o.plot.phatcolor)
             plot(CLOCK.tvec,-2*sqrt(squeeze(o.hist.Phat(length(TARGET)*tl+al*(idx-1)+iKFstate,length(TARGET)*tl+al*(iAgent-1)+iKFstate,2:end))),o.plot.phatmarker,'color',o.plot.phatcolor)
         else
             subplot(AgentStateList(iKFstate)), hold on
             plot(CLOCK.tvec,...
-                (o.hist.Xhat(length(TARGET)*tl+al*(idx-1)+iKFstate-al,:)-AGENT(iAgent).hist.s(iKFidxp(iKFstate-al),2:end))...
-                ./AGENT(iAgent).hist.s(iKFidxp(iKFstate-al),2:end)*100,...
+                (o.hist.Xhat(length(TARGET)*tl+al*(idx-1)+iKFstate-al,2:end)-AGENT(iAgent).hist.s(iKFidxp(iKFstate-al),2:end))...
+                ./((abs(o.hist.Xhat(length(TARGET)*tl+al*(idx-1)+iKFstate-al,2:end))+abs(AGENT(iAgent).hist.s(iKFidxp(iKFstate-al),2:end)))./2)*100,...
                 'marker',o.plot.hpmarker,'color',o.plot.hpcolor);
             
         end
@@ -116,6 +112,8 @@ for iAgent = 1 : length(AGENT)
                     legend([get(legend(gca),'string'),AGENT.LOCAL_KF.plot.legend]);
                 case 'decentral' % decentralized case
                     legend([get(legend(gca),'string'),AGENT.DECEN_KF.plot.legend]);
+                case 'fDDF' % fDDF based local case
+                    legend([get(legend(gca),'string'),AGENT.FDDF_KF.plot.legend]);
                     
             end
         end

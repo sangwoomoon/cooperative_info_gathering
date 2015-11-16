@@ -22,6 +22,9 @@
 % % z = [z_1;z_2;...;z_n] = [xt_k_rel_1; xp_abs_1; xt_k_rel_2; xp_abs_2];
 % % u = [up_1;up_2;...;up_n] = [ep1_ddot; np1_ddot; ep2_ddot; np2_ddot; ... ; epn_ddot; npn_ddot ];
 
+% 4. fDDF KF FORM
+% same as LOCAL FORM
+
 function o = Default ( o , SIMULATION, AGENT, TARGET, CLOCK, option )
 
 % default setting for targets
@@ -153,6 +156,8 @@ for iAgent = 1 : length(AGENT)
             KFidx = [];
             HtTempMem = [];
             
+%         tricky part. should be re-defined withr respect to the
+%         measurement conditions
             o.R = blkdiag(o.R,AGENT(iAgent).MEASURE.Rt{iTarget});
 
         end
@@ -174,8 +179,11 @@ for iAgent = 1 : length(AGENT)
             HpTempMem = [];
 
         end
-       
-%         o.R = blkdiag(o.R,AGENT(iAgent).MEASURE.Rp);
+
+%         tricky part. should be re-defined withr respect to the
+%         measurement conditions
+%         o.R = blkdiag(o.R,AGENT(iAgent).MEASURE.Rp); 
+
         
     end
     
@@ -192,7 +200,12 @@ for iAgent = 1 : length(AGENT)
 end
 
 o.H = [Htarget, Hagent];
-o.Phat = 100*eye(o.nState);                                           
+o.Phat = 100*eye(o.nState);
+
+% store initial values
+o.hist.Xhat = o.Xhat;
+o.hist.Phat = o.Phat;
+o.hist.stamp = 0;
 
 switch option
     case 'central'
@@ -203,6 +216,8 @@ switch option
         o.plot.hpmarker = 'square';
         o.plot.phatmarker = '.';
         o.plot.legend = [{'Central KF xhat'},{'Central KF Phat'},{'Central KF Phat'}];
+        
+        o.hist.Y = nan(SIMULATION.nAgent*length(AGENT(1).MEASURE.y),1); 
     case 'local'
         o.plot.htcolor = rand(1,3);
         o.plot.hpcolor = rand(1,3);
@@ -213,16 +228,32 @@ switch option
         o.plot.legend = [{strcat('Agent ',num2str(AGENT.id),' Local KF xhat')},...
             {strcat('Agent ',num2str(AGENT.id),' Local KF Phat')},...
             {strcat('Agent ',num2str(AGENT.id),' Local KF Phat')}];
+        
+        o.hist.Y = nan(length(AGENT(1).MEASURE.y),1);
     case 'decentral'
+        o.plot.htcolor = rand(1,3);
+        o.plot.hpcolor = rand(1,3);
+        o.plot.phatcolor = rand(1,3);
+        o.plot.htmarker = 'diamond';
+        o.plot.hpmarker = 'diamond';
+        o.plot.phatmarker = '--';
+        o.plot.legend = [{strcat('Agent ',num2str(AGENT.id),' Decentral KF xhat')},...
+            {strcat('Agent ',num2str(AGENT.id),' Decentral KF Phat')},...
+            {strcat('Agent ',num2str(AGENT.id),' Decentral KF Phat')}];
+        
+        o.hist.Y = nan(sum(AGENT.COMM.C(:,AGENT.id))*length(AGENT(1).MEASURE.y),1);
+    case 'fDDF'
         o.plot.htcolor = rand(1,3);
         o.plot.hpcolor = rand(1,3);
         o.plot.phatcolor = rand(1,3);
         o.plot.htmarker = '+';
         o.plot.hpmarker = '+';
         o.plot.phatmarker = '--';
-        o.plot.legend = [{strcat('Agent ',num2str(AGENT.id),' Decentral KF xhat')},...
-            {strcat('Agent ',num2str(AGENT.id),' Decentral KF Phat')},...
-            {strcat('Agent ',num2str(AGENT.id),' Decentral KF Phat')}];
+        o.plot.legend = [{strcat('Agent ',num2str(AGENT.id),' fDDF KF xhat')},...
+            {strcat('Agent ',num2str(AGENT.id),' fDDF KF Phat')},...
+            {strcat('Agent ',num2str(AGENT.id),' fDDF KF Phat')}];
+        
+        o.hist.Y = nan(length(AGENT(1).MEASURE.y),1);
 end
 
 o.plot.xlabel = {'time (secs)'};

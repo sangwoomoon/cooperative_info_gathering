@@ -8,7 +8,9 @@ hold on;
 %% INITIAL SETTING %%%%
 
 %--- Simulation Class Setting ----
-SIMULATION = Simulation();
+nAgent = 3;
+nTarget = 2;
+SIMULATION = Simulation(nAgent,nTarget);
 
 %--- Clock Class Setting ----
 CLOCK = Clock();
@@ -37,9 +39,8 @@ TARGET(2).bKFx = [1 1 1 1];
 TARGET(2).hist.x = TARGET(2).x;
 TARGET(2).hist.stamp = 0;
 
-% tricky part : Is it better to insert Qt in the measurement class?
-TARGET(1).Qt = diag([0.2; 0.2]); 
-TARGET(2).Qt = diag([0.2; 0.2]); 
+TARGET(1).Qt = diag([0.2; 0.2]);     
+TARGET(2).Qt = diag([0.2; 0.2]);
 
 %--- Individual AGENT CLASS setting ----
 AGENT(1).s = [0.3,0.1,-2.5,0,2, 0]';
@@ -76,7 +77,8 @@ SIMULATION.CENTRAL_KF = KalmanFilter(SIMULATION,AGENT,TARGET,CLOCK,'central');
 for iAgent = 1 : SIMULATION.nAgent
     SIMULATION.iAgent = iAgent;
     AGENT(iAgent).LOCAL_KF = KalmanFilter(SIMULATION,AGENT(iAgent),TARGET,CLOCK,'local');
-    AGENT(iAgent).DECEN_KF = KalmanFilter(SIMULATION,AGENT(iAgent),TARGET,CLOCK,'decentral');
+    AGENT(iAgent).FDDF_KF = KalmanFilter(SIMULATION,AGENT(iAgent),TARGET,CLOCK,'fDDF');
+    AGENT(iAgent).FDDF = FactorDDF(AGENT(iAgent),SIMULATION);
 end
 
 %% MAIN PROCEDURE %%%%
@@ -125,12 +127,17 @@ for iClock = 1 : CLOCK.nt
     end
     
     %--- Filter Update :: Centralized KF ----
-    SIMULATION.CENTRAL_KF.KalmanFilterAlgorithm(SIMULATION,AGENT,'central');
+    SIMULATION.CENTRAL_KF.KalmanFilterAlgorithm(SIMULATION,AGENT,CLOCK,'central');
     
-    %--- Filter Update :: Individual KF :: Local KF ----
+    %--- Filter Update :: Individual KF :: Local KF and FDDF aided KF ----
     for iAgent = 1 : SIMULATION.nAgent
         % Local KF Process
-        AGENT(iAgent).LOCAL_KF.KalmanFilterAlgorithm(SIMULATION,AGENT(iAgent),'local'); 
+        AGENT(iAgent).LOCAL_KF.KalmanFilterAlgorithm(SIMULATION,AGENT(iAgent),CLOCK,'local');
+        
+        % FDDF KF Process :: same procedure as Local KF, but it uses fused
+        % estimated data (Xhat, Phat) from the communication.
+        % The first iteration is the same as Local KF.
+        AGENT(iAgent).FDDF_KF.KalmanFilterAlgorithm(SIMULATION,AGENT(iAgent),CLOCK,'fDDF');
     end
     
     %--- Communicate ----
@@ -138,10 +145,9 @@ for iClock = 1 : CLOCK.nt
        AGENT(iAgent).COMM.CommunicationProcedure(AGENT, SIMULATION, AGENT(iAgent).id); 
     end
    
-    %--- Filter Update :: Individual KF :: Decentralized KF (using the averaging data) ----
+    %--- DDF Information Fusion (managing xhat and Phat) ----
     for iAgent = 1 : SIMULATION.nAgent
-        % Decentralized KF Process
-        AGENT(iAgent).DECEN_KF.KalmanFilterAlgorithm(SIMULATION,AGENT(iAgent),'decentral');
+       AGENT(iAgent).FDDF.DataFusion(AGENT(iAgent), SIMULATION, CLOCK);
     end
     
 end

@@ -25,8 +25,8 @@ o.hist.x = o.x; % store initial condition
 
 o.Qt = diag([0.2; 0.2]); 
 
-o.plot.color = 'b';
-o.plot.marker = ['bo';'bx']; % start; end
+o.plot.statecolor = rand(1,3);
+o.plot.marker = ['o';'x']; % start; end
 o.plot.markersize = 10;
 o.plot.linewidth = 3;
 

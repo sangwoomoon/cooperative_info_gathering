@@ -21,8 +21,12 @@ classdef Agent < handle
         COMM    % Communication Class (sub-class of agent)
         MEASURE % Measurement Class (usb-class of agent)
         CONTROL % Control Class (sub-class of agent)
+        
+        FDDF    % Factorized DDF Class
+       
         LOCAL_KF % KF Estimation Class (sub-class of agent)
         DECEN_KF % KF Estimation Class (sub-class of agent)
+        FDDF_KF % Factorized DDF based KF Estimation Class 
         
         hist    % History
         plot    % Plot handle

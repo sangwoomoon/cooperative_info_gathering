@@ -1,4 +1,4 @@
-function o = KalmanFilterAlgorithm( o, SIMULATION, AGENT, option )
+function o = KalmanFilterAlgorithm( o, SIMULATION, AGENT, CLOCK, option )
 
 o.Y = [];
 
@@ -10,17 +10,19 @@ switch (option)
     case 'local'        
             o.Y = AGENT.MEASURE.y;
     case 'decentral'
-        % averaging of measurements and measurement cov. matrix
-        o.Y = AGENT.MEASURE.y;
-        o.R = AGENT.DECEN_KF.R;
         for iAgent = 1 : SIMULATION.nAgent
-            if iAgent ~= AGENT.id
-                o.Y = o.Y + AGENT.COMM.Z(iAgent).y;
-                o.R = o.R + AGENT.COMM.Z(iAgent).R;
+            if AGENT.id == iAgent % if index is the agent itself
+                o.u = [o.u;AGENT.CONTROL.u];
+                o.Y = [o.Y;AGENT.MEASURE.y];
+            else
+                o.u = [o.u;AGENT.COMM.Z(iAgent).u];
+                o.Y = [o.Y;AGENT.COMM.Z(iAgent).y];
             end
         end
-        o.Y = o.Y./SIMULATION.nAgent;
-        o.R = o.R./SIMULATION.nAgent;
+    case 'fDDF'
+        o.Y = AGENT.MEASURE.y;
+        o.Xhat = AGENT.FDDF.XhatDDF;
+        o.Phat = AGENT.FDDF.PhatDDF;
 end
     
 %%Prediction
@@ -30,15 +32,16 @@ Pbar = o.F*o.Phat*o.F' + o.Gamma*o.Q*o.Gamma';
 %%Measurement update
 innov = o.Y - o.H*Xbar;
 S = o.H*Pbar*o.H' + o.R;
-W = Pbar*o.H' / S;
+W = Pbar*o.H' / S; % Kalman Gain (den : inversed form of S matrix)
 
 Xhat = Xbar + W*innov;
-Phat = (eye(o.nState) - W*o.H)*Pbar*(eye(o.nState) - W*o.H)' + W*o.R*W';
+Phat = (eye(o.nState) - W*o.H)*Pbar*(eye(o.nState) - W*o.H)' + W*o.R*W'; % Joseph form to prevent from numerical issues
 
 %%Store and update
 o.hist.Y(:,end+1) = o.Y;
 o.hist.Xhat(:,end+1) = Xhat;
 o.hist.Phat(:,:,end+1) = Phat;
+o.hist.stamp(:,end+1) = CLOCK.ct;
 o.Xhat = Xhat;
 o.Phat = Phat;
 

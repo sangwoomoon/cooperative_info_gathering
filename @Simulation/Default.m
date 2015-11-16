@@ -1,13 +1,13 @@
-function o = Default( o )
+function o = Default( o, nAgent, nTarget )
 
 % default setting for simulation
 % input : empty Simulation Class
 %
 % output : set Simulation Class
 
-o.nTarget = 2;
-o.nAgent = 3;
+o.nTarget = nTarget;
+o.nAgent = nAgent;
 
-o.sRandom = rng(333555533);
+o.sRandom = rng(333555532);
 
 end

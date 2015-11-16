@@ -17,8 +17,8 @@ classdef Simulation
     
 
     methods
-        function o = Simulation()
-            o = Default(o);
+        function o = Simulation( nAgent, nTarget )
+            o = Default(o, nAgent, nTarget );
         end
         
         o = get( o, varargin );
