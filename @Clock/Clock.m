@@ -15,8 +15,8 @@ classdef Clock
     
 
     methods
-        function o = Clock()
-           o = Default(o);
+        function o = Clock( initialTime, TimeStep, IterationNumber )
+           o = Default(o, initialTime, TimeStep, IterationNumber );
         end
         
         o = get( o, varargin );

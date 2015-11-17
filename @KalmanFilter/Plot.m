@@ -6,8 +6,7 @@ al=sum(AGENT(1).bKFs);   % number of state for agents concerned with KF process
 AgentStateList1 = [];
 AgentStateList2 = [];
 
-TargetStateList1 = [];
-TargetStateList2 = [];
+TargetStateList = [];
 
 iKFplotidx = 0;
 iKFidxp = [];
@@ -26,12 +25,10 @@ iKFidxt = [];
 for iTargetState = 1 : length(TARGET(1).x)
     if TARGET(1).bKFx(iTargetState) == 1
         iKFplotidx = iKFplotidx + 1;
-        TargetStateList1 = [TargetStateList1, tl*100+20+2*(iKFplotidx-1)+1];
-        TargetStateList2 = [TargetStateList2, tl*100+20+2*iKFplotidx];
+        TargetStateList = [TargetStateList, tl*100+10+iKFplotidx];
         iKFidxt = [iKFidxt,iTargetState];
     end
 end
-TargetStateList = [TargetStateList1, TargetStateList2];
 
 % Target Error Plot
 for iTarget = 1 : length(TARGET)
@@ -41,20 +38,12 @@ for iTarget = 1 : length(TARGET)
         suptitle(['Target ',num2str(iTarget), ' State Estimation Errors'])
     end
     
-    for iKFstate = 1 : 2*tl
-        if iKFstate < tl+1 % actual
-            subplot(TargetStateList(iKFstate)), hold on;
-            plot(CLOCK.tvec,o.hist.Xhat(tl*(iTarget-1)+iKFstate,2:end)-TARGET(iTarget).hist.x(iKFidxt(iKFstate),2:end),'marker',o.plot.htmarker,'color',o.plot.htcolor);
-            plot(CLOCK.tvec,2*sqrt(squeeze(o.hist.Phat(tl*(iTarget-1)+iKFstate,tl*(iTarget-1)+iKFstate,2:end))),o.plot.phatmarker,'color',o.plot.phatcolor)
-            plot(CLOCK.tvec,-2*sqrt(squeeze(o.hist.Phat(tl*(iTarget-1)+iKFstate,tl*(iTarget-1)+iKFstate,2:end))),o.plot.phatmarker,'color',o.plot.phatcolor)
-        else % percentage
-            subplot(TargetStateList(iKFstate)), hold on;
-            plot(CLOCK.tvec,...
-                (o.hist.Xhat(tl*(iTarget-1)+iKFstate-tl,2:end)-TARGET(iTarget).hist.x(iKFidxt(iKFstate-tl),2:end))...
-                ./((abs(o.hist.Xhat(tl*(iTarget-1)+iKFstate-tl,2:end))+abs(TARGET(iTarget).hist.x(iKFidxt(iKFstate-tl),2:end)))./2)*100,...
-                'marker',o.plot.htmarker,'color',o.plot.htcolor);
-        end
-    
+    for iKFstate = 1 : tl
+        subplot(TargetStateList(iKFstate)), hold on;
+        plot(CLOCK.tvec,o.hist.Xhat(tl*(iTarget-1)+iKFstate,2:end)-TARGET(iTarget).hist.x(iKFidxt(iKFstate),2:end),'marker',o.plot.htmarker,'color',o.plot.htcolor);
+        plot(CLOCK.tvec,2*sqrt(squeeze(o.hist.Phat(tl*(iTarget-1)+iKFstate,tl*(iTarget-1)+iKFstate,2:end))),o.plot.phatmarker,'color',o.plot.phatcolor)
+        plot(CLOCK.tvec,-2*sqrt(squeeze(o.hist.Phat(tl*(iTarget-1)+iKFstate,tl*(iTarget-1)+iKFstate,2:end))),o.plot.phatmarker,'color',o.plot.phatcolor)
+        
         xlabel('Time (secs)')
         ylabel(SIMULATION.CENTRAL_KF.plot.ylabeltarget(iKFstate));
         

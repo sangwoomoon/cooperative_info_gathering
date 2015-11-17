@@ -7,6 +7,9 @@ classdef FactorDDF < handle
         XhatMgn % Marginalized KF state (extract target state from Xhat)
         PhatMgn % Marginalized Covariance Matrix of KF process
         
+        XhatTemp % temporary stored Xhat DDF (at each step for sequential process)
+        PhatTemp % temporary stored Phat DDF (at each step for sequential process)
+        
         omega   % factorizing parameter
         
         M       % Information matrix

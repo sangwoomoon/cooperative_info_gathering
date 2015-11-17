@@ -13,7 +13,10 @@ nTarget = 2;
 SIMULATION = Simulation(nAgent,nTarget);
 
 %--- Clock Class Setting ----
-CLOCK = Clock();
+t0 = 0.1;
+dt = 0.1;
+nt = 200;
+CLOCK = Clock(t0,dt,nt);
 
 %--- Environment Classes Setting ----
 ENVIRONMENT = Environment(clock);
@@ -147,8 +150,10 @@ for iClock = 1 : CLOCK.nt
    
     %--- DDF Information Fusion (managing xhat and Phat) ----
     for iAgent = 1 : SIMULATION.nAgent
-       AGENT(iAgent).FDDF.DataFusion(AGENT(iAgent), SIMULATION, CLOCK);
+       AGENT(iAgent).FDDF.DataFusion(AGENT(iAgent), SIMULATION, CLOCK, 'MMSE');
     end
+    
+    iClock
     
 end
 

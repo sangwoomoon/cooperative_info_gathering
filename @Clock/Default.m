@@ -1,14 +1,14 @@
-function o = Default (o)
+function o = Default (o, t0, dt, nt)
 
 % default setting for simulation
 % input : empty Clock Class
 %
 % output : set Clock Class
 
-o.t0 = 0.1;
+o.t0 = t0;
 
 o.ct = 0;
-o.dt = 0.1; % general time step for basic process;
+o.dt = dt; % general time step for basic process;
 
 o.delt.control = o.dt;
 o.delt.target = o.dt;
@@ -18,7 +18,7 @@ o.delt.measurement = o.dt;
 o.delt.communicate = o.dt;
 o.delt.filter = o.dt;
 
-o.nt = 200;
+o.nt = nt;
 o.tf = o.dt*o.nt;
 
 o.tvec = o.t0:o.dt:o.tf;
