@@ -8,7 +8,7 @@ hold on;
 %% INITIAL SETTING %%%%
 
 %--- Simulation Class Setting ----
-nAgent = 3;
+nAgent = 4;
 nTarget = 2;
 SIMULATION = Simulation(nAgent,nTarget);
 
@@ -60,18 +60,26 @@ AGENT(3).s = [0.4,0.3,2.5,0,-3, 0]';
 AGENT(3).bKFs = [1 1 0 0 0 0];
 AGENT(3).hist.s = AGENT(3).s;
 AGENT(3).hist.stamp = 0;
+% 
+AGENT(4).s = [0.3,0.2,3.5,0,-2, 0]';
+AGENT(4).bKFs = [1 1 0 0 0 0];
+AGENT(4).hist.s = AGENT(3).s;
+AGENT(4).hist.stamp = 0;
 
 AGENT(1).MEASURE.Rp = diag([50.15 1.15]);
 AGENT(2).MEASURE.Rp = diag([1.15 50.15]);
 AGENT(3).MEASURE.Rp = diag([20.15 1.15]);
+AGENT(4).MEASURE.Rp = diag([1.15 50.15]);
 
 AGENT(1).MEASURE.Rt{1} = diag([0.085; 5.85]); % relative target 1 - agent 1
 AGENT(2).MEASURE.Rt{1} = diag([5.85; 0.085]); % relative target 1 - agent 2
 AGENT(3).MEASURE.Rt{1} = diag([0.085; 5.85]); % relative target 1 - agent 3
+AGENT(4).MEASURE.Rt{1} = diag([5.85; 0.085]); % relative target 1 - agent 3
 
 AGENT(1).MEASURE.Rt{2} = diag([5.85; 0.085]); % relative target 2 - agent 1
 AGENT(2).MEASURE.Rt{2} = diag([0.085; 5.85]); % relative target 2 - agent 2
 AGENT(3).MEASURE.Rt{2} = diag([5.85; 0.085]); % relative target 2 - agent 3
+AGENT(4).MEASURE.Rt{2} = diag([0.085; 5.85]); % relative target 2 - agent 2
 
 %--- Centralized KF subclass initialization ----
 SIMULATION.CENTRAL_KF = KalmanFilter(SIMULATION,AGENT,TARGET,CLOCK,'central'); 
@@ -89,6 +97,7 @@ end
 % for test.. should be removed.
 load('AccelerationInput.mat');
 AccInput(5:6,:) = 0.5*AccInput(1:2,:);
+AccInput(7:8,:) = 0.8*AccInput(3:4,:);
 
 for iClock = 1 : CLOCK.nt
     
@@ -149,9 +158,11 @@ for iClock = 1 : CLOCK.nt
     end
    
     %--- DDF Information Fusion (managing xhat and Phat) ----
-    for iAgent = 1 : SIMULATION.nAgent
-       AGENT(iAgent).FDDF.DataFusion(AGENT(iAgent), SIMULATION, CLOCK, 'MMSE');
-    end
+%     if rem(iClock,5) == 0
+        for iAgent = 1 : SIMULATION.nAgent
+            AGENT(iAgent).FDDF.DataFusion(AGENT(iAgent), SIMULATION, CLOCK, 'MMNB');
+        end
+%     end
     
     iClock
     

@@ -20,7 +20,7 @@ for iMerge = 1:SIMULATION.nAgent
         
         % step 2 :: make the optimal solution for omega
         
-        if strcmpi(option,'MMSE')
+        if strcmpi(option,'MMNB')
             %%Compute NB pdf for marginal fusion only
             M_mmse = inv(inv(o.PhatMgn) ...
                 + inv(AGENT.COMM.Z(iMerge).Phat(1:tl,1:tl)));
@@ -47,7 +47,7 @@ for iMerge = 1:SIMULATION.nAgent
                     % an disadvantage?
                     Cost(iOmega) = trace(inv(MCandi(:,:,iOmega)));
                     
-                case {'MMSE'}
+                case {'MMNB'}
                     
                     Cost(iOmega) = 0.5*( trace(MCandi(:,:,iOmega)*M_mmse) ...
                          + (mCandi(:,iOmega)-m_mmse)'*MCandi(:,:,iOmega)*(mCandi(:,iOmega)-m_mmse)...
@@ -57,6 +57,8 @@ for iMerge = 1:SIMULATION.nAgent
         end
         
         [MinCost,MinIdx] = min(Cost);
+        
+%         MinIdx = 11; % 0.1
         
         MtempDelta = MCandi(:,:,MinIdx)-inv(o.PhatMgn);
         mtempDelta = MCandi(:,:,iOmega)*mCandi(:,MinIdx)-inv(o.PhatMgn)*o.XhatMgn;
@@ -70,6 +72,12 @@ for iMerge = 1:SIMULATION.nAgent
         Mtemp = Mtemp + MtempDelta;
         mtemp = mtemp + mtempDelta;
         
+        o.M = [Mtemp, zeros(tl,AGENT.FDDF_KF.nState-tl); zeros(AGENT.FDDF_KF.nState-tl,AGENT.FDDF_KF.nState)];
+        o.m = [mtemp; zeros(AGENT.FDDF_KF.nState-tl,1)];
+        
+        o.PhatTemp = inv(inv(AGENT.FDDF_KF.Phat)+o.M);
+        o.XhatTemp = o.PhatTemp*(inv(AGENT.FDDF_KF.Phat)*AGENT.FDDF_KF.Xhat+o.m);
+        
     else
         
         o.omega(iMerge,1) = nan;
@@ -77,12 +85,12 @@ for iMerge = 1:SIMULATION.nAgent
         
     end
 end
-
-o.M = [Mtemp, zeros(tl,AGENT.FDDF_KF.nState-tl); zeros(AGENT.FDDF_KF.nState-tl,AGENT.FDDF_KF.nState)];
-o.m = [mtemp; zeros(AGENT.FDDF_KF.nState-tl,1)];
-
-o.PhatTemp = inv(inv(AGENT.FDDF_KF.Phat)+o.M);
-o.XhatTemp = o.PhatTemp*(inv(AGENT.FDDF_KF.Phat)*AGENT.FDDF_KF.Xhat+o.m);
+% 
+% o.M = [Mtemp, zeros(tl,AGENT.FDDF_KF.nState-tl); zeros(AGENT.FDDF_KF.nState-tl,AGENT.FDDF_KF.nState)];
+% o.m = [mtemp; zeros(AGENT.FDDF_KF.nState-tl,1)];
+% 
+% o.PhatTemp = inv(inv(AGENT.FDDF_KF.Phat)+o.M);
+% o.XhatTemp = o.PhatTemp*(inv(AGENT.FDDF_KF.Phat)*AGENT.FDDF_KF.Xhat+o.m);
 
 o.PhatDDF = o.PhatTemp;
 o.XhatDDF = o.XhatTemp;
