@@ -10,8 +10,10 @@ end
 for iAgent = 1 : o.nAgent
     AGENT(iAgent).Plot();
     legend([get(legend(gca),'string'),AGENT(iAgent).plot.legend]);
-    AGENT(iAgent).MEASURE.Plot(AGENT(iAgent));
-    legend([get(legend(gca),'string'),AGENT(iAgent).MEASURE.plot.legend]);    
+    for iTarget = 1 : o.nTarget
+        AGENT(iAgent).MEASURE(iTarget).Plot(AGENT(iAgent));
+        legend([get(legend(gca),'string'),AGENT(iAgent).MEASURE(iTarget).plot.legend]);
+    end
 end
 axis equal;
 

@@ -8,15 +8,16 @@ hold on;
 %% INITIAL SETTING %%%%
 
 %--- Simulation Class Setting ----
-nAgent = 4;
-nTarget = 2;
+nAgent = 3;
+nTarget = 3;
 SIMULATION = Simulation(nAgent,nTarget);
 
 %--- Clock Class Setting ----
 t0 = 0.1;
 dt = 0.1;
 nt = 200;
-CLOCK = Clock(t0,dt,nt);
+FDDFt = 0.1;
+CLOCK = Clock(t0,dt,nt,FDDFt);
 
 %--- Environment Classes Setting ----
 ENVIRONMENT = Environment(clock);
@@ -42,8 +43,15 @@ TARGET(2).bKFx = [1 1 1 1];
 TARGET(2).hist.x = TARGET(2).x;
 TARGET(2).hist.stamp = 0;
 
+% for landmark (same STM, but stationary)
+TARGET(3).x = [5.0,0,5.0,0]';
+TARGET(3).bKFx = [1 1 1 1];
+TARGET(3).hist.x = TARGET(3).x;
+TARGET(3).hist.stamp = 0;
+
 TARGET(1).Qt = diag([0.2; 0.2]);     
 TARGET(2).Qt = diag([0.2; 0.2]);
+TARGET(3).Qt = diag([0.0; 0.0]); % exactly known position?
 
 %--- Individual AGENT CLASS setting ----
 AGENT(1).s = [0.3,0.1,-2.5,0,2, 0]';
@@ -60,26 +68,34 @@ AGENT(3).s = [0.4,0.3,2.5,0,-3, 0]';
 AGENT(3).bKFs = [1 1 0 0 0 0];
 AGENT(3).hist.s = AGENT(3).s;
 AGENT(3).hist.stamp = 0;
-% 
-AGENT(4).s = [0.3,0.2,3.5,0,-2, 0]';
-AGENT(4).bKFs = [1 1 0 0 0 0];
-AGENT(4).hist.s = AGENT(3).s;
-AGENT(4).hist.stamp = 0;
 
-AGENT(1).MEASURE.Rp = diag([50.15 1.15]);
-AGENT(2).MEASURE.Rp = diag([1.15 50.15]);
-AGENT(3).MEASURE.Rp = diag([20.15 1.15]);
-AGENT(4).MEASURE.Rp = diag([1.15 50.15]);
+% AGENT(4).s = [0.3,0.2,3.5,0,-2, 0]';
+% AGENT(4).bKFs = [1 1 0 0 0 0];
+% AGENT(4).hist.s = AGENT(3).s;
+% AGENT(4).hist.stamp = 0;
 
-AGENT(1).MEASURE.Rt{1} = diag([0.085; 5.85]); % relative target 1 - agent 1
-AGENT(2).MEASURE.Rt{1} = diag([5.85; 0.085]); % relative target 1 - agent 2
-AGENT(3).MEASURE.Rt{1} = diag([0.085; 5.85]); % relative target 1 - agent 3
-AGENT(4).MEASURE.Rt{1} = diag([5.85; 0.085]); % relative target 1 - agent 3
+for iTarget = 1 : SIMULATION.nTarget
+    AGENT(1).MEASURE(iTarget).Rp = diag([1.15 0.15]);
+    AGENT(2).MEASURE(iTarget).Rp = diag([0.15 1.15]);
+    AGENT(3).MEASURE(iTarget).Rp = diag([1.15 1.15]);
+%     AGENT(4).MEASURE(iTarget).Rp = diag([0.15 2.15]);
+end
 
-AGENT(1).MEASURE.Rt{2} = diag([5.85; 0.085]); % relative target 2 - agent 1
-AGENT(2).MEASURE.Rt{2} = diag([0.085; 5.85]); % relative target 2 - agent 2
-AGENT(3).MEASURE.Rt{2} = diag([5.85; 0.085]); % relative target 2 - agent 3
-AGENT(4).MEASURE.Rt{2} = diag([0.085; 5.85]); % relative target 2 - agent 2
+AGENT(1).MEASURE(1).Rt = diag([0.085; 5.85]); % relative target 1 - agent 1
+AGENT(2).MEASURE(1).Rt = diag([5.85; 0.085]); % relative target 1 - agent 2
+AGENT(3).MEASURE(1).Rt = diag([0.085; 5.85]); % relative target 1 - agent 3
+% AGENT(4).MEASURE(1).Rt = diag([5.85; 0.085]); % relative target 1 - agent 4
+
+AGENT(1).MEASURE(2).Rt = diag([5.85; 0.085]); % relative target 2 - agent 1
+AGENT(2).MEASURE(2).Rt = diag([0.085; 5.85]); % relative target 2 - agent 2
+AGENT(3).MEASURE(2).Rt = diag([5.85; 0.085]); % relative target 2 - agent 3
+% AGENT(4).MEASURE(2).Rt = diag([0.085; 5.85]); % relative target 2 - agent 4
+
+AGENT(1).MEASURE(3).Rt = diag([0.001; 0.001]); % relative target 3 - agent 1 (exactly knows)
+AGENT(2).MEASURE(3).Rt = diag([0.001; 0.001]); % relative target 3 - agent 2 (exactly knows)
+AGENT(3).MEASURE(3).Rt = diag([5.850; 5.850]); % relative target 3 - agent 3 (bad measurement)
+% AGENT(4).MEASURE(3).Rt = diag([5.850; 5.850]); % relative target 3 - agent 4 (bad measurement)
+
 
 %--- Centralized KF subclass initialization ----
 SIMULATION.CENTRAL_KF = KalmanFilter(SIMULATION,AGENT,TARGET,CLOCK,'central'); 
@@ -135,7 +151,9 @@ for iClock = 1 : CLOCK.nt
     
     %--- Measurement ----
     for iAgent = 1 : SIMULATION.nAgent
-       AGENT(iAgent).MEASURE.TakeMeasurement(AGENT(iAgent),TARGET,ENVIRONMENT,CLOCK,SIMULATION.sRandom); 
+        for iTarget = 1 : SIMULATION.nTarget
+            AGENT(iAgent).MEASURE(iTarget).TakeMeasurement(AGENT(iAgent),TARGET(iTarget),ENVIRONMENT,CLOCK,SIMULATION.sRandom);
+        end
     end
     
     %--- Filter Update :: Centralized KF ----
@@ -158,13 +176,13 @@ for iClock = 1 : CLOCK.nt
     end
    
     %--- DDF Information Fusion (managing xhat and Phat) ----
-%     if rem(iClock,5) == 0
+     if rem(iClock,CLOCK.delt.FDDF) == 0
         for iAgent = 1 : SIMULATION.nAgent
             AGENT(iAgent).FDDF.DataFusion(AGENT(iAgent), SIMULATION, CLOCK, 'MMNB');
         end
-%     end
+     end
     
-    iClock
+    fprintf('iteration = %d\n',iClock);
     
 end
 

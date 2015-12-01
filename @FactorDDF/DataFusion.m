@@ -39,16 +39,12 @@ for iMerge = 1:SIMULATION.nAgent
             switch(option)
                 case {'trace'}
                     
-                    % weird thing happened : it seems to generate right
-                    % result when nAgent = 2, but it fails to estimate if
-                    % nAgent >=3.
-                    % The only difference between this method and MMSE is
-                    % to find the cost function. It is natural and
-                    % an disadvantage?
                     Cost(iOmega) = trace(inv(MCandi(:,:,iOmega)));
                     
                 case {'MMNB'}
                     
+                    % with Kullback-Leibler divergence (in multivariate
+                    % normal distribution)
                     Cost(iOmega) = 0.5*( trace(MCandi(:,:,iOmega)*M_mmse) ...
                          + (mCandi(:,iOmega)-m_mmse)'*MCandi(:,:,iOmega)*(mCandi(:,iOmega)-m_mmse)...
                          - length(m_mmse) ...

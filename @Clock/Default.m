@@ -1,4 +1,4 @@
-function o = Default (o, t0, dt, nt)
+function o = Default (o, t0, dt, nt, FDDFt)
 
 % default setting for simulation
 % input : empty Clock Class
@@ -17,6 +17,7 @@ o.delt.environment = o.dt;
 o.delt.measurement = o.dt;
 o.delt.communicate = o.dt;
 o.delt.filter = o.dt;
+o.delt.FDDF = FDDFt/o.dt;
 
 o.nt = nt;
 o.tf = o.dt*o.nt;

@@ -23,7 +23,12 @@ o.Qp = diag([0.05 0.05]);
 
 o.TA = TaskAllocation(TARGET, CLOCK); % Task Allocation sub-class
 o.COMM = Communication(SIMULATION, CLOCK); % Communication sub-class
-o.MEASURE = Measurement(TARGET, CLOCK, o.id); % Measurement sub-class
+
+for iTarget = 1 : length(TARGET)
+    MEASURE(iTarget) = Measurement(TARGET(iTarget), CLOCK, o.id); % Measurement sub-class
+end
+
+o.MEASURE = MEASURE;
 o.CONTROL = Control(o, TARGET, ENVIRONMENT); % Control sub-class
 
 o.plot.statecolor = rand(1,3);

@@ -5,22 +5,30 @@ o.Y = [];
 switch (option)
     case 'central'
         for iAgent = 1 : length(AGENT)
-            o.Y = [o.Y;AGENT(iAgent).MEASURE.y];
+            for iTarget = 1 : SIMULATION.nTarget
+                o.Y = [o.Y;AGENT(iAgent).MEASURE(iTarget).y];
+            end
         end
-    case 'local'        
-            o.Y = AGENT.MEASURE.y;
+    case 'local'
+        for iTarget = 1 : SIMULATION.nTarget
+            o.Y = [o.Y;AGENT.MEASURE(iTarget).y];
+        end
     case 'decentral'
-        for iAgent = 1 : SIMULATION.nAgent
-            if AGENT.id == iAgent % if index is the agent itself
-                o.u = [o.u;AGENT.CONTROL.u];
-                o.Y = [o.Y;AGENT.MEASURE.y];
-            else
-                o.u = [o.u;AGENT.COMM.Z(iAgent).u];
-                o.Y = [o.Y;AGENT.COMM.Z(iAgent).y];
+        for iTarget = 1 : SIMULATION.nTarget
+            for iAgent = 1 : SIMULATION.nAgent
+                if AGENT.id == iAgent % if index is the agent itself
+                    o.u = [o.u;AGENT.CONTROL.u];
+                    o.Y = [o.Y;AGENT.MEASURE(iTarget).y];
+                else
+                    o.u = [o.u;AGENT.COMM.Z(iAgent).u];
+                    o.Y = [o.Y;AGENT.COMM.Z(iAgent).y];
+                end
             end
         end
     case 'fDDF'
-        o.Y = AGENT.MEASURE.y;
+        for iTarget = 1 : SIMULATION.nTarget
+            o.Y = [o.Y; AGENT.MEASURE(iTarget).y];
+        end
         o.Xhat = AGENT.FDDF.XhatDDF;
         o.Phat = AGENT.FDDF.PhatDDF;
 end

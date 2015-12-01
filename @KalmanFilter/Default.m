@@ -150,7 +150,7 @@ for iAgent = 1 : length(AGENT)
             end
             
             for iKFstateCol = 1 : length(KFidx)
-                HtTempMem = [HtTempMem,AGENT(iAgent).MEASURE.Ht(:,KFidx(iKFstateCol))];
+                HtTempMem = [HtTempMem,AGENT(iAgent).MEASURE(iTarget).Ht(:,KFidx(iKFstateCol))];
             end
             HtTemp = blkdiag(HtTemp,HtTempMem);
             KFidx = [];
@@ -158,7 +158,7 @@ for iAgent = 1 : length(AGENT)
             
 %         tricky part. should be re-defined withr respect to the
 %         measurement conditions
-            o.R = blkdiag(o.R,AGENT(iAgent).MEASURE.Rt{iTarget});
+            o.R = blkdiag(o.R,AGENT(iAgent).MEASURE(iTarget).Rt);
 
         end
         
@@ -172,7 +172,7 @@ for iAgent = 1 : length(AGENT)
             end
             
             for iKFstateCol = 1 : length(KFidx)
-                HpTempMem = [HpTempMem,AGENT(iAgent).MEASURE.Hp(:,KFidx(iKFstateCol))];
+                HpTempMem = [HpTempMem,AGENT(iAgent).MEASURE(iTarget).Hp(:,KFidx(iKFstateCol))];
             end
             HpTemp = [HpTemp;HpTempMem];
             KFidx = [];
@@ -217,7 +217,11 @@ switch option
         o.plot.phatmarker = '.';
         o.plot.legend = [{'Central KF xhat'},{'Central KF Phat'},{'Central KF Phat'}];
         
-        o.hist.Y = nan(SIMULATION.nAgent*length(AGENT(1).MEASURE.y),1); 
+        for iAgent = 1 : length(AGENT)
+            for iTarget = 1 : length(TARGET)
+                o.hist.Y = [o.hist.Y;nan(length(AGENT(iAgent).MEASURE(iTarget).y),1)];
+            end
+        end
     case 'local'
         o.plot.htcolor = rand(1,3);
         o.plot.hpcolor = rand(1,3);
@@ -229,7 +233,9 @@ switch option
             {strcat('Agent ',num2str(AGENT.id),' Local KF Phat')},...
             {strcat('Agent ',num2str(AGENT.id),' Local KF Phat')}];
         
-        o.hist.Y = nan(length(AGENT(1).MEASURE.y),1);
+        for iTarget = 1 : length(TARGET)
+            o.hist.Y = [o.hist.Y; nan(length(AGENT(1).MEASURE(iTarget).y),1)];
+        end
     case 'decentral'
         o.plot.htcolor = rand(1,3);
         o.plot.hpcolor = rand(1,3);
@@ -241,7 +247,9 @@ switch option
             {strcat('Agent ',num2str(AGENT.id),' Decentral KF Phat')},...
             {strcat('Agent ',num2str(AGENT.id),' Decentral KF Phat')}];
         
-        o.hist.Y = nan(sum(AGENT.COMM.C(:,AGENT.id))*length(AGENT(1).MEASURE.y),1);
+        for iTarget = 1 : length(TARGET)
+            o.hist.Y = [o.hist.Y; nan(sum(AGENT.COMM.C(:,AGENT.id))*length(AGENT(1).MEASURE(iTarget).y),1)];
+        end
     case 'fDDF'
         o.plot.htcolor = rand(1,3);
         o.plot.hpcolor = rand(1,3);
@@ -253,7 +261,9 @@ switch option
             {strcat('Agent ',num2str(AGENT.id),' fDDF KF Phat')},...
             {strcat('Agent ',num2str(AGENT.id),' fDDF KF Phat')}];
         
-        o.hist.Y = nan(length(AGENT(1).MEASURE.y),1);
+        for iTarget = 1 : length(TARGET)
+            o.hist.Y = [o.hist.Y; nan(length(AGENT(1).MEASURE(iTarget).y),1)];
+        end
 end
 
 o.plot.xlabel = {'time (secs)'};

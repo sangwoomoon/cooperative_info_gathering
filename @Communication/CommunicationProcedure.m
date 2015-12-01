@@ -4,7 +4,9 @@ iComm = 1;
 for iSender = 1 : SIMULATION.nAgent
     if o.C(iSender,id) == 1 % Receiver and Sender should be different
         Z(iComm).id = iSender;
-        Z(iComm).y = AGENT(iSender).MEASURE.y;
+        for iTarget = 1 : SIMULATION.nTarget
+            Z(iComm).y{iTarget} = AGENT(iSender).MEASURE(iTarget).y;
+        end
         Z(iComm).u = AGENT(iSender).CONTROL.u;
         % Z(iComm).R = AGENT(iSender).DECEN_KF.R; % beware of that this is from FDDF_KF
         Z(iComm).Phat = AGENT(iSender).FDDF_KF.Phat; % beware of that it is combined by bias states
