@@ -8,9 +8,10 @@ hold on;
 %% INITIAL SETTING %%%%
 
 %--- Simulation Class Setting ----
-nAgent = 3;
+nAgent = 2;
 nTarget = 3;
-SIMULATION = Simulation(nAgent,nTarget);
+nLandMark = 1;
+SIMULATION = Simulation(nAgent,nTarget,nLandMark);
 
 %--- Clock Class Setting ----
 t0 = 0.1;
@@ -35,17 +36,20 @@ end
 %--- Individual TARGET CLASS setting ----
 TARGET(1).x = [1.0,-0.1,1.0,0.1]';
 TARGET(1).bKFx = [1 1 1 1];
+TARGET(1).bLandMark = 0;
 TARGET(1).hist.x = TARGET(1).x;
 TARGET(1).hist.stamp = 0;
 
 TARGET(2).x = [-1.0,0.1,-1.0,-0.1]';
 TARGET(2).bKFx = [1 1 1 1];
+TARGET(2).bLandMark = 0;
 TARGET(2).hist.x = TARGET(2).x;
 TARGET(2).hist.stamp = 0;
 
 % for landmark (same STM, but stationary)
 TARGET(3).x = [5.0,0,5.0,0]';
-TARGET(3).bKFx = [1 1 1 1];
+TARGET(3).bKFx = [0 0 0 0];
+TARGET(3).bLandMark = 1;
 TARGET(3).hist.x = TARGET(3).x;
 TARGET(3).hist.stamp = 0;
 
@@ -64,11 +68,11 @@ AGENT(2).bKFs = [1 1 0 0 0 0];
 AGENT(2).hist.s = AGENT(2).s;
 AGENT(2).hist.stamp = 0;
 
-AGENT(3).s = [0.4,0.3,2.5,0,-3, 0]';
-AGENT(3).bKFs = [1 1 0 0 0 0];
-AGENT(3).hist.s = AGENT(3).s;
-AGENT(3).hist.stamp = 0;
-
+% AGENT(3).s = [0.4,0.3,2.5,0,-3, 0]';
+% AGENT(3).bKFs = [1 1 0 0 0 0];
+% AGENT(3).hist.s = AGENT(3).s;
+% AGENT(3).hist.stamp = 0;
+% 
 % AGENT(4).s = [0.3,0.2,3.5,0,-2, 0]';
 % AGENT(4).bKFs = [1 1 0 0 0 0];
 % AGENT(4).hist.s = AGENT(3).s;
@@ -77,24 +81,24 @@ AGENT(3).hist.stamp = 0;
 for iTarget = 1 : SIMULATION.nTarget
     AGENT(1).MEASURE(iTarget).Rp = diag([1.15 0.15]);
     AGENT(2).MEASURE(iTarget).Rp = diag([0.15 1.15]);
-    AGENT(3).MEASURE(iTarget).Rp = diag([1.15 1.15]);
+%     AGENT(3).MEASURE(iTarget).Rp = diag([0.575 0.575]);
 %     AGENT(4).MEASURE(iTarget).Rp = diag([0.15 2.15]);
 end
 
-AGENT(1).MEASURE(1).Rt = diag([0.085; 5.85]); % relative target 1 - agent 1
-AGENT(2).MEASURE(1).Rt = diag([5.85; 0.085]); % relative target 1 - agent 2
-AGENT(3).MEASURE(1).Rt = diag([0.085; 5.85]); % relative target 1 - agent 3
-% AGENT(4).MEASURE(1).Rt = diag([5.85; 0.085]); % relative target 1 - agent 4
+AGENT(1).MEASURE(1).Rt = diag([0.085; 2]); % relative target 1 - agent 1
+AGENT(2).MEASURE(1).Rt = diag([2; 0.085]); % relative target 1 - agent 2
+% AGENT(3).MEASURE(1).Rt = diag([0.085; 2]); % relative target 1 - agent 3
+% AGENT(4).MEASURE(1).Rt = diag([2; 0.085]); % relative target 1 - agent 4
 
-AGENT(1).MEASURE(2).Rt = diag([5.85; 0.085]); % relative target 2 - agent 1
-AGENT(2).MEASURE(2).Rt = diag([0.085; 5.85]); % relative target 2 - agent 2
-AGENT(3).MEASURE(2).Rt = diag([5.85; 0.085]); % relative target 2 - agent 3
-% AGENT(4).MEASURE(2).Rt = diag([0.085; 5.85]); % relative target 2 - agent 4
+AGENT(1).MEASURE(2).Rt = diag([2; 0.085]); % relative target 2 - agent 1
+AGENT(2).MEASURE(2).Rt = diag([0.085; 2]); % relative target 2 - agent 2
+% AGENT(3).MEASURE(2).Rt = diag([2; 0.085]); % relative target 2 - agent 3
+% AGENT(4).MEASURE(2).Rt = diag([0.085; 2]); % relative target 2 - agent 4
 
-AGENT(1).MEASURE(3).Rt = diag([0.001; 0.001]); % relative target 3 - agent 1 (exactly knows)
-AGENT(2).MEASURE(3).Rt = diag([0.001; 0.001]); % relative target 3 - agent 2 (exactly knows)
-AGENT(3).MEASURE(3).Rt = diag([5.850; 5.850]); % relative target 3 - agent 3 (bad measurement)
-% AGENT(4).MEASURE(3).Rt = diag([5.850; 5.850]); % relative target 3 - agent 4 (bad measurement)
+AGENT(1).MEASURE(3).Rt = diag([0.001; 0.001]); % relative target 3 - agent 1 (almost exactly knows)
+AGENT(2).MEASURE(3).Rt = diag([0.001; 0.001]); % relative target 3 - agent 2 (almost exactly knows)
+% AGENT(3).MEASURE(3).Rt = diag([0.001; 0.001]); % relative target 3 - agent 3 (bad measurement)
+% AGENT(4).MEASURE(3).Rt = diag([0.001; 0.001]); % relative target 3 - agent 4 (bad measurement)
 
 
 %--- Centralized KF subclass initialization ----

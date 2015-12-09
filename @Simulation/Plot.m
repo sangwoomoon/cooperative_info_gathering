@@ -24,7 +24,7 @@ o.CENTRAL_KF.Plot(AGENT,TARGET,CLOCK,o,'central');
 
 % Individual Estimation plot
 for iAgent = 1 : o.nAgent
-    AGENT(iAgent).LOCAL_KF.Plot(AGENT(iAgent),TARGET,CLOCK,o,'local');
+%     AGENT(iAgent).LOCAL_KF.Plot(AGENT(iAgent),TARGET,CLOCK,o,'local');
     AGENT(iAgent).FDDF_KF.Plot(AGENT(iAgent),TARGET,CLOCK,o,'fDDF');
 end
 

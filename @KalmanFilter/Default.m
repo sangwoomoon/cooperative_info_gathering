@@ -32,10 +32,18 @@ function o = Default ( o , SIMULATION, AGENT, TARGET, CLOCK, option )
 %
 % output : set CentralKF Class
 
-tl=sum(TARGET(1).bKFx);  % number of state for targets which will be handled in KF
-al=sum(AGENT(1).bKFs);  % number of state for agents which will be handled in KF
+tl = 0;
+al = 0;
 
-o.nState = tl*length(TARGET)+al*length(AGENT);           
+for iTgtAgt = 1 : length(AGENT)+length(TARGET)
+    if iTgtAgt < length(TARGET)+1
+        tl=tl+sum(TARGET(iTgtAgt).bKFx);  % number of state for targets which will be handled in KF
+    else
+        al=al+sum(AGENT(iTgtAgt-length(TARGET)).bKFs);  % number of state for agents which will be handled in KF
+    end
+end
+
+o.nState = tl+al;           
 
 KFidx = []; % indices of state for KF process
 
@@ -71,7 +79,7 @@ for iAgtTgt = 1 : length(AGENT) + length(TARGET) % w.r.t total agent and target 
     
     if iAgtTgt < length(TARGET) + 1 % target index
         
-        if tl ~= 0 % if there are states considered as the entries of KF process,
+        if sum(TARGET(iAgtTgt).bKFx) ~= 0 % if there are states considered as the entries of KF process,
            
             % filter F,Gamma matrix to make KF process
             for iTgtState = 1 : length(TARGET(iAgtTgt).x)
@@ -102,7 +110,7 @@ for iAgtTgt = 1 : length(AGENT) + length(TARGET) % w.r.t total agent and target 
         
     else % agent index
         
-        if al ~= 0 % if there are states considered as the entries of KF process,
+        if sum(AGENT(iAgtTgt-length(TARGET)).bKFs) ~= 0 % if there are states considered as the entries of KF process,
             
             % filter F,Gamma matrix to make KF process
             for iAgtState = 1 : length(AGENT(iAgtTgt-length(TARGET)).s)
@@ -140,8 +148,9 @@ for iAgent = 1 : length(AGENT)
     % target part
     for iTarget = 1 : length(TARGET)
         
-        if tl ~= 0 % if there are states considered as the entries of KF process,
-           
+        % SHOULD BE MODIFIDED!!
+        % if sum(TARGET(iTarget).bKFx) ~= 0 % if there are states considered as the entries of KF process,
+            
             % filter H matrix to make KF process
             for iTgtState = 1 : length(TARGET(iTarget).x)
                 if (TARGET(iTarget).bKFx(iTgtState)==1)
@@ -152,33 +161,43 @@ for iAgent = 1 : length(AGENT)
             for iKFstateCol = 1 : length(KFidx)
                 HtTempMem = [HtTempMem,AGENT(iAgent).MEASURE(iTarget).Ht(:,KFidx(iKFstateCol))];
             end
-            HtTemp = blkdiag(HtTemp,HtTempMem);
+            
+            if ~isempty(HtTempMem)
+                HtTemp = blkdiag(HtTemp,HtTempMem);
+            else
+                % this target state is not considered (i.e. landmark), so
+                % we make the zero matrix below the HtTemp because this
+                % measurment is used for the state of agent.
+                HtTemp = [HtTemp;zeros(length(HtTemp(:,1))/(iTarget-1),length(HtTemp(1,:)))];
+            end
             KFidx = [];
             HtTempMem = [];
             
-%         tricky part. should be re-defined withr respect to the
-%         measurement conditions
+            %         tricky part. should be re-defined withr respect to the
+            %         measurement conditions
             o.R = blkdiag(o.R,AGENT(iAgent).MEASURE(iTarget).Rt);
-
-        end
-        
-        if al ~= 0 % if there are states considered as the entries of KF process,
-           
-            % filter H matrix to make KF process
-            for iTgtState = 1 : length(AGENT(iAgent).s)
-                if (AGENT(iAgent).bKFs(iTgtState)==1)
-                    KFidx = [KFidx, iTgtState];
+            
+            
+            
+            if sum(AGENT(iAgent).bKFs) ~= 0 % if there are states considered as the entries of KF process,
+                
+                % filter H matrix to make KF process
+                for iTgtState = 1 : length(AGENT(iAgent).s)
+                    if (AGENT(iAgent).bKFs(iTgtState)==1)
+                        KFidx = [KFidx, iTgtState];
+                    end
                 end
+                
+                for iKFstateCol = 1 : length(KFidx)
+                    HpTempMem = [HpTempMem,AGENT(iAgent).MEASURE(iTarget).Hp(:,KFidx(iKFstateCol))];
+                end
+                HpTemp = [HpTemp;HpTempMem];
+                KFidx = [];
+                HpTempMem = [];
+                
             end
             
-            for iKFstateCol = 1 : length(KFidx)
-                HpTempMem = [HpTempMem,AGENT(iAgent).MEASURE(iTarget).Hp(:,KFidx(iKFstateCol))];
-            end
-            HpTemp = [HpTemp;HpTempMem];
-            KFidx = [];
-            HpTempMem = [];
-
-        end
+        % end
 
 %         tricky part. should be re-defined withr respect to the
 %         measurement conditions
@@ -200,7 +219,7 @@ for iAgent = 1 : length(AGENT)
 end
 
 o.H = [Htarget, Hagent];
-o.Phat = 100*eye(o.nState);
+o.Phat = 10*eye(o.nState);
 
 % store initial values
 o.hist.Xhat = o.Xhat;
@@ -228,7 +247,11 @@ switch option
         o.plot.phatcolor = rand(1,3);
         o.plot.htmarker = 'o';
         o.plot.hpmarker = 'o';
-        o.plot.phatmarker = '--';
+        if AGENT.id < 3
+            o.plot.phatmarker = '--';
+        else
+            o.plot.phatmarker = '*';
+        end
         o.plot.legend = [{strcat('Agent ',num2str(AGENT.id),' Local KF xhat')},...
             {strcat('Agent ',num2str(AGENT.id),' Local KF Phat')},...
             {strcat('Agent ',num2str(AGENT.id),' Local KF Phat')}];

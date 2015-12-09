@@ -5,6 +5,7 @@ classdef Target < handle
         x       % current state of target [e,e_dot,n,n_dot];
         
         bKFx    % binary array of state for using KF process.
+        bLandMark % binary whether this target uses a landmark.
           
         % Target motion parameters (random walk)
         Ft      % State transition matrix

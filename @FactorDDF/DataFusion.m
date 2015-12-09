@@ -54,7 +54,7 @@ for iMerge = 1:SIMULATION.nAgent
         
         [MinCost,MinIdx] = min(Cost);
         
-%         MinIdx = 11; % 0.1
+%          MinIdx = 51; % 0.5
         
         MtempDelta = MCandi(:,:,MinIdx)-inv(o.PhatMgn);
         mtempDelta = MCandi(:,:,iOmega)*mCandi(:,MinIdx)-inv(o.PhatMgn)*o.XhatMgn;
@@ -81,12 +81,6 @@ for iMerge = 1:SIMULATION.nAgent
         
     end
 end
-% 
-% o.M = [Mtemp, zeros(tl,AGENT.FDDF_KF.nState-tl); zeros(AGENT.FDDF_KF.nState-tl,AGENT.FDDF_KF.nState)];
-% o.m = [mtemp; zeros(AGENT.FDDF_KF.nState-tl,1)];
-% 
-% o.PhatTemp = inv(inv(AGENT.FDDF_KF.Phat)+o.M);
-% o.XhatTemp = o.PhatTemp*(inv(AGENT.FDDF_KF.Phat)*AGENT.FDDF_KF.Xhat+o.m);
 
 o.PhatDDF = o.PhatTemp;
 o.XhatDDF = o.XhatTemp;

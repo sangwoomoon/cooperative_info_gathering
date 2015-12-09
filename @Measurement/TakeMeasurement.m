@@ -9,7 +9,7 @@ o.rt = mvnrnd(zeros(1,2),o.Rt,1);
 dele = TARGET.x(1);% - AGENT.s(1); %watch indices!! [b_e,b_n,e,e_dot,n,n_dot] @xt1truehist
 deln = TARGET.x(3);% - AGENT.s(3); %watch indices!! [e,e_dot,n,n_dot]  @xp1truehist
 
-if TARGET.id ~= 3
+if TARGET.bLandMark ~= 1
     o.y(1) = AGENT.s(1) + dele + o.rt(1); %relative easting + bias
     o.y(2) = AGENT.s(2) + deln + o.rt(2); %relative northing + bias
 else
