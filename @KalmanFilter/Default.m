@@ -84,7 +84,7 @@ for iAgtTgt = 1 : length(AGENT) + length(TARGET) % w.r.t total agent and target 
             % filter F,Gamma matrix to make KF process
             for iTgtState = 1 : length(TARGET(iAgtTgt).x)
                 if (TARGET(iAgtTgt).bKFx(iTgtState)==1)
-                    o.Xhat = [o.Xhat;TARGET(iAgtTgt).x(iTgtState)];
+                    o.Xhat = [o.Xhat;TARGET(iAgtTgt).x(iTgtState)+(-3+6*rand)]; % priori with noise
                     KFidx = [KFidx, iTgtState];
                 end
             end
@@ -115,7 +115,7 @@ for iAgtTgt = 1 : length(AGENT) + length(TARGET) % w.r.t total agent and target 
             % filter F,Gamma matrix to make KF process
             for iAgtState = 1 : length(AGENT(iAgtTgt-length(TARGET)).s)
                 if (AGENT(iAgtTgt-length(TARGET)).bKFs(iAgtState)==1)
-                    o.Xhat = [o.Xhat;AGENT(iAgtTgt-length(TARGET)).s(iAgtState)];
+                    o.Xhat = [o.Xhat;AGENT(iAgtTgt-length(TARGET)).s(iAgtState)+(-3+6*rand)]; % priori with noise
                     KFidx = [KFidx, iAgtState];
                 end
             end
@@ -228,11 +228,11 @@ o.hist.stamp = 0;
 
 switch option
     case 'central'
-        o.plot.htcolor = 'b';
-        o.plot.hpcolor = 'b';
+        o.plot.htcolor = 'c';
+        o.plot.hpcolor = 'c';
         o.plot.phatcolor = 'm';
-        o.plot.htmarker = 'square';
-        o.plot.hpmarker = 'square';
+        o.plot.htmarker = '+';
+        o.plot.hpmarker = '+';
         o.plot.phatmarker = '.';
         o.plot.legend = [{'Central KF xhat'},{'Central KF Phat'},{'Central KF Phat'}];
         
@@ -245,13 +245,9 @@ switch option
         o.plot.htcolor = rand(1,3);
         o.plot.hpcolor = rand(1,3);
         o.plot.phatcolor = rand(1,3);
-        o.plot.htmarker = 'o';
-        o.plot.hpmarker = 'o';
-        if AGENT.id < 3
-            o.plot.phatmarker = '--';
-        else
-            o.plot.phatmarker = '*';
-        end
+        o.plot.htmarker = 'none';
+        o.plot.hpmarker = 'none';
+        o.plot.phatmarker = '--';
         o.plot.legend = [{strcat('Agent ',num2str(AGENT.id),' Local KF xhat')},...
             {strcat('Agent ',num2str(AGENT.id),' Local KF Phat')},...
             {strcat('Agent ',num2str(AGENT.id),' Local KF Phat')}];
@@ -277,8 +273,8 @@ switch option
         o.plot.htcolor = rand(1,3);
         o.plot.hpcolor = rand(1,3);
         o.plot.phatcolor = rand(1,3);
-        o.plot.htmarker = '+';
-        o.plot.hpmarker = '+';
+        o.plot.htmarker = 'o';
+        o.plot.hpmarker = 'o';
         o.plot.phatmarker = '--';
         o.plot.legend = [{strcat('Agent ',num2str(AGENT.id),' fDDF KF xhat')},...
             {strcat('Agent ',num2str(AGENT.id),' fDDF KF Phat')},...

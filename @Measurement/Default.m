@@ -9,8 +9,8 @@ switch (TARGET.id)
     case {3}
         o.Hp =[1 0 -1 0 0 0 ;
                0 1 0 0 -1 0]; % used for input for measurement of target (rel.position with bias)
-        o.Ht =[0 0 0 0;
-               0 0 0 0]; % used for input for measurement of target (rel.position)
+        o.Ht =[1 0 0 0;
+               0 0 1 0]; % used for input for measurement of target (rel.position)
 end
 
 for iTarget = 1 : length(TARGET)

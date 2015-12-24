@@ -33,8 +33,8 @@ switch (option)
         o.Phat = AGENT.FDDF.PhatDDF;
 end
     
-%%Prediction
-Xbar = o.F*o.Xhat; % no input matrix.
+%%Time update
+Xbar = o.F*o.Xhat;
 Pbar = o.F*o.Phat*o.F' + o.Gamma*o.Q*o.Gamma';
 
 %%Measurement update
