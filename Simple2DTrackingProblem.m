@@ -8,8 +8,8 @@ hold on;
 %% INITIAL SETTING %%%%
 
 %--- Simulation Class Setting ----
-nAgent = 4;
-nTarget = 3;
+nAgent = 2;
+nTarget = 1;
 nLandMark = 1;
 SIMULATION = Simulation(nAgent,nTarget,nLandMark);
 
