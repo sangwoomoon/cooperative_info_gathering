@@ -9,7 +9,7 @@ sRandom;
 %%Simulate platform movements
 o.vp = (mvnrnd(zeros(1,2),o.Qp,1))';
 % actual bias would be exactly same
-o.s(3:6) = o.Fp(3:6,3:6)*o.s(3:6) + o.Gamp(3:6,:)*o.vp + o.Gu(3:6,:)*o.CONTROL.u; 
+o.s = o.Fp*o.s + o.Gamp*o.vp + o.Gu*o.CONTROL.u; 
 
 % store current state to history
 o.hist.s(:,end+1) = o.s;

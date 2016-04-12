@@ -1,16 +1,19 @@
-function o = KalmanFilterAlgorithm( o, SIMULATION, AGENT, TARGET, CLOCK, option )
+function o = ExtendedKalmanFilterAlgorithm( o, SIMULATION, AGENT, TARGET, CLOCK, option )
 
 o.F = [];
 o.Gamma = [];
 o.Q = [];
 o.H = [];
+o.V = [];
+o.R = [];
 
 for ii = 1 : length(TARGET)
     o.F = blkdiag(o.F, AGENT.Fp);
     o.Gamma = blkdiag(o.Gamma, AGENT.Gamp);
     o.Q = blkdiag(o.Q, TARGET(ii).Qt);
-    o.H = [o.H; o.ComputeH(AGENT,TARGET)];
-    o.V = blkdiag(o.V, eye(AGENT.MEASURE(1).y));
+    o.ComputeH(AGENT,TARGET(ii));
+    o.V = blkdiag(o.V, eye(length(AGENT.MEASURE(ii).y)));
+    o.R = blkdiag(o.R, AGENT.MEASURE(ii).Rt);
 end
 
 o.Y = [];
@@ -51,12 +54,18 @@ Xbar = o.F*o.Xhat;
 Pbar = o.F*o.Phat*o.F' + o.Gamma*o.Q*o.Gamma';
 
 %%Measurement update
-innov = o.Y - o.H*Xbar;
-S = o.H*Pbar*o.H' + o.R;
-W = Pbar*o.H' / S; % Kalman Gain (den : inversed form of S matrix)
+L = Pbar*o.H'*(o.H*Pbar*o.H'+o.V*o.R*o.V')^(-1);
 
-Xhat = Xbar + W*innov;
-Phat = (eye(o.nState) - W*o.H)*Pbar*(eye(o.nState) - W*o.H)' + W*o.R*W'; % Joseph form to prevent from numerical issues
+G = [];
+
+%--- Measurement ----
+for iTarget = 1 : length(TARGET)
+    dG = o.TakeMeasurement(Xbar(length(TARGET(iTarget).x)*(iTarget-1)+1:length(TARGET(iTarget).x)*iTarget,1),AGENT);
+    G = [G;dG];
+end
+
+Xhat = Xbar+ L*(o.Y-G);
+Phat = (eye(o.nState) - L*o.H)*Pbar;
 
 %%Store and update
 o.hist.Y(:,end+1) = o.Y;

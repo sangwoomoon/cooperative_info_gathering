@@ -5,16 +5,16 @@ sRandom;
 
 %%Simulate target movement with Euler
 
-if o.bLandMark ~= 1 % general target (should be modified in the future)
+% if o.bLandMark ~= 1 % general target (should be modified in the future)
 
     % vt = mvnrnd(MU,SIGMA,N) returns a N-by-D matrix R of random vectors
     % chosen from the multivariate normal distribution with 1-by-D mean
     % vector MU, and D-by-D covariance matrix SIGMA.
     o.vt = mvnrnd(zeros(1,2),o.Qt,1);  % mvnrnd(MU(N-by-D Matrix),SIGMA(Gaussian Cov.),N)
     o.x = o.Ft*o.x + o.Gt*o.vt';
-else % landmark : fixed/known
-    o.x = o.Ft*o.x;
-end
+% else % landmark : fixed/known
+%     o.x = o.Ft*o.x;
+% end
 
 % store current state to history 
 o.hist.x(:,end+1) = o.x;

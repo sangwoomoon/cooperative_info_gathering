@@ -23,7 +23,7 @@ o.Gu = zeros(2); % 2 state - 2 state
 o.x = [1.0,0.1,1.0,0.1]'; % just for default (may be changed in the main script)
 o.hist.x = o.x; % store initial condition
 
-o.Qt = diag([0.2; 0.2]); 
+o.Qt = diag([0.05; 0.05]); 
 
 o.plot.statecolor = rand(1,3);
 o.plot.marker = ['o';'x']; % start; end

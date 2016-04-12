@@ -7,24 +7,20 @@ function o = Default ( o, TARGET, ENVIRONMENT, SIMULATION, CLOCK, iAgent)
 
 o.id = iAgent;
 
-o.Fp = blkdiag(eye(2),[1 CLOCK.dt; 0 1],[1 CLOCK.dt; 0 1]);
+o.Fp = blkdiag([1 CLOCK.dt; 0 1],[1 CLOCK.dt; 0 1]);
 
-o.Gamp = [    CLOCK.dt               0   ;
-                    0          CLOCK.dt  ;
-          0.5*CLOCK.dt^2             0   ;
+o.Gamp = [0.5*CLOCK.dt^2             0   ;
               CLOCK.dt               0   ;
                      0    0.5*CLOCK.dt^2 ;
-                     0        CLOCK.dt  ]; % make the separate Q matrix
+                     0        CLOCK.dt  ]; 
 
-o.Gu = [            0                0   ;
-                    0                0   ;
-          0.5*CLOCK.dt^2             0   ;
+o.Gu = [  0.5*CLOCK.dt^2             0   ;
               CLOCK.dt               0   ;
                      0    0.5*CLOCK.dt^2 ;
-                     0        CLOCK.dt  ]; % make the separate Q matrix
+                     0        CLOCK.dt  ]; 
 
 
-o.Qp = diag([0.01 0.01]);
+o.Qp = diag([0.05 0.05]);
 
 
 o.TA = TaskAllocation(TARGET, CLOCK); % Task Allocation sub-class

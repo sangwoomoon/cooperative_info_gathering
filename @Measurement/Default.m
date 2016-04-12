@@ -1,17 +1,17 @@
 function o = Default (o, TARGET, CLOCK, iAgent)
 
-switch (TARGET.id)
-    case {1,2}
-        o.Hp =[1 0 -1 0 0 0 ;
-               0 1 0 0 -1 0]; % used for input for measurement of target (rel.position with bias)
-        o.Ht =[1 0 0 0;
-               0 0 1 0]; % used for input for measurement of target (rel.position)
-    case {3}
-        o.Hp =[1 0 -1 0 0 0 ;
-               0 1 0 0 -1 0]; % used for input for measurement of target (rel.position with bias)
-        o.Ht =[1 0 0 0;
-               0 0 1 0]; % used for input for measurement of target (rel.position)
-end
+% switch (TARGET.id)
+%     case {1,2}
+%         o.Hp =[1 0 -1 0 0 0 ;
+%                0 1 0 0 -1 0]; % used for input for measurement of target (rel.position with bias)
+%         o.Ht =[1 0 0 0;
+%                0 0 1 0]; % used for input for measurement of target (rel.position)
+%     case {3}
+%         o.Hp =[1 0 -1 0 0 0 ;
+%                0 1 0 0 -1 0]; % used for input for measurement of target (rel.position with bias)
+%         o.Ht =[1 0 0 0;
+%                0 0 1 0]; % used for input for measurement of target (rel.position)
+% end
 
 for iTarget = 1 : length(TARGET)
     o.y(2*(iTarget-1)+1:2*iTarget) = nan(2,1);
