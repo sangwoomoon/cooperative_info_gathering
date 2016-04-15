@@ -3,14 +3,18 @@ classdef Control < handle
         
         u       % acceleration input [eddot,nddot]
         
+        kp      % proportional gain
+        
+        c       % centroid for Lloyd's algorithm
+        
         hist    % History
         plot    % Plot handle
         
     end % Properties
     
     methods
-        function o = Control( AGENT, TARGET, ENVIRONMENT )
-             o = Default(o, AGENT, TARGET, ENVIRONMENT );
+        function o = Control( CLOCK )
+             o = Default(o, CLOCK );
         end
         
         o = get( o, varargin );

@@ -1,6 +1,10 @@
 classdef Environment < handle
     properties ( SetAccess = public, GetAccess = public )
-    
+        
+        xlength     % field size x-axis
+        ylength     % field size y-axis
+        
+        bound       % boundary point of field
        
     end % Properties
     

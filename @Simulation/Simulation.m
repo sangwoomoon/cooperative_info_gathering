@@ -12,6 +12,9 @@ classdef Simulation
         
         CENTRAL_KF      % Centralized KF Simulation
         
+        VORONOI         % voronoi class handle
+        LLOYD           % lloyd class handle
+        
         plot            % plot for whole result (legends)
         
     end % Properties

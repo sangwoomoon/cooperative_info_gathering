@@ -23,8 +23,8 @@ classdef Target < handle
     end % Properties
     
     methods
-        function o = Target( Clock, iTarget )
-            o = Default( o, Clock , iTarget);
+        function o = Target( CLOCK, ENVIRONMENT, iTarget, sRandom )
+            o = Default( o, CLOCK, ENVIRONMENT, iTarget, sRandom);
         end
         
         o = get( o, varargin );

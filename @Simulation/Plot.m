@@ -15,6 +15,10 @@ for iAgent = 1 : o.nAgent
         legend([get(legend(gca),'string'),AGENT(iAgent).MEASURE(iTarget).plot.legend]);
     end
 end
+
+% Voronoi Centroid plot (FIGURE 1)
+o.LLOYD.Plot();
+
 axis equal;
 
 % Centralized Estimation plot

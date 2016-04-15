@@ -1,4 +1,6 @@
-function o = Default( o, CLOCK ,iTarget)
+function o = Default( o, CLOCK ,ENVIRONMENT, iTarget, sRandom)
+
+sRandom; % random seed
 
 % default setting for targets
 % input : empty Target Class
@@ -20,13 +22,19 @@ o.Gt = [0.5*CLOCK.dt^2             0   ;
  
 o.Gu = zeros(2); % 2 state - 2 state
 
-o.x = [1.0,0.1,1.0,0.1]'; % just for default (may be changed in the main script)
+% stationary, randomized location within given environment
+o.x = [ENVIRONMENT.xlength(1)+(ENVIRONMENT.xlength(2)-ENVIRONMENT.xlength(1))*rand(1);...
+                                                                                    0;...
+       ENVIRONMENT.ylength(1)+(ENVIRONMENT.ylength(2)-ENVIRONMENT.ylength(1))*rand(1);...
+                                                                                    0];
+       
 o.hist.x = o.x; % store initial condition
+o.hist.stamp = 0; % store initialized time
 
 o.Qt = diag([0.05; 0.05]); 
 
 o.plot.statecolor = rand(1,3);
-o.plot.marker = ['o';'x']; % start; end
+o.plot.marker = ['^';'x']; % start; end
 o.plot.markersize = 10;
 o.plot.linewidth = 3;
 

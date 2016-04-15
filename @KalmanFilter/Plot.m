@@ -18,11 +18,11 @@ TargetStateList = [];
 iKFplotidx = 0;
 iKFidxt = [];
 for iTargetState = 1 : length(TARGET(1).x)
-%     if TARGET(1).bKFx(iTargetState) == 1
-        iKFplotidx = iKFplotidx + 1;
-        TargetStateList = [TargetStateList, tl*100+10+iKFplotidx];
-        iKFidxt = [iKFidxt,iTargetState];
-%     end
+    %     if TARGET(1).bKFx(iTargetState) == 1
+    iKFplotidx = iKFplotidx + 1;
+    TargetStateList = [TargetStateList, tl*100+10+iKFplotidx];
+    iKFidxt = [iKFidxt,iTargetState];
+    %     end
 end
 
 
@@ -31,34 +31,35 @@ for iTarget = 1 : length(TARGET)
     
     % Target state errors:
     figure(iTarget+1), hold on;
-%     if strcmp(option,'central')
+    if AGENT.id == 1
         suptitle(['Target ',num2str(iTarget), ' State Estimation Errors'])
-%     end
+    end
     
-    if TARGET(iTarget).bLandMark == 0 % if the target is a landmark, the plot should be stopped
-        for iKFstate = 1 : tl
-            subplot(TargetStateList(iKFstate)), hold on;
-            plot(CLOCK.tvec,o.hist.Xhat(tl*(iTarget-1)+iKFstate,2:end)-TARGET(iTarget).hist.x(iKFidxt(iKFstate),2:end),'marker',o.plot.htmarker,'color',o.plot.htcolor);
-            plot(CLOCK.tvec,3*sqrt(squeeze(o.hist.Phat(tl*(iTarget-1)+iKFstate,tl*(iTarget-1)+iKFstate,2:end))),o.plot.phatmarker,'color',o.plot.phatcolor)
-            plot(CLOCK.tvec,-3*sqrt(squeeze(o.hist.Phat(tl*(iTarget-1)+iKFstate,tl*(iTarget-1)+iKFstate,2:end))),o.plot.phatmarker,'color',o.plot.phatcolor)
-            
+%     if TARGET(iTarget).bLandMark == 0 % if the target is a landmark, the plot should be stopped
+    for iKFstate = 1 : tl
+        subplot(TargetStateList(iKFstate)), hold on;
+        plot(CLOCK.tvec,o.hist.Xhat(tl*(iTarget-1)+iKFstate,2:end)-TARGET(iTarget).hist.x(iKFidxt(iKFstate),2:end),'marker',o.plot.htmarker,'color',o.plot.htcolor);
+        plot(CLOCK.tvec,3*sqrt(squeeze(o.hist.Phat(tl*(iTarget-1)+iKFstate,tl*(iTarget-1)+iKFstate,2:end))),o.plot.phatmarker,'color',o.plot.phatcolor)
+        plot(CLOCK.tvec,-3*sqrt(squeeze(o.hist.Phat(tl*(iTarget-1)+iKFstate,tl*(iTarget-1)+iKFstate,2:end))),o.plot.phatmarker,'color',o.plot.phatcolor)
+        
+        if iKFstate == tl
             xlabel('Time (secs)')
-            ylabel(AGENT(1).LOCAL_KF.plot.ylabeltarget(iKFstate));
-            
-            if iKFstate == 1
-                switch option
-                    case 'central' % Centralized Case
-                        legend([get(legend(gca),'string'),SIMULATION.CENTRAL_KF.plot.legend]);
-                    case 'local' % local case
-                        legend([get(legend(gca),'string'),AGENT.LOCAL_KF.plot.legend]);
-                    case 'decentral' % decentralized case
-                        legend([get(legend(gca),'string'),AGENT.DECEN_KF.plot.legend]);
-                    case 'fDDF' % fDDF based local case
-                        legend([get(legend(gca),'string'),AGENT.FDDF_KF.plot.legend]);
-                        
-                end
+        end
+        ylabel(AGENT(1).LOCAL_KF.plot.ylabeltarget(iKFstate));
+    
+        if iKFstate == 1
+            switch option
+                case 'central' % Centralized Case
+                    legend([get(legend(gca),'string'),SIMULATION.CENTRAL_KF.plot.legend]);
+                case 'local' % local case
+                    legend([get(legend(gca),'string'),AGENT.LOCAL_KF.plot.legend]);
+                case 'decentral' % decentralized case
+                    legend([get(legend(gca),'string'),AGENT.DECEN_KF.plot.legend]);
+                case 'fDDF' % fDDF based local case
+                    legend([get(legend(gca),'string'),AGENT.FDDF_KF.plot.legend]);
             end
         end
+    %         end
     end
 end
 
