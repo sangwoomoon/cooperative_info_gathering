@@ -23,9 +23,10 @@ o.Gu = [  0.5*CLOCK.dt^2             0   ;
                      0        CLOCK.dt  ]; 
                  
 % (initially) stationary, randomized location within given environment
-o.s = [ENVIRONMENT.xlength(1)+(ENVIRONMENT.xlength(2)-ENVIRONMENT.xlength(1))*rand(1);...
+% (MAKE IT CENTERED)
+o.s = [ENVIRONMENT.xlength(1)+(ENVIRONMENT.xlength(2)-ENVIRONMENT.xlength(1))*((1-ENVIRONMENT.kr*2)*rand(1)+ENVIRONMENT.kr);...
                                                                                     0;...
-       ENVIRONMENT.ylength(1)+(ENVIRONMENT.ylength(2)-ENVIRONMENT.ylength(1))*rand(1);...
+       ENVIRONMENT.ylength(1)+(ENVIRONMENT.ylength(2)-ENVIRONMENT.ylength(1))*((1-ENVIRONMENT.kr*2)*rand(1)+ENVIRONMENT.kr);...
                                                                                     0];
                                                                                 
 o.Qp = diag([0.05 0.05]);
@@ -33,7 +34,7 @@ o.Qp = diag([0.05 0.05]);
 o.hist.s = o.s; % store initial condition
 o.hist.stamp = 0; % store initialized time
 
-o.TA = TaskAllocation(TARGET, CLOCK); % Task Allocation sub-class
+o.TA = TaskAllocation(SIMULATION, CLOCK); % Task Allocation sub-class
 o.COMM = Communication(SIMULATION, CLOCK); % Communication sub-class
 
 for iTarget = 1 : length(TARGET)

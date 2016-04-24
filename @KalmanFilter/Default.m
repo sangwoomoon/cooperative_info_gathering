@@ -43,6 +43,8 @@ for ii = 1 : length(TARGET)
     o.Phat = blkdiag(o.Phat, 10*eye(length(TARGET(ii).x)));
 end
 
+o.bTrack = zeros(1,SIMULATION.nTarget); % binary set for tarcking target index
+
 % store initial values
 o.hist.Xhat = o.Xhat;
 o.hist.Phat = o.Phat;

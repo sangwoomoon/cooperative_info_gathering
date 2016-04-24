@@ -1,7 +1,9 @@
 function o = Default (o, CLOCK)
 
-    o.xlength = [-100 100]; % meters
-    o.ylength = [-100 100]; % meters
+    o.xlength = [-300 300]; % meters
+    o.ylength = [-300 300]; % meters
+    
+    o.kr = 0.2;
     
     o.bound = [ o.xlength(1), o.ylength(1);    
                 o.xlength(1), o.ylength(2);

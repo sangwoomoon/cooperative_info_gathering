@@ -2,6 +2,7 @@ classdef Control < handle
     properties % ( SetAccess = public, GetAccess = public )
         
         u       % acceleration input [eddot,nddot]
+        uMax    % boundary of input
         
         kp      % proportional gain
         

@@ -1,3 +1,5 @@
-function o = Default (o, TARGET, CLOCK)
-
+function o = Default (o, SIMULATION, CLOCK)
+    
+    o.bTasklist = zeros(1,SIMULATION.nTarget);
+    
 end

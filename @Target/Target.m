@@ -17,6 +17,8 @@ classdef Target < handle
         
         vt      % Random variable wrt movement of target
         
+        velMax  % maximum velocity (2 by 1)
+        
         hist    % History
         plot    % Plot handle
         

@@ -9,8 +9,12 @@ for iSender = 1 : SIMULATION.nAgent
         end
         Z(iComm).u = AGENT(iSender).CONTROL.u;
         % Z(iComm).R = AGENT(iSender).DECEN_KF.R; % beware of that this is from FDDF_KF
-        Z(iComm).Phat = AGENT(iSender).FDDF_KF.Phat; % beware of that it is combined by bias states
-        Z(iComm).Xhat = AGENT(iSender).FDDF_KF.Xhat; % beware of that without bias (ignore 5,6th element)
+        
+        Z(iComm).Phat = AGENT(iSender).LOCAL_EKF.Phat; 
+        Z(iComm).Xhat = AGENT(iSender).LOCAL_EKF.Xhat;
+        
+        %Z(iComm).Phat = AGENT(iSender).FDDF_KF.Phat; % beware of that it is combined by bias states
+        %Z(iComm).Xhat = AGENT(iSender).FDDF_KF.Xhat; % beware of that without bias (ignore 5,6th element)
     else % Receiver and Sender should be different
         Z(iComm).id = [];
         Z(iComm).y = [];

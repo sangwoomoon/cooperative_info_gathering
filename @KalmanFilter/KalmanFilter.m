@@ -19,6 +19,8 @@ classdef KalmanFilter < handle
         V           % [vt1 0 0...0; 0 vt2 ... 0; 0 ... 0 ] type
         u           % [upvec1;upvec2] type
         
+        bTrack      % tracking binary set : for task allocation         
+        
         hist        % history of valuable
         plot        % plot handle
 

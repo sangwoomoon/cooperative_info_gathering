@@ -11,7 +11,7 @@ hold on;
 
 %--- Simulation Class Setting ----
 nAgent = 5;
-nTarget = 5;
+nTarget = 6;
 % nLandMark = 0;
 
 SIMULATION = Simulation(nAgent,nTarget);
@@ -19,7 +19,7 @@ SIMULATION = Simulation(nAgent,nTarget);
 %--- Clock Class Setting ----
 t0 = 0.1;
 dt = 0.1;
-nt = 100;
+nt = 200;
 FDDFt = 0.1;
 CLOCK = Clock(t0,dt,nt,FDDFt);
 
@@ -55,12 +55,14 @@ end
 %--- Individaulized KF subclass initialization ----
 for iAgent = 1 : SIMULATION.nAgent
     SIMULATION.iAgent = iAgent;
-    AGENT(iAgent).LOCAL_KF = KalmanFilter(SIMULATION,AGENT(iAgent),TARGET,CLOCK,'local');
+    AGENT(iAgent).LOCAL_EKF = KalmanFilter(SIMULATION,AGENT(iAgent),TARGET,CLOCK,'local');
 %     AGENT(iAgent).FDDF_KF = KalmanFilter(SIMULATION,AGENT(iAgent),TARGET,CLOCK,'fDDF');
 %     AGENT(iAgent).FDDF = FactorDDF(AGENT(iAgent),SIMULATION);
 end
 
 %% MAIN PROCEDURE %%%%
+
+count = 0; % for snapshot plotting
 
 for iClock = 1 : CLOCK.nt
     
@@ -86,14 +88,15 @@ for iClock = 1 : CLOCK.nt
     SIMULATION.VORONOI.TakeVoronoi(AGENT, ENVIRONMENT, SIMULATION );
     
     %--- Task Allocation from Voronoi cell ----
-    for iAgent = 1 : SIMULATION.nAgent
-       % AGENT(iAgent).TA.TaskProcedure(); 
-    end
+    AGENT(1).TA.AssignTargets(AGENT,TARGET,SIMULATION);
     
     %--- Measurement ----
     for iAgent = 1 : SIMULATION.nAgent
         for iTarget = 1 : SIMULATION.nTarget
-            AGENT(iAgent).MEASURE(iTarget).TakeMeasurement(AGENT(iAgent),TARGET(iTarget),ENVIRONMENT,CLOCK,SIMULATION.sRandom);
+            % select assigned targets to be measured for each agent
+            if AGENT(iAgent).TA.bTasklist(iTarget) == 1
+                AGENT(iAgent).MEASURE(iTarget).TakeMeasurement(AGENT(iAgent),TARGET(iTarget),ENVIRONMENT,CLOCK,SIMULATION.sRandom);
+            end
         end
     end
     
@@ -103,7 +106,7 @@ for iClock = 1 : CLOCK.nt
     %--- Filter Update :: Individual KF :: Local KF and FDDF aided KF ----
     for iAgent = 1 : SIMULATION.nAgent
         % Local KF Process
-        AGENT(iAgent).LOCAL_KF.ExtendedKalmanFilterAlgorithm(SIMULATION,AGENT(iAgent),TARGET, CLOCK,'local');
+        AGENT(iAgent).LOCAL_EKF.ExtendedKalmanFilterAlgorithm(SIMULATION,AGENT(iAgent),TARGET, CLOCK,'local');
         
         % FDDF KF Process :: same procedure as Local KF, but it uses fused
         % estimated data (Xhat, Phat) from the communication.
@@ -121,9 +124,14 @@ for iClock = 1 : CLOCK.nt
     end
     
     %--- Communicate ----
-%     for iAgent = 1 : SIMULATION.nAgent
-%        AGENT(iAgent).COMM.CommunicationProcedure(AGENT, SIMULATION, AGENT(iAgent).id); 
-%     end
+    for iAgent = 1 : SIMULATION.nAgent
+       AGENT(iAgent).COMM.CommunicationProcedure(AGENT, SIMULATION, AGENT(iAgent).id); 
+    end
+   
+    %--- Share Estimation ----
+    for iAgent = 1 : SIMULATION.nAgent
+       AGENT(iAgent).COMM.ShareEstimation(AGENT(iAgent),SIMULATION,CLOCK); 
+    end
    
     %--- DDF Information Fusion (managing xhat and Phat) ----
 %      if rem(iClock,CLOCK.delt.FDDF) == 0
@@ -132,9 +140,44 @@ for iClock = 1 : CLOCK.nt
 %         end
 %      end
     
+    % Voronoi Plotting
+    if rem(iClock,50) == 0
+        figure(10), hold on;
+        count = count + 1;
+        subplotidx = 200+20 + count;
+        subplot(subplotidx), hold on;
+        
+        % Target plot (FIGURE 10)
+        for iTarget = 1 : SIMULATION.nTarget
+            TARGET(iTarget).Plot();
+            if count == 2
+                legend([get(legend(gca),'string'),TARGET(iTarget).plot.legend]);
+            end
+        end
+        
+        % Agent plot (FIGURE 10)
+        for iAgent = 1 : SIMULATION.nAgent
+            AGENT(iAgent).Plot();
+            if count == 2
+                legend([get(legend(gca),'string'),AGENT(iAgent).plot.legend]);
+            end
+        end
+        
+        % Voronoi Centroid plot (FIGURE 10)
+        SIMULATION.LLOYD.Plot('point');
+        % Voronoi Cell plot (FIGURE 10)
+        SIMULATION.VORONOI.Plot();
+        
+        xlabel('East (m)');
+        ylabel('North (m)');
+        axis equal; axis([ENVIRONMENT.xlength(1),ENVIRONMENT.xlength(2),ENVIRONMENT.ylength(1),ENVIRONMENT.ylength(2)]);
+    end
+
     fprintf('iteration = %d\n',iClock);
     
 end
 
 %% PLOT %%%%
 SIMULATION.Plot(AGENT,TARGET,CLOCK);
+
+

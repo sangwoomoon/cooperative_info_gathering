@@ -5,7 +5,12 @@ function o = ComputeInput( o, AGENT, option )
 switch (option)
     case 'Lloyd'
         % u := kp * (C - X_agent)
-        o.u = o.kp*(o.c-[AGENT.s(1),AGENT.s(3)]');        
+        o.u = o.kp*(o.c-[AGENT.s(1),AGENT.s(3)]');  
+        
+        if norm(o.u) > o.uMax
+            o.u = o.uMax*o.u/norm(o.u); % make the maximum magnitude of acceleration
+        end
+        
     case 'Track'
         
 end

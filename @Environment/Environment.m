@@ -4,6 +4,8 @@ classdef Environment < handle
         xlength     % field size x-axis
         ylength     % field size y-axis
         
+        kr          % ratio for centering agents and targets (between 0 to 1)
+        
         bound       % boundary point of field
        
     end % Properties

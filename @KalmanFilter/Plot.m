@@ -45,14 +45,14 @@ for iTarget = 1 : length(TARGET)
         if iKFstate == tl
             xlabel('Time (secs)')
         end
-        ylabel(AGENT(1).LOCAL_KF.plot.ylabeltarget(iKFstate));
+        ylabel(AGENT(1).LOCAL_EKF.plot.ylabeltarget(iKFstate));
     
         if iKFstate == 1
             switch option
                 case 'central' % Centralized Case
                     legend([get(legend(gca),'string'),SIMULATION.CENTRAL_KF.plot.legend]);
                 case 'local' % local case
-                    legend([get(legend(gca),'string'),AGENT.LOCAL_KF.plot.legend]);
+                    legend([get(legend(gca),'string'),AGENT.LOCAL_EKF.plot.legend]);
                 case 'decentral' % decentralized case
                     legend([get(legend(gca),'string'),AGENT.DECEN_KF.plot.legend]);
                 case 'fDDF' % fDDF based local case
