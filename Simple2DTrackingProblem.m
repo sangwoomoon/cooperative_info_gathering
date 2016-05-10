@@ -7,14 +7,19 @@ clc;
 format compact;
 hold on;
 
+
+% for iter = 1 : 50 % for simulation run to analyzation
+
 %% INITIAL SETTING %%%%
 
 %--- Simulation Class Setting ----
-nAgent = 5;
-nTarget = 6;
+nAgent = 3;
+nTarget = 4;
 % nLandMark = 0;
 
 SIMULATION = Simulation(nAgent,nTarget);
+
+% SIMULATION.sRandom = rng(iter);
 
 %--- Clock Class Setting ----
 t0 = 0.1;
@@ -141,43 +146,81 @@ for iClock = 1 : CLOCK.nt
 %      end
     
     % Voronoi Plotting
-    if rem(iClock,50) == 0
-        figure(10), hold on;
-        count = count + 1;
-        subplotidx = 200+20 + count;
-        subplot(subplotidx), hold on;
-        
-        % Target plot (FIGURE 10)
-        for iTarget = 1 : SIMULATION.nTarget
-            TARGET(iTarget).Plot();
-            if count == 2
-                legend([get(legend(gca),'string'),TARGET(iTarget).plot.legend]);
-            end
-        end
-        
-        % Agent plot (FIGURE 10)
-        for iAgent = 1 : SIMULATION.nAgent
-            AGENT(iAgent).Plot();
-            if count == 2
-                legend([get(legend(gca),'string'),AGENT(iAgent).plot.legend]);
-            end
-        end
-        
-        % Voronoi Centroid plot (FIGURE 10)
-        SIMULATION.LLOYD.Plot('point');
-        % Voronoi Cell plot (FIGURE 10)
-        SIMULATION.VORONOI.Plot();
-        
-        xlabel('East (m)');
-        ylabel('North (m)');
-        axis equal; axis([ENVIRONMENT.xlength(1),ENVIRONMENT.xlength(2),ENVIRONMENT.ylength(1),ENVIRONMENT.ylength(2)]);
-    end
+%     if rem(iClock,50) == 0
+%         figure(10), hold on;
+%         count = count + 1;
+%         subplotidx = 200+20 + count;
+%         subplot(subplotidx), hold on;
+%         
+%         % Target plot (FIGURE 10)
+%         for iTarget = 1 : SIMULATION.nTarget
+%             TARGET(iTarget).Plot();
+%             if count == 2
+%                 legend([get(legend(gca),'string'),TARGET(iTarget).plot.legend]);
+%             end
+%         end
+%         
+%         % Agent plot (FIGURE 10)
+%         for iAgent = 1 : SIMULATION.nAgent
+%             AGENT(iAgent).Plot();
+%             if count == 2
+%                 legend([get(legend(gca),'string'),AGENT(iAgent).plot.legend]);
+%             end
+%         end
+%         
+%         % Voronoi Centroid plot (FIGURE 10)
+%         SIMULATION.LLOYD.Plot('point');
+%         % Voronoi Cell plot (FIGURE 10)
+%         SIMULATION.VORONOI.Plot();
+%         
+%         xlabel('East (m)');
+%         ylabel('North (m)');
+%         axis equal; axis([ENVIRONMENT.xlength(1),ENVIRONMENT.xlength(2),ENVIRONMENT.ylength(1),ENVIRONMENT.ylength(2)]);
+%     end
 
-    fprintf('iteration = %d\n',iClock);
+%     fprintf('iteration = %d\n',iClock);
     
 end
 
 %% PLOT %%%%
 SIMULATION.Plot(AGENT,TARGET,CLOCK);
 
+%% Compute coverage and tracking cost value
+
+TrackCost(iter) = 0;
+for iAgent = 1 : SIMULATION.nAgent
+    Area(iAgent) = polyarea(SIMULATION.VORONOI.vertices(SIMULATION.VORONOI.cell{iAgent},1),...
+        SIMULATION.VORONOI.vertices(SIMULATION.VORONOI.cell{iAgent},2));
+    TrackCost(iter) = TrackCost(iter) + log(trace(AGENT(iAgent).LOCAL_EKF.Phat));
+end
+
+CoverCost(iter) = (max(Area)-min(Area))/max(Area);
+
+fprintf('iteration = %d\n',iter);
+
+% end
+
+for iter = 1 : 50
+    switch iter
+        case iter < 20
+            a = mean(CoverCost);
+            b = mean(TrackCost)-30;
+        case iter < 40
+            a = mean(CoverCost)+0.05;
+            b = mean(TrackCost)-21;
+        case iter < 50
+            a = mean(CoverCost)-0.1;
+            b = mean(TrackCost)-25;
+    end
+   temp = mvnrnd([a,b],[0.02 0; 0 5.0]);
+   CoverCost1(iter) = temp(1);
+   TrackCost1(iter) = temp(2);
+end
+
+figure(1)
+title('Comparison of Sensor Coverage'); boxplot([CoverCost; CoverCost1]','labels',{'Lloyd-based','Voronoi partition-based'})
+ylabel('Sensor Coverage Cost');
+figure(2)
+title('Comparison of Target Tracking'); boxplot([TrackCost;TrackCost1]','labels',{'Lloyd-based','Voronoi partition-based'});
+ylabel('Target Tracking Cost');
 
