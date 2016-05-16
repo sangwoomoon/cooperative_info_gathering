@@ -16,8 +16,8 @@ SIMULATION = Simulation(nAgent,nTarget,nLandMark);
 %--- Clock Class Setting ----
 t0 = 0.1;
 dt = 0.1;
-nt = 200;
-FDDFt = 0.1;
+nt = 60;
+FDDFt = 1.0;
 CLOCK = Clock(t0,dt,nt,FDDFt);
 
 %--- Environment Classes Setting ----
@@ -174,12 +174,16 @@ for iClock = 1 : CLOCK.nt
         % The first iteration is the same as Local KF.
         AGENT(iAgent).FDDF_KF.KalmanFilterAlgorithm(SIMULATION,AGENT(iAgent),CLOCK,'fDDF');
     end
+  
+    %--- Innovation ---
+    
     
     %--- Communicate ----
     for iAgent = 1 : SIMULATION.nAgent
        AGENT(iAgent).COMM.CommunicationProcedure(AGENT, SIMULATION, AGENT(iAgent).id); 
     end
-   
+  
+    
     %--- DDF Information Fusion (managing xhat and Phat) ----
      if rem(iClock,CLOCK.delt.FDDF) == 0
         for iAgent = 1 : SIMULATION.nAgent

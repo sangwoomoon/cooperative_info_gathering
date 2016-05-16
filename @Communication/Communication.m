@@ -1,7 +1,7 @@
 classdef Communication < handle
     properties % ( SetAccess = public, GetAccess = public )
         
-        C % communication Matrix (sender : row - receiver : col)
+        % C % communication Matrix (sender : row - receiver : col)
         Z % received package through communication
         
     end % Properties
