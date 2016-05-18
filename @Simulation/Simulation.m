@@ -10,8 +10,6 @@ classdef Simulation
         
         sRandom         % Specification of Random Variables (seeds for Random #)
         
-        CENTRAL_KF      % Centralized KF Simulation
-        
         plot            % plot for whole result (legends)
         
     end % Properties

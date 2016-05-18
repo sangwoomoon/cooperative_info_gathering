@@ -1,6 +1,6 @@
-function o = Default( o, AGENT )
+function o = Default( o, range )
 
-    o.range = inf;
+    o.range = range; % perfect communication
 
 
 end

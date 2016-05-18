@@ -1,4 +1,4 @@
-function o = Plot(o, AGENT, TARGET, CLOCK)
+function o = Plot(o, AGENT, TARGET, CENTRAL_KF, CLOCK)
 
 % Target plot (FIGURE 1)
 for iTarget = 1 : o.nTarget
@@ -20,7 +20,7 @@ axis equal;
 % Centralized Estimation plot
 % FIGURE 2- : TARGET POSITION ERROR PLOT
 % FIGURE 3-(nAGENT*nTarget+3): AGENT-TARGET ERROR PLOT
-o.CENTRAL_KF.Plot(AGENT,TARGET,CLOCK,o,'central');
+CENTRAL_KF.Plot(AGENT,TARGET,CLOCK,o,'central');
 
 % Individual Estimation plot
 for iAgent = 1 : o.nAgent

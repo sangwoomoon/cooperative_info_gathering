@@ -1,6 +1,6 @@
-function o = DataFusion(o, AGENT, SIMULATION, CLOCK, option)
+function o = DataFusion(o, AGENT, SIMULATION, NETWORK, CLOCK, option)
 
-tl = AGENT.FDDF_KF.nState-sum(AGENT.bKFs);
+tl = AGENT.FDDF_KF.nState-sum(AGENT.DYNAMICS.bKFs);
 
 o.XhatTemp = AGENT.FDDF_KF.Xhat;
 o.PhatTemp = AGENT.FDDF_KF.Phat;
@@ -12,7 +12,7 @@ omegaCandi = 0:0.01:1;
 
 for iMerge = 1:SIMULATION.nAgent
     
-    if (AGENT.COMM.C(iMerge,AGENT.id) == 1) % communication is connected 
+    if (NETWORK.graph(iMerge,AGENT.id) == 1) % communication is connected 
         
         % step 1 :: marginalize the matrix (extract target state)
         o.XhatMgn = o.XhatTemp(1:tl);

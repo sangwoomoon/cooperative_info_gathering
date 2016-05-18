@@ -59,24 +59,24 @@ TARGET(2).Qt = diag([0.2; 0.2]);
 % TARGET(3).Qt = diag([0.2; 0.2]); % this value is not usable 
 
 %--- Individual AGENT CLASS setting ----
-AGENT(1).s = [0.2,0.5,-2.5,0,2, 0]';
-AGENT(1).bKFs = [1 1 0 0 0 0];
-AGENT(1).hist.s = AGENT(1).s;
+AGENT(1).DYNAMICS.s = [0.2,0.5,-2.5,0,2, 0]';
+AGENT(1).DYNAMICS.bKFs = [1 1 0 0 0 0];
+AGENT(1).hist.s = AGENT(1).DYNAMICS.s;
 AGENT(1).hist.stamp = 0;
 
-AGENT(2).s = [-0.3,0.4,1.5,0,-5, 0]';
-AGENT(2).bKFs = [1 1 0 0 0 0];
-AGENT(2).hist.s = AGENT(2).s;
+AGENT(2).DYNAMICS.s = [-0.3,0.4,1.5,0,-5, 0]';
+AGENT(2).DYNAMICS.bKFs = [1 1 0 0 0 0];
+AGENT(2).hist.s = AGENT(2).DYNAMICS.s;
 AGENT(2).hist.stamp = 0;
 
-AGENT(3).s = [0.3,0.2,2.5,0,-3, 0]';
-AGENT(3).bKFs = [1 1 0 0 0 0];
-AGENT(3).hist.s = AGENT(3).s;
+AGENT(3).DYNAMICS.s = [0.3,0.2,2.5,0,-3, 0]';
+AGENT(3).DYNAMICS.bKFs = [1 1 0 0 0 0];
+AGENT(3).hist.s = AGENT(3).DYNAMICS.s;
 AGENT(3).hist.stamp = 0;
  
-AGENT(4).s = [0.3,0.2,3.5,0,-2, 0]';
-AGENT(4).bKFs = [1 1 0 0 0 0];
-AGENT(4).hist.s = AGENT(3).s;
+AGENT(4).DYNAMICS.s = [0.3,0.2,3.5,0,-2, 0]';
+AGENT(4).DYNAMICS.bKFs = [1 1 0 0 0 0];
+AGENT(4).hist.s = AGENT(3).DYNAMICS.s;
 AGENT(4).hist.stamp = 0;
 
 for iTarget = 1 : SIMULATION.nTarget
@@ -101,9 +101,11 @@ AGENT(2).MEASURE(3).Rt = diag([0.001; 0.001]); % relative target 3 - agent 2 (al
 AGENT(3).MEASURE(3).Rt = diag([2; 2]); % relative target 3 - agent 3 (bad measurement)
 AGENT(4).MEASURE(3).Rt = diag([2; 2]); % relative target 3 - agent 4 (bad measurement)
 
+%--- Network class initialization ----
+NETWORK = Network(inf);
 
 %--- Centralized KF subclass initialization ----
-SIMULATION.CENTRAL_KF = KalmanFilter(SIMULATION,AGENT,TARGET,CLOCK,'central'); 
+CENTRAL_KF = KalmanFilter(SIMULATION,AGENT,TARGET,CLOCK,'central'); 
 
 %--- Individaulized KF subclass initialization ----
 for iAgent = 1 : SIMULATION.nAgent
@@ -148,7 +150,7 @@ for iClock = 1 : CLOCK.nt
     
     %--- Propagate Agent ----
     for iAgent = 1 : SIMULATION.nAgent
-        AGENT(iAgent).UpdateAgentDynamics(CLOCK,SIMULATION.sRandom);
+        AGENT(iAgent).DYNAMICS.UpdateAgentDynamics(CLOCK,AGENT(iAgent),SIMULATION.sRandom);
     end
     
     %--- Propagate Environment ----
@@ -162,7 +164,7 @@ for iClock = 1 : CLOCK.nt
     end
     
     %--- Filter Update :: Centralized KF ----
-    SIMULATION.CENTRAL_KF.KalmanFilterAlgorithm(SIMULATION,AGENT,CLOCK,'central');
+    CENTRAL_KF.KalmanFilterAlgorithm(SIMULATION,AGENT,CLOCK,'central');
     
     %--- Filter Update :: Individual KF :: Local KF and FDDF aided KF ----
     for iAgent = 1 : SIMULATION.nAgent
@@ -179,15 +181,23 @@ for iClock = 1 : CLOCK.nt
     
     
     %--- Communicate ----
+    %--- Send Data to Network Class ----
     for iAgent = 1 : SIMULATION.nAgent
-       AGENT(iAgent).COMM.CommunicationProcedure(AGENT, SIMULATION, AGENT(iAgent).id); 
+       AGENT(iAgent).COMM.SendData(NETWORK,AGENT(iAgent),SIMULATION); 
     end
-  
+    
+    %--- Set Network Graph under Network Class ---
+    NETWORK.DetermineCommStatus(SIMULATION,AGENT);
+    
+    %--- Receive Data from Network Class ----
+    for iAgent = 1 : SIMULATION.nAgent
+       AGENT(iAgent).COMM.ReceiveData(NETWORK,AGENT(iAgent),SIMULATION); 
+    end
     
     %--- DDF Information Fusion (managing xhat and Phat) ----
      if rem(iClock,CLOCK.delt.FDDF) == 0
         for iAgent = 1 : SIMULATION.nAgent
-            AGENT(iAgent).FDDF.DataFusion(AGENT(iAgent), SIMULATION, CLOCK, 'MMNB');
+            AGENT(iAgent).FDDF.DataFusion(AGENT(iAgent), SIMULATION, NETWORK, CLOCK, 'MMNB');
         end
      end
     
@@ -196,4 +206,4 @@ for iClock = 1 : CLOCK.nt
 end
 
 %% PLOT %%%%
-SIMULATION.Plot(AGENT,TARGET,CLOCK);
+SIMULATION.Plot(AGENT,TARGET,CENTRAL_KF,CLOCK);

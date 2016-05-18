@@ -1,7 +1,7 @@
 function o = Plot (o, AGENT, TARGET, CLOCK, SIMULATION, option)
 
 tl=sum(TARGET(1).bKFx);  % number of state for targets concerned with KF process
-al=sum(AGENT(1).bKFs);   % number of state for agents concerned with KF process
+al=sum(AGENT(1).DYNAMICS.bKFs);   % number of state for agents concerned with KF process
 
 AgentStateList1 = [];
 AgentStateList2 = [];
@@ -10,8 +10,8 @@ TargetStateList = [];
 
 iKFplotidx = 0;
 iKFidxp = [];
-for iAgentState = 1 : length(AGENT(1).s)
-    if AGENT(1).bKFs(iAgentState) == 1
+for iAgentState = 1 : length(AGENT(1).DYNAMICS.s)
+    if AGENT(1).DYNAMICS.bKFs(iAgentState) == 1
         iKFplotidx = iKFplotidx + 1;
         AgentStateList1 = [AgentStateList1, al*100+20+2*(iKFplotidx-1)+1];
         AgentStateList2 = [AgentStateList2, al*100+20+2*iKFplotidx];
@@ -48,12 +48,12 @@ for iTarget = 1 : length(TARGET)
             
             
             xlabel('Time (secs)')
-            ylabel(SIMULATION.CENTRAL_KF.plot.ylabeltarget(iKFstate));
+            ylabel(o.plot.ylabeltarget(iKFstate));
             
             if iKFstate == 1
                 switch option
                     case 'central' % Centralized Case
-                        legend([get(legend(gca),'string'),SIMULATION.CENTRAL_KF.plot.legend]);
+                        legend([get(legend(gca),'string'),o.plot.legend]);
                     case 'local' % local case
                         legend([get(legend(gca),'string'),AGENT.LOCAL_KF.plot.legend]);
                     case 'decentral' % decentralized case
@@ -94,12 +94,12 @@ for iAgent = 1 : length(AGENT)
             
         end
         xlabel('Time (secs)')
-        ylabel(SIMULATION.CENTRAL_KF.plot.ylabelagent(iKFstate));
+        ylabel(o.plot.ylabelagent(iKFstate));
         
         if iKFstate == 1
             switch option
                 case 'central' % Centralized Case
-                    legend([get(legend(gca),'string'),SIMULATION.CENTRAL_KF.plot.legend]);
+                    legend([get(legend(gca),'string'),o.plot.legend]);
                 case 'local' % local case
                     legend([get(legend(gca),'string'),AGENT.LOCAL_KF.plot.legend]);
                 case 'decentral' % decentralized case

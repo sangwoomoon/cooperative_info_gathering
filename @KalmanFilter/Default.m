@@ -39,7 +39,7 @@ for iTgtAgt = 1 : length(AGENT)+length(TARGET)
     if iTgtAgt < length(TARGET)+1
         tl=tl+sum(TARGET(iTgtAgt).bKFx);  % number of state for targets which will be handled in KF
     else
-        al=al+sum(AGENT(iTgtAgt-length(TARGET)).bKFs);  % number of state for agents which will be handled in KF
+        al=al+sum(AGENT(iTgtAgt-length(TARGET)).DYNAMICS.bKFs);  % number of state for agents which will be handled in KF
     end
 end
 
@@ -110,22 +110,22 @@ for iAgtTgt = 1 : length(AGENT) + length(TARGET) % w.r.t total agent and target 
         
     else % agent index
         
-        if sum(AGENT(iAgtTgt-length(TARGET)).bKFs) ~= 0 % if there are states considered as the entries of KF process,
+        if sum(AGENT(iAgtTgt-length(TARGET)).DYNAMICS.bKFs) ~= 0 % if there are states considered as the entries of KF process,
             
             % filter F,Gamma matrix to make KF process
-            for iAgtState = 1 : length(AGENT(iAgtTgt-length(TARGET)).s)
-                if (AGENT(iAgtTgt-length(TARGET)).bKFs(iAgtState)==1)
-                    o.Xhat = [o.Xhat;AGENT(iAgtTgt-length(TARGET)).s(iAgtState)+(-3+6*rand)]; % priori with noise
+            for iAgtState = 1 : length(AGENT(iAgtTgt-length(TARGET)).DYNAMICS.s)
+                if (AGENT(iAgtTgt-length(TARGET)).DYNAMICS.bKFs(iAgtState)==1)
+                    o.Xhat = [o.Xhat;AGENT(iAgtTgt-length(TARGET)).DYNAMICS.s(iAgtState)+(-3+6*rand)]; % priori with noise
                     KFidx = [KFidx, iAgtState];
                 end
             end
             
             for iKFstateRow = 1 : length(KFidx)
                 for iKFstateCol = 1 : length(KFidx)
-                    FTempRow = [FTempRow, AGENT(iAgtTgt-length(TARGET)).Fp(KFidx(iKFstateRow),KFidx(iKFstateCol))];
+                    FTempRow = [FTempRow, AGENT(iAgtTgt-length(TARGET)).DYNAMICS.Fp(KFidx(iKFstateRow),KFidx(iKFstateCol))];
                 end
                 FTemp = [FTemp;FTempRow];
-                GammaTemp = [GammaTemp; AGENT(iAgtTgt-length(TARGET)).Gamp(KFidx(iKFstateRow),:)];
+                GammaTemp = [GammaTemp; AGENT(iAgtTgt-length(TARGET)).DYNAMICS.Gamp(KFidx(iKFstateRow),:)];
                 FTempRow = [];
             end
             
@@ -134,7 +134,7 @@ for iAgtTgt = 1 : length(AGENT) + length(TARGET) % w.r.t total agent and target 
             FTemp = [];
             GammaTemp = [];
             
-            o.Q = blkdiag(o.Q,AGENT(iAgtTgt-length(TARGET)).Qp);
+            o.Q = blkdiag(o.Q,AGENT(iAgtTgt-length(TARGET)).DYNAMICS.Qp);
             KFidx = [];
             
         end
@@ -179,11 +179,11 @@ for iAgent = 1 : length(AGENT)
             
             
             
-            if sum(AGENT(iAgent).bKFs) ~= 0 % if there are states considered as the entries of KF process,
+            if sum(AGENT(iAgent).DYNAMICS.bKFs) ~= 0 % if there are states considered as the entries of KF process,
                 
                 % filter H matrix to make KF process
-                for iTgtState = 1 : length(AGENT(iAgent).s)
-                    if (AGENT(iAgent).bKFs(iTgtState)==1)
+                for iTgtState = 1 : length(AGENT(iAgent).DYNAMICS.s)
+                    if (AGENT(iAgent).DYNAMICS.bKFs(iTgtState)==1)
                         KFidx = [KFidx, iTgtState];
                     end
                 end
