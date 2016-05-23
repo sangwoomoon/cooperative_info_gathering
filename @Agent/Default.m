@@ -8,7 +8,6 @@ function o = Default ( o, TARGET, ENVIRONMENT, SIMULATION, CLOCK, iAgent)
 o.id = iAgent;
 
 o.CONTROL = Control(o, TARGET, ENVIRONMENT); % Control sub-class
-o.DYNAMICS = Dynamics(SIMULATION, CLOCK); % Agent Dynamics sub-class
 o.TA = TaskAllocation(TARGET, CLOCK); % Task Allocation sub-class
 o.COMM = Communication(SIMULATION, CLOCK); % Communication sub-class
 

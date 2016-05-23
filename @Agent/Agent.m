@@ -1,5 +1,5 @@
 classdef Agent < handle
-    properties % ( SetAccess = public, GetAccess = public )
+    properties ( SetAccess = public, GetAccess = public )
         
         id      % Agent id (integers)        
         
@@ -12,6 +12,7 @@ classdef Agent < handle
         
         FDDF    % Factorized DDF Class
        
+        ESTIMATOR % Estimator Class (super class of KF, EKF..)
         LOCAL_KF % KF Estimation Class (sub-class of agent)
         DECEN_KF % KF Estimation Class (sub-class of agent)
         FDDF_KF % Factorized DDF based KF Estimation Class 

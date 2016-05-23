@@ -1,4 +1,4 @@
-function o = UpdateAgentDynamics(o, CLOCK, AGENT, sRandom)
+function o = TimeUpdate(o, CLOCK, AGENT, sRandom)
 
 sRandom;
 
@@ -7,16 +7,17 @@ sRandom;
 % vector MU, and D-by-D covariance matrix SIGMA.
 
 %%Simulate platform movements
-o.vp = (mvnrnd(zeros(1,2),o.Qp,1))';
-% actual bias would be exactly same
-o.s(3:6) = o.Fp(3:6,3:6)*o.s(3:6) + o.Gamp(3:6,:)*o.vp + o.Gu(3:6,:)*AGENT.CONTROL.u; 
+o.v = (mvnrnd(zeros(1,3),o.Q,1))'; % noise for heading, x, and y
+
+o.s(3) = o.s(3) + AGENT.CONTROL.u(2)*CLOCK.dt + o.v(3);
+
+o.s(1) = o.s(1) + AGENT.CONTROL.u(1)*cos(o.s(3))*CLOCK.dt + o.v(1);
+o.s(2) = o.s(2) + AGENT.CONTROL.u(1)*sin(o.s(3))*CLOCK.dt + o.v(2);
 
 % store current state to history
 AGENT.hist.s(:,end+1) = o.s;
 
 % stamp current time
 AGENT.hist.stamp(length(AGENT.hist.s(1,:))) = CLOCK.ct;
-
-
 
 end
