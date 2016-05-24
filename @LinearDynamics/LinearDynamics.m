@@ -2,6 +2,7 @@ classdef LinearDynamics < Dynamics
     %LinearDynamics is a sub-class of Dynamics class
     
     properties
+        
         % Platform motion model: platform states are [e,edot,n,ndot]
         F       % State transition matrix
         Gamma   % Process noise input matrix

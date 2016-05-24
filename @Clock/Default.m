@@ -5,6 +5,8 @@ function o = Default (o, t0, dt, nt, FDDFt)
 %
 % output : set Clock Class
 
+o.dt_sym = sym('dt_sym',[1 1]);
+
 o.t0 = t0;
 
 o.ct = 0;

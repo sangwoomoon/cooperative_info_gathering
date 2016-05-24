@@ -1,6 +1,10 @@
 classdef Clock 
     properties   ( SetAccess = public, GetAccess = public )
         
+        % symbolic values
+        dt_sym % symbolic value of time step
+        
+        % numerical values
         t0 % initial time
         dt % discrete time step
         delt % discrete time step for each procedure

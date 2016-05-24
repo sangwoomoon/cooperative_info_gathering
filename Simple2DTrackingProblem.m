@@ -31,9 +31,10 @@ end
 %--- Agent Classes Setting ----
 for iAgent = 1 : SIMULATION.nAgent
     AGENT(iAgent) = Agent(TARGET, ENVIRONMENT, SIMULATION, CLOCK , iAgent); %,'LinearDynamics');
-    AGENT(iAgent).DYNAMICS = LinearDynamics(SIMULATION, CLOCK); % allocate LinearDynamics@Dynamics into DYNAMICS variable in AGENT class
-    % AGENT(iAgent).DYNAMICS = DubinsDynamics(SIMULATION, CLOCK); % allocate DubinsDynamics@Dynamics into DYNAMICS variable in AGENT class
+    % AGENT(iAgent).DYNAMICS = LinearDynamics(SIMULATION, CLOCK); % allocate LinearDynamics@Dynamics into DYNAMICS variable in AGENT class
+    AGENT(iAgent).DYNAMICS = DubinsDynamics(SIMULATION, AGENT(iAgent).CONTROL, CLOCK); % allocate DubinsDynamics@Dynamics into DYNAMICS variable in AGENT class
 end
+
 
 %--- Individual TARGET CLASS setting ----
 TARGET(1).x = [1.0,-0.1,1.0,0.1]';
@@ -61,8 +62,8 @@ TARGET(2).Qt = diag([0.2; 0.2]);
 % TARGET(3).Qt = diag([0.2; 0.2]); % this value is not usable 
 
 %--- Individual AGENT CLASS setting ----
-AGENT(1).DYNAMICS.s = [-0.3,0.4,1.5,0,-5, 0]';
-% AGENT(1).DYNAMICS.s = [0.2,0.5,0]';
+% AGENT(1).DYNAMICS.s = [-0.3,0.4,1.5,0,-5, 0]';
+AGENT(1).DYNAMICS.s = [0.2,0.5,0]';
 AGENT(1).DYNAMICS.bKFs = [1 1 0 0 0 0];
 AGENT(1).hist.s = AGENT(1).DYNAMICS.s;
 AGENT(1).hist.stamp = 0;
@@ -125,6 +126,9 @@ load('AccelerationInput.mat');
 AccInput(5:6,:) = 0.5*AccInput(1:2,:);
 AccInput(7:8,:) = 0.8*AccInput(3:4,:);
 
+AccInput(1,1:60) = 2; % m/s
+AccInput(2,1:60) = 1; % rad/s
+
 for iClock = 1 : CLOCK.nt
     
     %--- clock update ----
@@ -167,42 +171,42 @@ for iClock = 1 : CLOCK.nt
     end
     
     %--- Filter Update :: Centralized KF ----
-    CENTRAL_KF.KalmanFilterAlgorithm(SIMULATION,AGENT,CLOCK,'central');
+%    CENTRAL_KF.KalmanFilterAlgorithm(SIMULATION,AGENT,CLOCK,'central');
     
     %--- Filter Update :: Individual KF :: Local KF and FDDF aided KF ----
-    for iAgent = 1 : SIMULATION.nAgent
+%    for iAgent = 1 : SIMULATION.nAgent
         % Local KF Process
-        AGENT(iAgent).LOCAL_KF.KalmanFilterAlgorithm(SIMULATION,AGENT(iAgent),CLOCK,'local');
+%        AGENT(iAgent).LOCAL_KF.KalmanFilterAlgorithm(SIMULATION,AGENT(iAgent),CLOCK,'local');
         
         % FDDF KF Process :: same procedure as Local KF, but it uses fused
         % estimated data (Xhat, Phat) from the communication.
         % The first iteration is the same as Local KF.
-        AGENT(iAgent).FDDF_KF.KalmanFilterAlgorithm(SIMULATION,AGENT(iAgent),CLOCK,'fDDF');
-    end
+%        AGENT(iAgent).FDDF_KF.KalmanFilterAlgorithm(SIMULATION,AGENT(iAgent),CLOCK,'fDDF');
+%    end
   
     %--- Innovation ---
     
     
     %--- Communicate ----
     %--- Send Data to Network Class ----
-    for iAgent = 1 : SIMULATION.nAgent
-       AGENT(iAgent).COMM.SendData(NETWORK,AGENT(iAgent),SIMULATION); 
-    end
+%    for iAgent = 1 : SIMULATION.nAgent
+%       AGENT(iAgent).COMM.SendData(NETWORK,AGENT(iAgent),SIMULATION); 
+%    end
     
     %--- Set Network Graph under Network Class ---
-    NETWORK.DetermineCommStatus(SIMULATION,AGENT);
+%    NETWORK.DetermineCommStatus(SIMULATION,AGENT);
     
     %--- Receive Data from Network Class ----
-    for iAgent = 1 : SIMULATION.nAgent
-       AGENT(iAgent).COMM.ReceiveData(NETWORK,AGENT(iAgent),SIMULATION); 
-    end
+%    for iAgent = 1 : SIMULATION.nAgent
+%       AGENT(iAgent).COMM.ReceiveData(NETWORK,AGENT(iAgent),SIMULATION); 
+%    end
     
     %--- DDF Information Fusion (managing xhat and Phat) ----
-     if rem(iClock,CLOCK.delt.FDDF) == 0
-        for iAgent = 1 : SIMULATION.nAgent
-            AGENT(iAgent).FDDF.DataFusion(AGENT(iAgent), SIMULATION, NETWORK, CLOCK, 'MMNB');
-        end
-     end
+ %    if rem(iClock,CLOCK.delt.FDDF) == 0
+ %       for iAgent = 1 : SIMULATION.nAgent
+ %           AGENT(iAgent).FDDF.DataFusion(AGENT(iAgent), SIMULATION, NETWORK, CLOCK, 'MMNB');
+ %       end
+ %    end
     
     fprintf('iteration = %d\n',iClock);
     
