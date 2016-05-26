@@ -6,11 +6,11 @@ classdef DubinsDynamics < Dynamics
     end
     
     methods
-        function o = DubinsDynamics( SIMULATION, CONTROL, CLOCK )
-            o@Dynamics(SIMULATION, CONTROL, CLOCK );
+        
+        function o = DubinsDynamics(CONTROL, CLOCK, id )
+            o@Dynamics(CONTROL, CLOCK, id );
         end
         
-        o = get( o, varargin );
     end
     
 end

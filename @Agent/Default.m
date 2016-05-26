@@ -1,4 +1,4 @@
-function o = Default ( o, TARGET, ENVIRONMENT, SIMULATION, CLOCK, iAgent)
+function o = Default ( o, TARGET, ENVIRONMENT, SIMULATION, CLOCK, iAgent, option)
 
 % default setting for targets
 % input : empty Agent Class
@@ -7,24 +7,31 @@ function o = Default ( o, TARGET, ENVIRONMENT, SIMULATION, CLOCK, iAgent)
 
 o.id = iAgent;
 
+% initialize control class
 o.CONTROL = Control(o, TARGET, ENVIRONMENT); % Control sub-class
+
+% initialize dynamics class with respect to specified dynamics model
+switch (option)
+    case ('Linear')
+        o.DYNAMICS = LinearDynamics(o.CONTROL, CLOCK, o.id);
+    case ('LinearBias')
+        o.DYNAMICS = LinearBiasDynamics(o.CONTROL, CLOCK, o.id);
+    case ('Dubins')
+        o.DYNAMICS = DubinsDynamics(o.CONTROL, CLOCK, o.id);
+    otherwise
+        o.DYNAMICS = Dynamics(o.CONTROL, CLOCK, o.id);
+end
+
+
+% initialize measurement class with respect to specified measurement model
+for iTarget = 1 : length(TARGET)
+    MEASURE(iTarget) = Measurement(TARGET(iTarget), CLOCK, o.id);
+end
+o.MEASURE = MEASURE;
+
+
 o.TA = TaskAllocation(TARGET, CLOCK); % Task Allocation sub-class
 o.COMM = Communication(SIMULATION, CLOCK); % Communication sub-class
 
-for iTarget = 1 : length(TARGET)
-    MEASURE(iTarget) = Measurement(TARGET(iTarget), CLOCK, o.id); % Measurement sub-class
-end
-
-o.MEASURE = MEASURE;
-
-o.plot.statecolor = rand(1,3);
-o.plot.marker = ['o';'x']; % start; end
-o.plot.markersize = 10;
-o.plot.line = '--';
-o.plot.linewidth = 3;
-
-o.plot.legend = [{strcat('Agent ',num2str(o.id))},...
-    {strcat('Agent ',num2str(o.id),' start')},...
-    {strcat('Agent ',num2str(o.id),' end')}];
 
 end

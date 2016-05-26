@@ -1,7 +1,9 @@
-function o = Default( o, SIMULATION, CONTROL, CLOCK )
-%Default Summary of this function goes here
-%   Detailed explanation goes here
+function o = Default( o, CONTROL, CLOCK, id )
+%Default function initialize the Dubins dynamics
+%   s = [e, n, theta]
     
+    o.spec = 'Dubins';
+
     o.s_sym = sym('s_sym',[3,1]);
     o.v_sym = sym('v_sym',[3,1]);
     
@@ -15,6 +17,16 @@ function o = Default( o, SIMULATION, CONTROL, CLOCK )
     o.TakeJacobian(o.Eqn,o.v_sym,'Gamma');
     
     o.Q = diag([0.01 0.01 0.01]);
+    
+    o.plot.statecolor = rand(1,3);
+    o.plot.marker = ['o';'x']; % start; end
+    o.plot.markersize = 7;
+    o.plot.line = '--';
+    o.plot.linewidth = 3;
+    
+    o.plot.legend = [{strcat('Agent ',num2str(id))},...
+        {strcat('Agent ',num2str(id),' start')},...
+        {strcat('Agent ',num2str(id),' end')}];
     
 end
 

@@ -1,8 +1,12 @@
 classdef Dynamics < handle
-    %DYNAMICS Summary of this class goes here
-    %   Detailed explanation goes here
+    %DYNAMICS is a member of AGENT or TARGET class
+    %   Generic form concerned with dynamics of agents or targets are
+    %   handled as properties, and it rules as a placeholder in order to
+    %   specify dynamic models.
     
     properties
+        
+        spec    % dynamic model specification (e.g. Linear / Dubins)
         
         % symbolic form
         s_sym   % symbolic form of states of agent
@@ -10,9 +14,8 @@ classdef Dynamics < handle
         
         Eqn     % symbolic function form of equation of motion
         
-        F      % State transition matrix
-        Gamma    % Process noise input matrix
-        
+        F       % State transition matrix
+        Gamma   % Process noise input matrix
         Gu      % Control input matrix
         
         
@@ -23,14 +26,18 @@ classdef Dynamics < handle
         v      % Random variable wrt movement of agent/target
         Q      % process noise for platform (accel noise)
         
+        % history and plotting options
+        hist
+        plot
+        
     end
     
     methods
-        function o = Dynamics( SIMULATION, CONTROL, CLOCK )
-            o = Default(o, SIMULATION, CONTROL, CLOCK );
+        
+        function o = Dynamics( CONTROL, CLOCK, id )
+            o = Default(o, CONTROL, CLOCK, id );
         end
         
-        o = get( o, varargin );
     end
     
 end

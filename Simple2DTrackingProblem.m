@@ -8,7 +8,7 @@ hold on;
 %% INITIAL SETTING %%%%
 
 %--- Simulation Class Setting ----
-nAgent = 1;
+nAgent = 3;
 nTarget = 3;
 nLandMark = 1;
 SIMULATION = Simulation(nAgent,nTarget,nLandMark);
@@ -29,11 +29,15 @@ for iTarget = 1 : SIMULATION.nTarget
 end
 
 %--- Agent Classes Setting ----
-for iAgent = 1 : SIMULATION.nAgent
-    AGENT(iAgent) = Agent(TARGET, ENVIRONMENT, SIMULATION, CLOCK , iAgent); %,'LinearDynamics');
-    % AGENT(iAgent).DYNAMICS = LinearDynamics(SIMULATION, CLOCK); % allocate LinearDynamics@Dynamics into DYNAMICS variable in AGENT class
-    AGENT(iAgent).DYNAMICS = DubinsDynamics(SIMULATION, AGENT(iAgent).CONTROL, CLOCK); % allocate DubinsDynamics@Dynamics into DYNAMICS variable in AGENT class
-end
+AGENT(1) = Agent(TARGET, ENVIRONMENT, SIMULATION, CLOCK, 1, 'Linear');
+AGENT(2) = Agent(TARGET, ENVIRONMENT, SIMULATION, CLOCK, 2, 'LinearBias');
+AGENT(3) = Agent(TARGET, ENVIRONMENT, SIMULATION, CLOCK, 3, 'Dubins');
+
+% for iAgent = 1 : SIMULATION.nAgent
+%     AGENT(iAgent) = Agent(TARGET, ENVIRONMENT, SIMULATION, CLOCK, iAgent,'Linear');
+%     AGENT(iAgent).DYNAMICS = LinearDynamics(AGENT(iAgent).CONTROL, CLOCK, AGENT(iAgent).id); % allocate LinearDynamics@Dynamics into DYNAMICS variable in AGENT class
+%     % AGENT(iAgent).DYNAMICS = DubinsDynamics(AGENT(iAgent).CONTROL, CLOCK, AGENT(iAgent).id); % allocate DubinsDynamics@Dynamics into DYNAMICS variable in AGENT class
+% end
 
 
 %--- Individual TARGET CLASS setting ----
@@ -62,22 +66,21 @@ TARGET(2).Qt = diag([0.2; 0.2]);
 % TARGET(3).Qt = diag([0.2; 0.2]); % this value is not usable 
 
 %--- Individual AGENT CLASS setting ----
-% AGENT(1).DYNAMICS.s = [-0.3,0.4,1.5,0,-5, 0]';
-AGENT(1).DYNAMICS.s = [0.2,0.5,0]';
-AGENT(1).DYNAMICS.bKFs = [1 1 0 0 0 0];
-AGENT(1).hist.s = AGENT(1).DYNAMICS.s;
-AGENT(1).hist.stamp = 0;
+AGENT(1).DYNAMICS.s = [-5.5,0,5, 0]';
+AGENT(1).DYNAMICS.bKFs = [0 0 0 0];
+AGENT(1).DYNAMICS.hist.s = AGENT(1).DYNAMICS.s;
+AGENT(1).DYNAMICS.hist.stamp = 0;
 
-% AGENT(2).DYNAMICS.s = [-0.3,0.4,1.5,0,-5, 0]';
-% AGENT(2).DYNAMICS.bKFs = [1 1 0 0 0 0];
-% AGENT(2).hist.s = AGENT(2).DYNAMICS.s;
-% AGENT(2).hist.stamp = 0;
-% 
-% AGENT(3).DYNAMICS.s = [0.3,0.2,2.5,0,-3, 0]';
-% AGENT(3).DYNAMICS.bKFs = [1 1 0 0 0 0];
-% AGENT(3).hist.s = AGENT(3).DYNAMICS.s;
-% AGENT(3).hist.stamp = 0;
-%  
+AGENT(2).DYNAMICS.s = [-0.3,0.4,1.5,0,-5, 0]';
+AGENT(2).DYNAMICS.bKFs = [1 1 0 0 0 0];
+AGENT(2).DYNAMICS.hist.s = AGENT(2).DYNAMICS.s;
+AGENT(2).DYNAMICS.hist.stamp = 0;
+
+AGENT(3).DYNAMICS.s = [0.2,0.5,0]';
+AGENT(3).DYNAMICS.bKFs = [0 0 0];
+AGENT(3).DYNAMICS.hist.s = AGENT(3).DYNAMICS.s;
+AGENT(3).DYNAMICS.hist.stamp = 0;
+ 
 % AGENT(4).DYNAMICS.s = [0.3,0.2,3.5,0,-2, 0]';
 % AGENT(4).DYNAMICS.bKFs = [1 1 0 0 0 0];
 % AGENT(4).hist.s = AGENT(3).DYNAMICS.s;
@@ -123,11 +126,11 @@ NETWORK = Network(inf);
 
 % for test.. should be removed.
 load('AccelerationInput.mat');
-AccInput(5:6,:) = 0.5*AccInput(1:2,:);
-AccInput(7:8,:) = 0.8*AccInput(3:4,:);
+%AccInput(5:6,:) = 0.5*AccInput(1:2,:);
+%AccInput(7:8,:) = 0.8*AccInput(3:4,:);
 
-AccInput(1,1:60) = 2; % m/s
-AccInput(2,1:60) = 1; % rad/s
+AccInput(5,1:60) = 2; % m/s
+AccInput(6,1:60) = 1; % rad/s
 
 for iClock = 1 : CLOCK.nt
     
@@ -164,11 +167,11 @@ for iClock = 1 : CLOCK.nt
     ENVIRONMENT.UpdateEnvironmentDynamics(CLOCK,SIMULATION.sRandom);
     
     %--- Measurement ----
-    for iAgent = 1 : SIMULATION.nAgent
-        for iTarget = 1 : SIMULATION.nTarget
-            AGENT(iAgent).MEASURE(iTarget).TakeMeasurement(AGENT(iAgent),TARGET(iTarget),ENVIRONMENT,CLOCK,SIMULATION.sRandom);
-        end
-    end
+%     for iAgent = 1 : SIMULATION.nAgent
+%         for iTarget = 1 : SIMULATION.nTarget
+%             AGENT(iAgent).MEASURE(iTarget).TakeMeasurement(AGENT(iAgent),TARGET(iTarget),ENVIRONMENT,CLOCK,SIMULATION.sRandom);
+%         end
+%     end
     
     %--- Filter Update :: Centralized KF ----
 %    CENTRAL_KF.KalmanFilterAlgorithm(SIMULATION,AGENT,CLOCK,'central');
@@ -213,4 +216,5 @@ for iClock = 1 : CLOCK.nt
 end
 
 %% PLOT %%%%
-SIMULATION.Plot(AGENT,TARGET,CENTRAL_KF,CLOCK);
+SIMULATION.Plot(AGENT,TARGET,CLOCK);
+% SIMULATION.Plot(AGENT,TARGET,CENTRAL_KF,CLOCK);

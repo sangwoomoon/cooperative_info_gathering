@@ -7,7 +7,7 @@ sRandom;
 % vector MU, and D-by-D covariance matrix SIGMA.
 
 %%Simulate platform movements
-o.v = (mvnrnd(zeros(1,3),o.Q,1))'; % noise for heading, x, and y
+o.v = (mvnrnd(zeros(1,3),o.Q,1))'; % noise for x, y and heading
 
 o.s = double(subs(o.Eqn,...
     {o.s_sym(1),o.s_sym(2),o.s_sym(3),...
@@ -18,9 +18,9 @@ o.s = double(subs(o.Eqn,...
     o.v(1),o.v(2),o.v(3),CLOCK.dt}));
 
 % store current state to history
-AGENT.hist.s(:,end+1) = o.s;
+o.hist.s(:,end+1) = o.s;
 
 % stamp current time
-AGENT.hist.stamp(length(AGENT.hist.s(1,:))) = CLOCK.ct;
+o.hist.stamp(length(o.hist.s(1,:))) = CLOCK.ct;
 
 end
