@@ -7,7 +7,7 @@ classdef LinearBiasDynamics < Dynamics
     
     methods
         function o = LinearBiasDynamics( CONTROL, CLOCK, id )
-            o@Dynamics(CONTROL, CLOCK, id );
+            o@Dynamics(CONTROL, CLOCK, id, [] );
         end
         
         o = get( o, varargin );

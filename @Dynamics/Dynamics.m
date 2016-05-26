@@ -9,7 +9,7 @@ classdef Dynamics < handle
         spec    % dynamic model specification (e.g. Linear / Dubins)
         
         % symbolic form
-        s_sym   % symbolic form of states of agent
+        x_sym   % symbolic form of states of agent/target
         v_sym   % symbolic form of input noise
         
         Eqn     % symbolic function form of equation of motion
@@ -20,8 +20,8 @@ classdef Dynamics < handle
         
         
         % numeric form
-        s       % current state [b_e, b_n, e,edot,n,ndot]
-        bKFs    % binary array of state for using KF process.
+        x       % current state
+        bKFx    % binary array of state for using KF process.
         
         v      % Random variable wrt movement of agent/target
         Q      % process noise for platform (accel noise)
@@ -34,8 +34,8 @@ classdef Dynamics < handle
     
     methods
         
-        function o = Dynamics( CONTROL, CLOCK, id )
-            o = Default(o, CONTROL, CLOCK, id );
+        function o = Dynamics( CONTROL, CLOCK, id, option )
+            o = Default(o, CONTROL, CLOCK, id, option );
         end
         
     end

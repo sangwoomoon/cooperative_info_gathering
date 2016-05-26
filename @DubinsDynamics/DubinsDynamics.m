@@ -7,8 +7,8 @@ classdef DubinsDynamics < Dynamics
     
     methods
         
-        function o = DubinsDynamics(CONTROL, CLOCK, id )
-            o@Dynamics(CONTROL, CLOCK, id );
+        function o = DubinsDynamics(CONTROL, CLOCK, id, option )
+            o@Dynamics(CONTROL, CLOCK, id, option );
         end
         
     end

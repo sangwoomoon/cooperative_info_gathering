@@ -15,8 +15,8 @@ classdef Control < handle
     end % Properties
     
     methods
-        function o = Control( AGENT, TARGET, ENVIRONMENT )
-             o = Default(o, AGENT, TARGET, ENVIRONMENT );
+        function o = Control( ENVIRONMENT )
+             o = Default(o, ENVIRONMENT );
         end
         
         o = get( o, varargin );

@@ -8,18 +8,18 @@ function o = Default ( o, TARGET, ENVIRONMENT, SIMULATION, CLOCK, iAgent, option
 o.id = iAgent;
 
 % initialize control class
-o.CONTROL = Control(o, TARGET, ENVIRONMENT); % Control sub-class
+o.CONTROL = Control(ENVIRONMENT); % Control sub-class
 
 % initialize dynamics class with respect to specified dynamics model
 switch (option)
     case ('Linear')
-        o.DYNAMICS = LinearDynamics(o.CONTROL, CLOCK, o.id);
+        o.DYNAMICS = LinearDynamics(o.CONTROL, CLOCK, o.id, 'Agent');
     case ('LinearBias')
         o.DYNAMICS = LinearBiasDynamics(o.CONTROL, CLOCK, o.id);
     case ('Dubins')
-        o.DYNAMICS = DubinsDynamics(o.CONTROL, CLOCK, o.id);
+        o.DYNAMICS = DubinsDynamics(o.CONTROL, CLOCK, o.id, 'Agent');
     otherwise
-        o.DYNAMICS = Dynamics(o.CONTROL, CLOCK, o.id);
+        o.DYNAMICS = Dynamics(o.CONTROL, CLOCK, o.id, 'Agent');
 end
 
 

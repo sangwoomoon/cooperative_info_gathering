@@ -1,10 +1,10 @@
 function o = Plot(o, AGENT, TARGET, CLOCK)
 
 % Target plot (FIGURE 1)
-% for iTarget = 1 : o.nTarget
-%     TARGET(iTarget).Plot();
-%     legend([get(legend(gca),'string'),TARGET(iTarget).plot.legend]);
-% end
+for iTarget = 1 : o.nTarget
+    TARGET(iTarget).DYNAMICS.Plot();
+    legend([get(legend(gca),'string'),TARGET(iTarget).DYNAMICS.plot.legend]);
+end
 
 % Agent plot (FIGURE 1)
 for iAgent = 1 : o.nAgent

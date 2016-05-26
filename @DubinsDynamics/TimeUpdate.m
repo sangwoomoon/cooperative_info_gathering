@@ -1,6 +1,5 @@
-function o = TimeUpdate(o, CLOCK, AGENT, sRandom)
+function o = TimeUpdate(o, CLOCK, AGENT)
 
-sRandom;
 
 % R = mvnrnd(MU,SIGMA,N) returns a N-by-D matrix R of random vectors
 % chosen from the multivariate normal distribution with 1-by-D mean
@@ -9,18 +8,18 @@ sRandom;
 %%Simulate platform movements
 o.v = (mvnrnd(zeros(1,3),o.Q,1))'; % noise for x, y and heading
 
-o.s = double(subs(o.Eqn,...
-    {o.s_sym(1),o.s_sym(2),o.s_sym(3),...
+o.x = double(subs(o.Eqn,...
+    {o.x_sym(1),o.x_sym(2),o.x_sym(3),...
     AGENT.CONTROL.u_sym(1),AGENT.CONTROL.u_sym(2),...
     o.v_sym(1),o.v_sym(2),o.v_sym(3),...
     CLOCK.dt_sym},...
-    {o.s(1),o.s(2),o.s(3),AGENT.CONTROL.u(1),AGENT.CONTROL.u(2),...
+    {o.x(1),o.x(2),o.x(3),AGENT.CONTROL.u(1),AGENT.CONTROL.u(2),...
     o.v(1),o.v(2),o.v(3),CLOCK.dt}));
 
 % store current state to history
-o.hist.s(:,end+1) = o.s;
+o.hist.x(:,end+1) = o.x;
 
 % stamp current time
-o.hist.stamp(length(o.hist.s(1,:))) = CLOCK.ct;
+o.hist.stamp(length(o.hist.x(1,:))) = CLOCK.ct;
 
 end

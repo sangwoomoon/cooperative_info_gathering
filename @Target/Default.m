@@ -1,4 +1,4 @@
-function o = Default( o, CLOCK ,iTarget)
+function o = Default( o, CLOCK, ENVIRONMENT, iTarget, option)
 
 % default setting for targets
 % input : empty Target Class
@@ -10,28 +10,20 @@ function o = Default( o, CLOCK ,iTarget)
 
 
 o.id = iTarget;
-o.Ft = blkdiag([1 CLOCK.dt; 0 1],[1 CLOCK.dt; 0 1]);
 
-o.Gt = [0.5*CLOCK.dt^2             0   ;
-            CLOCK.dt               0   ;
-                   0    0.5*CLOCK.dt^2 ;
-                   0        CLOCK.dt  ]; % only for target part (beware that w/o bias!)
-               
- 
-o.Gu = zeros(2); % 2 state - 2 state
+% initialize control class
+o.CONTROL = Control(ENVIRONMENT); % Control sub-class
 
-o.x = [1.0,0.1,1.0,0.1]'; % just for default (may be changed in the main script)
-o.hist.x = o.x; % store initial condition
-
-o.Qt = diag([0.2; 0.2]); 
-
-o.plot.statecolor = rand(1,3);
-o.plot.marker = ['o';'x']; % start; end
-o.plot.markersize = 10;
-o.plot.linewidth = 3;
-
-o.plot.legend = [{strcat('Target ',num2str(o.id))},...
-    {strcat('Target ',num2str(o.id),' start')},...
-    {strcat('Target ',num2str(o.id),' end')}];
+% initialize dynamics class with respect to specified dynamics model
+switch (option)
+    case ('Linear')
+        o.DYNAMICS = LinearDynamics(o.CONTROL, CLOCK, o.id, 'Target');
+        o.CONTROL.u = zeros(1,2); % set as zero input for random walk of target movement
+    case ('Dubins')
+        o.DYNAMICS = DubinsDynamics(o.CONTROL, CLOCK, o.id, 'Target');
+        o.CONTROL.u = zeros(1,2); % set as zero input for random walk of target movement
+    otherwise
+        o.DYNAMICS = Dynamics(o.CONTROL, CLOCK, o.id, 'Target');
+end
     
 end

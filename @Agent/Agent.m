@@ -3,14 +3,14 @@ classdef Agent < handle
         
         id      % Agent id (integers)
         
-        TA      % Task Allocation Class (sub-class of agent)
-        COMM    % Communication Class (sub-class of agent)
+        TA      % Task Allocation Class (element of agent)
+        COMM    % Communication Class (element of agent)
         
-        DYNAMICS% Dynamics Class (sub-class of agent)
-        MEASURE % Measurement Class (usb-class of agent)
-        CONTROL % Control Class (sub-class of agent)
+        DYNAMICS% Dynamics Class (element of agent, superclass of Linear/Dubins/LinearBias)
+        MEASURE % Measurement Class (element of agent)
+        CONTROL % Control Class (element of agent)
         
-        FDDF    % Factorized DDF Class
+        FDDF    % Factorized DDF Class (element of agent)
        
         ESTIMATOR % Estimator Class (super class of KF, EKF..)
         

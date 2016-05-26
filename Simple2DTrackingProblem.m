@@ -16,7 +16,7 @@ SIMULATION = Simulation(nAgent,nTarget,nLandMark);
 %--- Clock Class Setting ----
 t0 = 0.1;
 dt = 0.1;
-nt = 60;
+nt = 30;
 FDDFt = 1.0;
 CLOCK = Clock(t0,dt,nt,FDDFt);
 
@@ -24,61 +24,54 @@ CLOCK = Clock(t0,dt,nt,FDDFt);
 ENVIRONMENT = Environment(CLOCK);
 
 %--- Target Classes Setting ----
-for iTarget = 1 : SIMULATION.nTarget
-    TARGET(iTarget) = Target(CLOCK, iTarget);
-end
+TARGET(1) = Target(CLOCK, ENVIRONMENT, 1, 'Linear');
+TARGET(2) = Target(CLOCK, ENVIRONMENT, 2, 'Dubins');
+TARGET(3) = Target(CLOCK, ENVIRONMENT, 3, 'Linear');
 
 %--- Agent Classes Setting ----
-AGENT(1) = Agent(TARGET, ENVIRONMENT, SIMULATION, CLOCK, 1, 'Linear');
-AGENT(2) = Agent(TARGET, ENVIRONMENT, SIMULATION, CLOCK, 2, 'LinearBias');
-AGENT(3) = Agent(TARGET, ENVIRONMENT, SIMULATION, CLOCK, 3, 'Dubins');
-
-% for iAgent = 1 : SIMULATION.nAgent
-%     AGENT(iAgent) = Agent(TARGET, ENVIRONMENT, SIMULATION, CLOCK, iAgent,'Linear');
-%     AGENT(iAgent).DYNAMICS = LinearDynamics(AGENT(iAgent).CONTROL, CLOCK, AGENT(iAgent).id); % allocate LinearDynamics@Dynamics into DYNAMICS variable in AGENT class
-%     % AGENT(iAgent).DYNAMICS = DubinsDynamics(AGENT(iAgent).CONTROL, CLOCK, AGENT(iAgent).id); % allocate DubinsDynamics@Dynamics into DYNAMICS variable in AGENT class
-% end
-
+AGENT(1) = Agent(TARGET, ENVIRONMENT, SIMULATION, CLOCK, 1, 'Linear'); % linear model
+AGENT(2) = Agent(TARGET, ENVIRONMENT, SIMULATION, CLOCK, 2, 'LinearBias'); % linear model w/ sensor bias
+AGENT(3) = Agent(TARGET, ENVIRONMENT, SIMULATION, CLOCK, 3, 'Dubins'); % unicycle model
 
 %--- Individual TARGET CLASS setting ----
-TARGET(1).x = [1.0,-0.1,1.0,0.1]';
-TARGET(1).bKFx = [1 1 1 1];
-TARGET(1).bLandMark = 0;
-TARGET(1).hist.x = TARGET(1).x;
-TARGET(1).hist.stamp = 0;
+TARGET(1).DYNAMICS.x = [1.0,-0.1,1.0,0.1]';
+TARGET(1).DYNAMICS.bKFx = [1 1 1 1];
+% TARGET(1).bLandMark = 0;
+TARGET(1).DYNAMICS.hist.x = TARGET(1).DYNAMICS.x;
+TARGET(1).DYNAMICS.hist.stamp = 0;
 
-TARGET(2).x = [-1.0,0.1,-1.0,-0.1]';
-TARGET(2).bKFx = [1 1 1 1];
-TARGET(2).bLandMark = 0;
-TARGET(2).hist.x = TARGET(2).x;
-TARGET(2).hist.stamp = 0;
+TARGET(2).DYNAMICS.x = [-1.0,0.1,0]';
+TARGET(2).DYNAMICS.bKFx = [1 1 1];
+% TARGET(2).bLandMark = 0;
+TARGET(2).DYNAMICS.hist.x = TARGET(2).DYNAMICS.x;
+TARGET(2).DYNAMICS.hist.stamp = 0;
 
 % for landmark (same STM, but stationary)
-TARGET(3).x = [5.0,0,5.0,0]';
-TARGET(3).bKFx = [0 0 0 0];
-TARGET(3).bLandMark = 1;
-TARGET(3).hist.x = TARGET(3).x;
-TARGET(3).hist.stamp = 0;
+TARGET(3).DYNAMICS.x = [5.0,0,5.0,0]';
+TARGET(3).DYNAMICS.bKFx = [0 0 0 0];
+% TARGET(3).bLandMark = 1;
+TARGET(3).DYNAMICS.hist.x = TARGET(3).DYNAMICS.x;
+TARGET(3).DYNAMICS.hist.stamp = 0;
 
 % Q is not usable if it is for landmark.
-TARGET(1).Qt = diag([0.2; 0.2]);     
-TARGET(2).Qt = diag([0.2; 0.2]);
+TARGET(1).DYNAMICS.Q = diag([0.2; 0.2]);     
+TARGET(2).DYNAMICS.Q = diag([0.2; 0.2; 0.2]);
 % TARGET(3).Qt = diag([0.2; 0.2]); % this value is not usable 
 
 %--- Individual AGENT CLASS setting ----
-AGENT(1).DYNAMICS.s = [-5.5,0,5, 0]';
-AGENT(1).DYNAMICS.bKFs = [0 0 0 0];
-AGENT(1).DYNAMICS.hist.s = AGENT(1).DYNAMICS.s;
+AGENT(1).DYNAMICS.x = [-5.5,0,5, 0]';
+AGENT(1).DYNAMICS.bKFx = [0 0 0 0];
+AGENT(1).DYNAMICS.hist.x = AGENT(1).DYNAMICS.x;
 AGENT(1).DYNAMICS.hist.stamp = 0;
 
-AGENT(2).DYNAMICS.s = [-0.3,0.4,1.5,0,-5, 0]';
-AGENT(2).DYNAMICS.bKFs = [1 1 0 0 0 0];
-AGENT(2).DYNAMICS.hist.s = AGENT(2).DYNAMICS.s;
+AGENT(2).DYNAMICS.x = [-0.3,0.4,1.5,0,-5, 0]';
+AGENT(2).DYNAMICS.bKFx = [1 1 0 0 0 0];
+AGENT(2).DYNAMICS.hist.x = AGENT(2).DYNAMICS.x;
 AGENT(2).DYNAMICS.hist.stamp = 0;
 
-AGENT(3).DYNAMICS.s = [0.2,0.5,0]';
-AGENT(3).DYNAMICS.bKFs = [0 0 0];
-AGENT(3).DYNAMICS.hist.s = AGENT(3).DYNAMICS.s;
+AGENT(3).DYNAMICS.x = [0.2,0.5,0]';
+AGENT(3).DYNAMICS.bKFx = [0 0 0];
+AGENT(3).DYNAMICS.hist.x = AGENT(3).DYNAMICS.x;
 AGENT(3).DYNAMICS.hist.stamp = 0;
  
 % AGENT(4).DYNAMICS.s = [0.3,0.2,3.5,0,-2, 0]';
@@ -155,12 +148,12 @@ for iClock = 1 : CLOCK.nt
     % target.dynamics :: nonlinear / linear model (for kalman filter)
     % target.update :: update with respect to time
     for iTarget = 1 : SIMULATION.nTarget
-        TARGET(iTarget).UpdateTargetDynamics(CLOCK,SIMULATION.sRandom);
+        TARGET(iTarget).DYNAMICS.TimeUpdate(CLOCK,TARGET(iTarget));
     end
     
     %--- Propagate Agent ----
     for iAgent = 1 : SIMULATION.nAgent
-        AGENT(iAgent).DYNAMICS.TimeUpdate(CLOCK,AGENT(iAgent),SIMULATION.sRandom); % UpdateAgentDynamics -> TimeUpdate
+        AGENT(iAgent).DYNAMICS.TimeUpdate(CLOCK,AGENT(iAgent)); % UpdateAgentDynamics -> TimeUpdate
     end
     
     %--- Propagate Environment ----

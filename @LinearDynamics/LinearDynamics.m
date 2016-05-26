@@ -6,8 +6,8 @@ classdef LinearDynamics < Dynamics
     end
     
     methods
-        function o = LinearDynamics( CONTROL, CLOCK, id )
-            o@Dynamics(CONTROL, CLOCK, id );
+        function o = LinearDynamics( CONTROL, CLOCK, id, option )
+            o@Dynamics(CONTROL, CLOCK, id, option );
         end
         
         o = get( o, varargin );
