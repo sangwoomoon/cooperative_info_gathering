@@ -9,6 +9,6 @@ o.nTarget = nTarget;
 o.nAgent = nAgent;
 o.nLandMark = nLandMark;
 
-o.sRandom = 1; %rng(333555532);
+o.sRandom = 333555532;
 
 end

@@ -7,11 +7,19 @@ classdef DubinsDynamics < Dynamics
     
     methods
         
-        function o = DubinsDynamics(CONTROL, CLOCK, id, option )
-            o@Dynamics(CONTROL, CLOCK, id, option );
+        function o = DubinsDynamics( )
+            o@Dynamics( );
         end
         
+        % Differential equation
+        % will be used for ODE45
+        dx = StateDerivate(obj, t, x, u);
+        
+        % make process noise
+        MakeNoise(obj);
+        
     end
+    
     
 end
 

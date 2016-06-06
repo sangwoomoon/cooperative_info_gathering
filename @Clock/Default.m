@@ -4,9 +4,6 @@ function o = Default (o, t0, dt, nt, FDDFt)
 % input : empty Clock Class
 %
 % output : set Clock Class
-
-o.dt_sym = sym('dt_sym');
-
 o.t0 = t0;
 
 o.ct = 0;

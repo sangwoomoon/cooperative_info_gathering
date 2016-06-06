@@ -2,13 +2,13 @@ function o = Plot(o, AGENT, TARGET, CLOCK)
 
 % Target plot (FIGURE 1)
 for iTarget = 1 : o.nTarget
-    TARGET(iTarget).DYNAMICS.Plot();
+    TARGET(iTarget).DYNAMICS.Plot(TARGET(iTarget)); % TARGET input for plotting option
     legend([get(legend(gca),'string'),TARGET(iTarget).DYNAMICS.plot.legend]);
 end
 
 % Agent plot (FIGURE 1)
 for iAgent = 1 : o.nAgent
-    AGENT(iAgent).DYNAMICS.Plot();
+    AGENT(iAgent).DYNAMICS.Plot(AGENT(iAgent)); % AGENT input for plotting option
     legend([get(legend(gca),'string'),AGENT(iAgent).DYNAMICS.plot.legend]);
 %     for iTarget = 1 : o.nTarget
 %         AGENT(iAgent).MEASURE(iTarget).Plot(AGENT(iAgent));

@@ -6,11 +6,18 @@ classdef LinearDynamics < Dynamics
     end
     
     methods
-        function o = LinearDynamics( CONTROL, CLOCK, id, option )
-            o@Dynamics(CONTROL, CLOCK, id, option );
+
+        function o = LinearDynamics()
+            o@Dynamics();
         end
         
-        o = get( o, varargin );
+        % Differential equation
+        % will be used for ODE45
+        dx = StateDerivate(obj, t, x, u);
+        
+        % make process noise
+        MakeNoise(obj);
+        
     end
     
 end

@@ -13,13 +13,13 @@ o.CONTROL = Control(ENVIRONMENT); % Control sub-class
 % initialize dynamics class with respect to specified dynamics model
 switch (option)
     case ('Linear')
-        o.DYNAMICS = LinearDynamics(o.CONTROL, CLOCK, o.id, 'Agent');
+        o.DYNAMICS = LinearDynamics();
     case ('LinearBias')
-        o.DYNAMICS = LinearBiasDynamics(o.CONTROL, CLOCK, o.id);
+        o.DYNAMICS = LinearBiasDynamics();
     case ('Dubins')
-        o.DYNAMICS = DubinsDynamics(o.CONTROL, CLOCK, o.id, 'Agent');
+        o.DYNAMICS = DubinsDynamics();
     otherwise
-        o.DYNAMICS = Dynamics(o.CONTROL, CLOCK, o.id, 'Agent');
+        o.DYNAMICS = Dynamics();
 end
 
 
@@ -32,6 +32,17 @@ o.MEASURE = MEASURE;
 
 o.TA = TaskAllocation(TARGET, CLOCK); % Task Allocation sub-class
 o.COMM = Communication(SIMULATION, CLOCK); % Communication sub-class
+
+% plotting options setting
+o.plot.statecolor = rand(1,3);
+o.plot.marker = ['o';'x']; % start; end
+o.plot.markersize = 7;
+o.plot.line = '--';
+o.plot.linewidth = 5;
+
+o.plot.legend = [{strcat('Agent ',num2str(o.id))},...
+    {strcat('Agent ',num2str(o.id),' start')},...
+    {strcat('Agent ',num2str(o.id),' end')}];
 
 
 end

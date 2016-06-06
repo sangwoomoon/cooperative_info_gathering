@@ -9,7 +9,7 @@ hold on;
 
 %--- Simulation Class Setting ----
 nAgent = 3;
-nTarget = 3;
+nTarget = 2;
 nLandMark = 1;
 SIMULATION = Simulation(nAgent,nTarget,nLandMark);
 
@@ -24,9 +24,8 @@ CLOCK = Clock(t0,dt,nt,FDDFt);
 ENVIRONMENT = Environment(CLOCK);
 
 %--- Target Classes Setting ----
-TARGET(1) = Target(CLOCK, ENVIRONMENT, 1, 'Linear');
-TARGET(2) = Target(CLOCK, ENVIRONMENT, 2, 'Dubins');
-TARGET(3) = Target(CLOCK, ENVIRONMENT, 3, 'Linear');
+TARGET(1) = Target(ENVIRONMENT, 1, 'Linear');
+TARGET(2) = Target(ENVIRONMENT, 2, 'Dubins');
 
 %--- Agent Classes Setting ----
 AGENT(1) = Agent(TARGET, ENVIRONMENT, SIMULATION, CLOCK, 1, 'Linear'); % linear model
@@ -34,72 +33,35 @@ AGENT(2) = Agent(TARGET, ENVIRONMENT, SIMULATION, CLOCK, 2, 'LinearBias'); % lin
 AGENT(3) = Agent(TARGET, ENVIRONMENT, SIMULATION, CLOCK, 3, 'Dubins'); % unicycle model
 
 %--- Individual TARGET CLASS setting ----
-TARGET(1).DYNAMICS.x = [1.0,-0.1,1.0,0.1]';
-TARGET(1).DYNAMICS.bKFx = [1 1 1 1];
-% TARGET(1).bLandMark = 0;
-TARGET(1).DYNAMICS.hist.x = TARGET(1).DYNAMICS.x;
-TARGET(1).DYNAMICS.hist.stamp = 0;
+TARGET(1).DYNAMICS.InitializeState([1.0,-0.1,1.0,0.1]');
+TARGET(1).DYNAMICS.SetParameters([1 1 1 1], diag([0.2; 0.2]), 1e-4, 1e-6); % parameter setting order : bKFx, Q, RelTol, AbsTol (last two is for ODE45)
 
-TARGET(2).DYNAMICS.x = [-1.0,0.1,0]';
-TARGET(2).DYNAMICS.bKFx = [1 1 1];
-% TARGET(2).bLandMark = 0;
-TARGET(2).DYNAMICS.hist.x = TARGET(2).DYNAMICS.x;
-TARGET(2).DYNAMICS.hist.stamp = 0;
-
-% for landmark (same STM, but stationary)
-TARGET(3).DYNAMICS.x = [5.0,0,5.0,0]';
-TARGET(3).DYNAMICS.bKFx = [0 0 0 0];
-% TARGET(3).bLandMark = 1;
-TARGET(3).DYNAMICS.hist.x = TARGET(3).DYNAMICS.x;
-TARGET(3).DYNAMICS.hist.stamp = 0;
-
-% Q is not usable if it is for landmark.
-TARGET(1).DYNAMICS.Q = diag([0.2; 0.2]);     
-TARGET(2).DYNAMICS.Q = diag([0.2; 0.2; 0.2]);
-% TARGET(3).Qt = diag([0.2; 0.2]); % this value is not usable 
+TARGET(2).DYNAMICS.InitializeState([-1.0,0.1,0]');
+TARGET(2).DYNAMICS.SetParameters([1 1 1], diag([0.2; 0.2; 0.2]), 1e-4, 1e-6);
 
 %--- Individual AGENT CLASS setting ----
-AGENT(1).DYNAMICS.x = [-5.5,0,5, 0]';
-AGENT(1).DYNAMICS.bKFx = [0 0 0 0];
-AGENT(1).DYNAMICS.hist.x = AGENT(1).DYNAMICS.x;
-AGENT(1).DYNAMICS.hist.stamp = 0;
+AGENT(1).DYNAMICS.InitializeState([-5.5,0,5, 0]');
+AGENT(1).DYNAMICS.SetParameters([0 0 0 0], diag([0.2; 0.2]), 1e-4, 1e-6);
 
-AGENT(2).DYNAMICS.x = [-0.3,0.4,1.5,0,-5, 0]';
-AGENT(2).DYNAMICS.bKFx = [1 1 0 0 0 0];
-AGENT(2).DYNAMICS.hist.x = AGENT(2).DYNAMICS.x;
-AGENT(2).DYNAMICS.hist.stamp = 0;
+AGENT(2).DYNAMICS.InitializeState([-0.3,0.4,1.5,0,-5, 0]');
+AGENT(2).DYNAMICS.SetParameters([1 1 0 0 0 0], diag([0.2; 0.2; 0.2; 0.2]), 1e-4, 1e-6);
 
-AGENT(3).DYNAMICS.x = [0.2,0.5,0]';
-AGENT(3).DYNAMICS.bKFx = [0 0 0];
-AGENT(3).DYNAMICS.hist.x = AGENT(3).DYNAMICS.x;
-AGENT(3).DYNAMICS.hist.stamp = 0;
+AGENT(3).DYNAMICS.InitializeState([0.2,0.5,0]');
+AGENT(3).DYNAMICS.SetParameters([0 0 0], diag([0.2; 0.2; 0.2]), 1e-4, 1e-6);
  
-% AGENT(4).DYNAMICS.s = [0.3,0.2,3.5,0,-2, 0]';
-% AGENT(4).DYNAMICS.bKFs = [1 1 0 0 0 0];
-% AGENT(4).hist.s = AGENT(3).DYNAMICS.s;
-% AGENT(4).hist.stamp = 0;
-
 for iTarget = 1 : SIMULATION.nTarget
     AGENT(1).MEASURE(iTarget).Rp = diag([1.15 0.15]);
-%     AGENT(2).MEASURE(iTarget).Rp = diag([0.15 1.15]);
-%     AGENT(3).MEASURE(iTarget).Rp = diag([1.15 0.15]);
-%     AGENT(4).MEASURE(iTarget).Rp = diag([0.15 2.15]);
+    AGENT(2).MEASURE(iTarget).Rp = diag([0.15 1.15]);
+    AGENT(3).MEASURE(iTarget).Rp = diag([1.15 0.15]);
 end
 
 AGENT(1).MEASURE(1).Rt = diag([0.085; 2]); % relative target 1 - agent 1
-% AGENT(2).MEASURE(1).Rt = diag([2; 0.085]); % relative target 1 - agent 2
-% AGENT(3).MEASURE(1).Rt = diag([0.5; 0.5]); % relative target 1 - agent 3
-% AGENT(4).MEASURE(1).Rt = diag([2; 2]); % relative target 1 - agent 4
+AGENT(2).MEASURE(1).Rt = diag([2; 0.085]); % relative target 1 - agent 2
+AGENT(3).MEASURE(1).Rt = diag([0.5; 0.5]); % relative target 1 - agent 3
 
 AGENT(1).MEASURE(2).Rt = diag([2; 0.0085]); % relative target 2 - agent 1
-% AGENT(2).MEASURE(2).Rt = diag([0.0085; 2]); % relative target 2 - agent 2
-% AGENT(3).MEASURE(2).Rt = diag([0.5; 0.5]); % relative target 2 - agent 3
-% AGENT(4).MEASURE(2).Rt = diag([2; 2]); % relative target 2 - agent 4
-
-AGENT(1).MEASURE(3).Rt = diag([0.001; 0.001]); % relative target 3 - agent 1 (almost exactly knows)
-% AGENT(2).MEASURE(3).Rt = diag([0.001; 0.001]); % relative target 3 - agent 2 (almost exactly knows)
-% AGENT(3).MEASURE(3).Rt = diag([2; 2]); % relative target 3 - agent 3 (bad measurement)
-% AGENT(4).MEASURE(3).Rt = diag([2; 2]); % relative target 3 - agent 4 (bad measurement)
+AGENT(2).MEASURE(2).Rt = diag([0.0085; 2]); % relative target 2 - agent 2
+AGENT(3).MEASURE(2).Rt = diag([0.5; 0.5]); % relative target 2 - agent 3
 
 %--- Network class initialization ----
 NETWORK = Network(inf);
@@ -117,12 +79,15 @@ NETWORK = Network(inf);
 
 %% MAIN PROCEDURE %%%%
 
+% random seed fixing
+rng(SIMULATION.sRandom);
+
 % for test.. should be removed.
 load('AccelerationInput.mat');
 %AccInput(5:6,:) = 0.5*AccInput(1:2,:);
 %AccInput(7:8,:) = 0.8*AccInput(3:4,:);
 
-AccInput(5,1:60) = 2; % m/s
+AccInput(5,1:60) = 5; % m/s
 AccInput(6,1:60) = 1; % rad/s
 
 for iClock = 1 : CLOCK.nt
@@ -148,12 +113,12 @@ for iClock = 1 : CLOCK.nt
     % target.dynamics :: nonlinear / linear model (for kalman filter)
     % target.update :: update with respect to time
     for iTarget = 1 : SIMULATION.nTarget
-        TARGET(iTarget).DYNAMICS.TimeUpdate(CLOCK,TARGET(iTarget));
+        TARGET(iTarget).DYNAMICS.TimeUpdate(TARGET(iTarget).CONTROL.u,CLOCK);
     end
     
     %--- Propagate Agent ----
     for iAgent = 1 : SIMULATION.nAgent
-        AGENT(iAgent).DYNAMICS.TimeUpdate(CLOCK,AGENT(iAgent)); % UpdateAgentDynamics -> TimeUpdate
+        AGENT(iAgent).DYNAMICS.TimeUpdate(AGENT(iAgent).CONTROL.u,CLOCK); % UpdateAgentDynamics -> TimeUpdate
     end
     
     %--- Propagate Environment ----

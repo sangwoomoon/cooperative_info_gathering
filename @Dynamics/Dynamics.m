@@ -8,17 +8,6 @@ classdef Dynamics < handle
         
         spec    % dynamic model specification (e.g. Linear / Dubins)
         
-        % symbolic form
-        x_sym   % symbolic form of states of agent/target
-        v_sym   % symbolic form of input noise
-        
-        Eqn     % symbolic function form of equation of motion
-        
-        F       % State transition matrix
-        Gamma   % Process noise input matrix
-        Gu      % Control input matrix
-        
-        
         % numeric form
         x       % current state
         bKFx    % binary array of state for using KF process.
@@ -26,19 +15,52 @@ classdef Dynamics < handle
         v      % Random variable wrt movement of agent/target
         Q      % process noise for platform (accel noise)
         
+        ODEoption % ODE45 integration option
+        
         % history and plotting options
         hist
         plot
         
     end
     
-    methods
+    methods 
         
-        function o = Dynamics( CONTROL, CLOCK, id, option )
-            o = Default(o, CONTROL, CLOCK, id, option );
+        % constructor method (should be changed) i.e. myobj = Dynamics() /
+        % or specified version of constructor
+        function obj = Dynamics()
+            obj = Default(obj); % use construct (function name)
         end
+            
+        % Propagate State
+        % update internal state and history
+        % Time update with respect to dynamics (overloading scheme)
+        TimeUpdate(obj, u, CLOCK);
+        
+        % State Update
+        % update external state and history
+        StateUpdate(obj, u, CLOCK);
+        
+        % Predict State
+        % State Prediction method (N-step ahead prediction with zero noise)
+        PredictState(obj, CLOCK, u, N);
+        
+        % Take Jacobian matrix method (output is not object itself, so
+        % output parameters should be remained)
+        output = TakeJacobian(obj, equation, value);
+        
+        % Set parameters by users
+        SetParameters(obj, bKFx, Q, RelTol, AbsTol);
+        
+        % Initialize states by users
+        InitializeState(obj, x);
+        
+        % Plot History of states 
+        % it is specified with respect to (plotting options are on the AGENT/TARGET
+        % class!)
+        Plot(obj);
         
     end
+    
     
 end
 

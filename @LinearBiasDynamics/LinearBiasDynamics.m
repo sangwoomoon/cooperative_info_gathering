@@ -6,11 +6,16 @@ classdef LinearBiasDynamics < Dynamics
     end
     
     methods
-        function o = LinearBiasDynamics( CONTROL, CLOCK, id )
-            o@Dynamics(CONTROL, CLOCK, id, [] );
+        function o = LinearBiasDynamics()
+            o@Dynamics();
         end
         
-        o = get( o, varargin );
+        % Differential equation
+        % will be used for ODE45
+        dx = StateDerivate(t, x, u, v);
+        
+        % make process noise
+        MakeNoise(obj);
     end
     
 end

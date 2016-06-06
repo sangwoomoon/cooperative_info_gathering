@@ -14,6 +14,8 @@ classdef Agent < handle
        
         ESTIMATOR % Estimator Class (super class of KF, EKF..)
         
+        plot % plotting handle (for states)
+        
     end % Properties
     
     methods

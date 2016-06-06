@@ -1,18 +1,18 @@
-function o = Plot ( o )
+function obj = Plot ( obj )
 
-switch (o.spec)
+switch (obj.spec)
     case ('Linear')
-        plot(o.hist.x(1,:),o.hist.x(3,:),o.plot.line,'color',o.plot.statecolor); hold on;
-        plot(o.hist.x(1,1),o.hist.x(3,1),o.plot.marker(1),'color',o.plot.statecolor,'MarkerSize',o.plot.markersize,'LineWidth',o.plot.linewidth); hold on;
-        plot(o.hist.x(1,end),o.hist.x(3,end),o.plot.marker(2),'color',o.plot.statecolor,'MarkerSize',o.plot.markersize,'LineWidth',o.plot.linewidth); hold on;
+        plot(obj.hist.x(1,:),obj.hist.x(3,:),obj.plot.line,'color',obj.plot.statecolor); hold on;
+        plot(obj.hist.x(1,1),obj.hist.x(3,1),obj.plot.marker(1),'color',obj.plot.statecolor,'MarkerSize',obj.plot.markersize,'LineWidth',obj.plot.linewidth); hold on;
+        plot(obj.hist.x(1,end),obj.hist.x(3,end),obj.plot.marker(2),'color',obj.plot.statecolor,'MarkerSize',obj.plot.markersize,'LineWidth',obj.plot.linewidth); hold on;
     case ('LinearBias')
-        plot(o.hist.x(3,:),o.hist.x(5,:),o.plot.line,'color',o.plot.statecolor); hold on;
-        plot(o.hist.x(3,1),o.hist.x(5,1),o.plot.marker(1),'color',o.plot.statecolor,'MarkerSize',o.plot.markersize,'LineWidth',o.plot.linewidth); hold on;
-        plot(o.hist.x(3,end),o.hist.x(5,end),o.plot.marker(2),'color',o.plot.statecolor,'MarkerSize',o.plot.markersize,'LineWidth',o.plot.linewidth); hold on;
+        plot(obj.hist.x(3,:),obj.hist.x(5,:),obj.plot.line,'color',obj.plot.statecolor); hold on;
+        plot(obj.hist.x(3,1),obj.hist.x(5,1),obj.plot.marker(1),'color',obj.plot.statecolor,'MarkerSize',obj.plot.markersize,'LineWidth',obj.plot.linewidth); hold on;
+        plot(obj.hist.x(3,end),obj.hist.x(5,end),obj.plot.marker(2),'color',obj.plot.statecolor,'MarkerSize',obj.plot.markersize,'LineWidth',obj.plot.linewidth); hold on;
     case ('Dubins')
-        plot(o.hist.x(1,:),o.hist.x(2,:),o.plot.line,'color',o.plot.statecolor); hold on;
-        plot(o.hist.x(1,1),o.hist.x(2,1),o.plot.marker(1),'color',o.plot.statecolor,'MarkerSize',o.plot.markersize,'LineWidth',o.plot.linewidth); hold on;
-        plot(o.hist.x(1,end),o.hist.x(2,end),o.plot.marker(2),'color',o.plot.statecolor,'MarkerSize',o.plot.markersize,'LineWidth',o.plot.linewidth); hold on;
+        plot(obj.hist.x(1,:),obj.hist.x(2,:),obj.plot.line,'color',obj.plot.statecolor); hold on;
+        plot(obj.hist.x(1,1),obj.hist.x(2,1),obj.plot.marker(1),'color',obj.plot.statecolor,'MarkerSize',obj.plot.markersize,'LineWidth',obj.plot.linewidth); hold on;
+        plot(obj.hist.x(1,end),obj.hist.x(2,end),obj.plot.marker(2),'color',obj.plot.statecolor,'MarkerSize',obj.plot.markersize,'LineWidth',obj.plot.linewidth); hold on;
 end
 
 end
