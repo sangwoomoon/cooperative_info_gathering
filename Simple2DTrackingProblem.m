@@ -16,7 +16,7 @@ SIMULATION = Simulation(nAgent,nTarget,nLandMark);
 %--- Clock Class Setting ----
 t0 = 0.1;
 dt = 0.1;
-nt = 30;
+nt = 60;
 FDDFt = 1.0;
 CLOCK = Clock(t0,dt,nt,FDDFt);
 

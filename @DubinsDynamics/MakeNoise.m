@@ -1,8 +1,14 @@
-function obj = MakeNoise( obj )
-%MAKENOISE Summary of this function goes here
-%   Detailed explanation goes here
+function obj = MakeNoise( obj, option )
+%MAKENOISE generates input noises with respect to classified dynamics
+%   Will be useful to apply to various types of noises by receiving option
+%   input parameter
 
-obj.v = (mvnrnd(zeros(1,3),obj.Q,1))'; % noise for inputs
+switch (option)
+    case ('zero')
+        obj.v = zeros(3,1); % zero noise (used for prediction/estimation)
+    otherwise
+        obj.v = (mvnrnd(zeros(1,3),obj.Q,1))'; % noise for inputs
+end
 
 end
 

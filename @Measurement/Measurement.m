@@ -22,7 +22,6 @@ classdef Measurement < handle
              o = Default(o, TARGET, CLOCK, iAgent );
         end
         
-        o = get( o, varargin );
     end
     
 end

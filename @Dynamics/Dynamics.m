@@ -8,8 +8,9 @@ classdef Dynamics < handle
         
         spec    % dynamic model specification (e.g. Linear / Dubins)
         
-        % numeric form
-        x       % current state
+        x       % current internal state (without noise)
+        x_e     % current external state (with noise)
+        
         bKFx    % binary array of state for using KF process.
         
         v      % Random variable wrt movement of agent/target
@@ -25,7 +26,7 @@ classdef Dynamics < handle
     
     methods 
         
-        % constructor method (should be changed) i.e. myobj = Dynamics() /
+        % constructor method
         % or specified version of constructor
         function obj = Dynamics()
             obj = Default(obj); % use construct (function name)
@@ -53,11 +54,6 @@ classdef Dynamics < handle
         
         % Initialize states by users
         InitializeState(obj, x);
-        
-        % Plot History of states 
-        % it is specified with respect to (plotting options are on the AGENT/TARGET
-        % class!)
-        Plot(obj);
         
     end
     

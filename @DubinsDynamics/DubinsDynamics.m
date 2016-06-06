@@ -7,8 +7,8 @@ classdef DubinsDynamics < Dynamics
     
     methods
         
-        function o = DubinsDynamics( )
-            o@Dynamics( );
+        function o = DubinsDynamics()
+            o@Dynamics();
         end
         
         % Differential equation
@@ -16,7 +16,12 @@ classdef DubinsDynamics < Dynamics
         dx = StateDerivate(obj, t, x, u);
         
         % make process noise
-        MakeNoise(obj);
+        MakeNoise(obj, option);
+        
+        % Plot History of states 
+        % it is specified with respect to (plotting options are on the AGENT/TARGET
+        % class!)
+        Plot(obj, PlottedClass);
         
     end
     
