@@ -15,8 +15,11 @@ classdef LinearDynamics < Dynamics
         % will be used for ODE45
         dx = StateDerivate(obj, t, x, u);
         
+        % take jacobian matrix (STM, Gamma, Gu)
+        jacobian = TakeJacobian(obj, u, dt, option);
+        
         % make process noise
-        MakeNoise(obj, option);
+        v = MakeNoise(obj); 
         
         % Plot History of states 
         % it is specified with respect to (plotting options are on the AGENT/TARGET

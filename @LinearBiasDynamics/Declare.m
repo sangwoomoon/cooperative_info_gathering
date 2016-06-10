@@ -1,4 +1,4 @@
-function obj = Default( obj )
+function obj = Declare( obj )
 %Default function is for initialization of linear dynamic model with sensor
 %bias, so it is only usable for agents
 %   It entails biases of sensors and position/velocity

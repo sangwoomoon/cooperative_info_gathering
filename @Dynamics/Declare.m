@@ -1,6 +1,6 @@
-function o = Default( o, CONTROL, CLOCK, id, option )
+function obj = Declare( obj )
     
-    o.x = [];
+    obj.x = [];
     switch (option)
         case ('Agent')
             fprintf('Agent %d dynamics is not assigned : should be modelized by users!\n', id)

@@ -1,48 +1,56 @@
-function o = Default ( o, TARGET, ENVIRONMENT, SIMULATION, CLOCK, iAgent, option)
+function obj = Default ( obj, TARGET, ENVIRONMENT, SIMULATION, CLOCK, iAgent, DyanmicsOption, MeasureOption)
 
 % default setting for targets
 % input : empty Agent Class
 %
 % output : set Agent Class
 
-o.id = iAgent;
+obj.id = iAgent;
 
 % initialize control class
-o.CONTROL = Control(ENVIRONMENT); % Control sub-class
+obj.CONTROL = Control(ENVIRONMENT); % Control sub-class
 
 % initialize dynamics class with respect to specified dynamics model
-switch (option)
+switch (DyanmicsOption)
     case ('Linear')
-        o.DYNAMICS = LinearDynamics();
+        obj.DYNAMICS = LinearDynamics();
     case ('LinearBias')
-        o.DYNAMICS = LinearBiasDynamics();
+        obj.DYNAMICS = LinearBiasDynamics();
     case ('Dubins')
-        o.DYNAMICS = DubinsDynamics();
+        obj.DYNAMICS = DubinsDynamics();
     otherwise
-        o.DYNAMICS = Dynamics();
+        obj.DYNAMICS = Dynamics();
 end
-
 
 % initialize measurement class with respect to specified measurement model
 for iTarget = 1 : length(TARGET)
-    MEASURE(iTarget) = Measurement(TARGET(iTarget), CLOCK, o.id);
+    switch (MeasureOption)
+        case ('Linear')
+            MEASURE(iTarget) = LinearMeasure();
+        case ('RangeBearing')
+            MEASURE(iTarget) = RangeBearingMeasure();
+        case ('RangeRate')
+            MEASURE(iTarget) = RangeRateMeasure();
+        otherwise
+            MEASURE(iTarget) = Measurement();
+    end
 end
-o.MEASURE = MEASURE;
+obj.MEASURE = MEASURE;
 
 
-o.TA = TaskAllocation(TARGET, CLOCK); % Task Allocation sub-class
-o.COMM = Communication(SIMULATION, CLOCK); % Communication sub-class
+obj.TA = TaskAllocation(TARGET, CLOCK); % Task Allocation sub-class
+obj.COMM = Communication(SIMULATION, CLOCK); % Communication sub-class
 
 % plotting options setting
-o.plot.statecolor = rand(1,3);
-o.plot.marker = ['o';'x']; % start; end
-o.plot.markersize = 7;
-o.plot.line = '--';
-o.plot.linewidth = 5;
+obj.plot.statecolor = rand(1,3);
+obj.plot.marker = ['o';'x']; % start; end
+obj.plot.markersize = 7;
+obj.plot.line = '--';
+obj.plot.linewidth = 5;
 
-o.plot.legend = [{strcat('Agent ',num2str(o.id))},...
-    {strcat('Agent ',num2str(o.id),' start')},...
-    {strcat('Agent ',num2str(o.id),' end')}];
+obj.plot.legend = [{strcat('Agent ',num2str(obj.id))},...
+    {strcat('Agent ',num2str(obj.id),' start')},...
+    {strcat('Agent ',num2str(obj.id),' end')}];
 
 
 end

@@ -8,8 +8,8 @@ classdef Dynamics < handle
         
         spec    % dynamic model specification (e.g. Linear / Dubins)
         
-        x       % current internal state (without noise)
-        x_e     % current external state (with noise)
+        x       % current state
+        x_pred  % predicted state
         
         bKFx    % binary array of state for using KF process.
         
@@ -20,40 +20,64 @@ classdef Dynamics < handle
         
         % history and plotting options
         hist
-        plot
         
     end
     
-    methods 
+    methods
+        
+     % CONSTRUCTOR PART
         
         % constructor method
         % or specified version of constructor
         function obj = Dynamics()
-            obj = Default(obj); % use construct (function name)
+            obj = Declare(obj); % use construct (function name)
         end
             
-        % Propagate State
-        % update internal state and history
-        % Time update with respect to dynamics (overloading scheme)
-        TimeUpdate(obj, u, CLOCK);
+     % DYNAMICS UPDATE PART
         
-        % State Update
-        % update external state and history
-        StateUpdate(obj, u, CLOCK);
+        % Propagate State
+        % update state and history
+        % Time update with respect to dynamics
+        % use the StateUpdate function to update state, and then store data
+        TimeUpdate(obj, u, CLOCK);
         
         % Predict State
         % State Prediction method (N-step ahead prediction with zero noise)
-        PredictState(obj, CLOCK, u, N);
+        % use the StateUpdate function to update state, and then store data
+        PredictState(obj, x, u, w, CLOCK);
         
-        % Take Jacobian matrix method (output is not object itself, so
-        % output parameters should be remained)
-        output = TakeJacobian(obj, equation, value);
+        % State Update only (this function is used to TimeUpdate /
+        % PredictState)
+        x = StateUpdate(obj, x, u, w, CLOCK); 
         
-        % Set parameters by users
-        SetParameters(obj, bKFx, Q, RelTol, AbsTol);
+        % differential equation that is called by StateUpdatefunction
+        % set as a template and it must be defined into the sub-class
+        dx = StateDerivate(obj, t, x, u, w);
+        
+        % make process noise
+        % set as a template and it must be defined into the sub-class        
+        w = MakeNoise(obj);
+        
+     % JACOBIAN PART
+        
+        % take jacobian matrix (STM, Gamma, Gu)
+        jacobian = TakeJacobian(obj, x, u, w, dt, option);
+        
+     % PARAMETER PART
+        
+        % Set parameters by users (so far we don't need to overload)
+        SetParameters(obj, bKFx, process_noise, RelTol, AbsTol);
         
         % Initialize states by users
-        InitializeState(obj, x);
+        InitializeState(obj, x_initial);
+        
+     % PLOT PART
+        
+        % Plot History of states 
+        % it is specified with respect to (plotting options are on the AGENT/TARGET
+        % class!)
+        % set as a template and it must be defined into the sub-class
+        Plot(obj, PlottedClass);
         
     end
     

@@ -28,9 +28,9 @@ TARGET(1) = Target(ENVIRONMENT, 1, 'Linear');
 TARGET(2) = Target(ENVIRONMENT, 2, 'Dubins');
 
 %--- Agent Classes Setting ----
-AGENT(1) = Agent(TARGET, ENVIRONMENT, SIMULATION, CLOCK, 1, 'Linear'); % linear model
-AGENT(2) = Agent(TARGET, ENVIRONMENT, SIMULATION, CLOCK, 2, 'LinearBias'); % linear model w/ sensor bias
-AGENT(3) = Agent(TARGET, ENVIRONMENT, SIMULATION, CLOCK, 3, 'Dubins'); % unicycle model
+AGENT(1) = Agent(TARGET, ENVIRONMENT, SIMULATION, CLOCK, 1, 'Linear', 'Linear'); % linear dynamics, linear measurement
+AGENT(2) = Agent(TARGET, ENVIRONMENT, SIMULATION, CLOCK, 2, 'LinearBias', 'Linear'); % linear model w/ sensor bias, linear measurement
+AGENT(3) = Agent(TARGET, ENVIRONMENT, SIMULATION, CLOCK, 3, 'Dubins', 'Linear'); % unicycle model, linear measurement
 
 %--- Individual TARGET CLASS setting ----
 TARGET(1).DYNAMICS.InitializeState([1.0,-0.1,1.0,0.1]');
@@ -39,7 +39,7 @@ TARGET(1).DYNAMICS.SetParameters([1 1 1 1], diag([0.2; 0.2]), 1e-4, 1e-6); % par
 TARGET(2).DYNAMICS.InitializeState([-1.0,0.1,0]');
 TARGET(2).DYNAMICS.SetParameters([1 1 1], diag([0.2; 0.2; 0.2]), 1e-4, 1e-6);
 
-%--- Individual AGENT CLASS setting ----
+%--- Individual AGENT CLASS setting :: Dynamics ----
 AGENT(1).DYNAMICS.InitializeState([-5.5,0,5, 0]');
 AGENT(1).DYNAMICS.SetParameters([0 0 0 0], diag([0.2; 0.2]), 1e-4, 1e-6);
 
@@ -49,19 +49,26 @@ AGENT(2).DYNAMICS.SetParameters([1 1 0 0 0 0], diag([0.2; 0.2; 0.2; 0.2]), 1e-4,
 AGENT(3).DYNAMICS.InitializeState([0.2,0.5,0]');
 AGENT(3).DYNAMICS.SetParameters([0 0 0], diag([0.2; 0.2; 0.2]), 1e-4, 1e-6);
  
-for iTarget = 1 : SIMULATION.nTarget
-    AGENT(1).MEASURE(iTarget).Rp = diag([1.15 0.15]);
-    AGENT(2).MEASURE(iTarget).Rp = diag([0.15 1.15]);
-    AGENT(3).MEASURE(iTarget).Rp = diag([1.15 0.15]);
+%--- Individual AGENT CLASS setting :: Measurement ----
+for iAgent = 1 : SIMULATION.nAgent
+    for iTarget = 1 : SIMULATION.nTarget
+        AGENT(iAgent).MEASURE(iTarget).InitializeMeasure('Target',iAgent,iTarget);
+    end
 end
 
-AGENT(1).MEASURE(1).Rt = diag([0.085; 2]); % relative target 1 - agent 1
-AGENT(2).MEASURE(1).Rt = diag([2; 0.085]); % relative target 1 - agent 2
-AGENT(3).MEASURE(1).Rt = diag([0.5; 0.5]); % relative target 1 - agent 3
+for iTarget = 1 : SIMULATION.nTarget
+    AGENT(1).MEASURE(iTarget).SetParameters('on',diag([1.15 0.15]));
+    AGENT(2).MEASURE(iTarget).SetParameters('on',diag([0.15 1.15]));
+    AGENT(3).MEASURE(iTarget).SetParameters('on',diag([1.15 0.15]));
+end
 
-AGENT(1).MEASURE(2).Rt = diag([2; 0.0085]); % relative target 2 - agent 1
-AGENT(2).MEASURE(2).Rt = diag([0.0085; 2]); % relative target 2 - agent 2
-AGENT(3).MEASURE(2).Rt = diag([0.5; 0.5]); % relative target 2 - agent 3
+% AGENT(1).MEASURE(1).Rt = diag([0.085; 2]); % relative target 1 - agent 1
+% AGENT(2).MEASURE(1).Rt = diag([2; 0.085]); % relative target 1 - agent 2
+% AGENT(3).MEASURE(1).Rt = diag([0.5; 0.5]); % relative target 1 - agent 3
+% 
+% AGENT(1).MEASURE(2).Rt = diag([2; 0.0085]); % relative target 2 - agent 1
+% AGENT(2).MEASURE(2).Rt = diag([0.0085; 2]); % relative target 2 - agent 2
+% AGENT(3).MEASURE(2).Rt = diag([0.5; 0.5]); % relative target 2 - agent 3
 
 %--- Network class initialization ----
 NETWORK = Network(inf);
@@ -113,12 +120,15 @@ for iClock = 1 : CLOCK.nt
     % target.dynamics :: nonlinear / linear model (for kalman filter)
     % target.update :: update with respect to time
     for iTarget = 1 : SIMULATION.nTarget
-        TARGET(iTarget).DYNAMICS.TimeUpdate(TARGET(iTarget).CONTROL.u,CLOCK);
+        TARGET(iTarget).DYNAMICS.TimeUpdate(TARGET(iTarget).DYNAMICS.x, TARGET(iTarget).CONTROL.u, CLOCK);
     end
+    
+    % State predction (for testing)
+    AGENT(1).DYNAMICS.PredictState(AGENT(1).DYNAMICS.x, AccInput(1:2,iClock:iClock+10), CLOCK);
     
     %--- Propagate Agent ----
     for iAgent = 1 : SIMULATION.nAgent
-        AGENT(iAgent).DYNAMICS.TimeUpdate(AGENT(iAgent).CONTROL.u,CLOCK); % UpdateAgentDynamics -> TimeUpdate
+        AGENT(iAgent).DYNAMICS.TimeUpdate(AGENT(iAgent).DYNAMICS.x, AGENT(iAgent).CONTROL.u, CLOCK);
     end
     
     %--- Propagate Environment ----

@@ -1,4 +1,4 @@
-function obj = Default( obj )
+function obj = Declare( obj )
 %Default function initialize the Dubins dynamics
 %   s = [e, n, theta]
     
