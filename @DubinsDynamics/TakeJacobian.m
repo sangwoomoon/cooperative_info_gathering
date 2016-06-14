@@ -1,21 +1,38 @@
-function jacobian = TakeJacobian( obj, x, u, w, dt, option )
+function djacobian = TakeJacobian( obj, jacobian, x, u, w, option )
 %COMPUTEJACOBIAN computes the jacobian matrix
 %   dependent on the sub-classes of Dynamics class
 
+
+%       OBSOLETE FUNCTION
+
+
 % consider af/ax(x(t+delta_t/2))delta_t
-switch(option)
+switch(option.jacobian)
     case ('F') % or state
-        jacobian = [0 0 u(1)*cos(obj.x(3))*dt;
-                    0 0 u(1)*sin(obj.x(3))*dt;
-                    0 0                     0];
+        
+        jacobian = reshape(jacobian,size(x),size(x));
+        Amatrix = [ 0 0 -u(1)*cos(x(3));
+                    0 0  u(2)*sin(x(3));
+                    0 0         0     ];
+                
+        djacobian = Amatrix*jacobian;
+        djacobian = reshape(djacobian,size(x)*size(x),1);
+        
     case ('Gamma') % Gw is better, name w
-        jacobian = [   dt      0       0;
-                        0     dt       0;
-                        0      0      dt];
+        
+        jacobian = reshape(jacobian,size(x),size(x));
+        Amatrix = [ 0 0 -u(1)*cos(x(3));
+                    0 0  u(2)*sin(x(3));
+                    0 0         0     ];
+                
+        Dmatrix = eye(size(Amatrix));
+        
+        djacobian = Amatrix*jacobian + Dmatrix;
+        djacobian = reshape(djacobian,size(x)*size(x),1);
+        
     case ('Gu') % use u instead of Gu
-        jacobian = [ sin(obj.x(3))*dt      0;
-                    -cos(obj.x(3))*dt      0;
-                                    0     dt];
+        
+ 
 end
 
 

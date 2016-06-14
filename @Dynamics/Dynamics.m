@@ -48,7 +48,7 @@ classdef Dynamics < handle
         
         % State Update only (this function is used to TimeUpdate /
         % PredictState)
-        x = StateUpdate(obj, x, u, w, CLOCK); 
+        [x,F,Gamma,Gu] = StateUpdate(obj, x, u, w, CLOCK); 
         
         % differential equation that is called by StateUpdatefunction
         % set as a template and it must be defined into the sub-class
@@ -58,10 +58,12 @@ classdef Dynamics < handle
         % set as a template and it must be defined into the sub-class        
         w = MakeNoise(obj);
         
-     % JACOBIAN PART
-        
-        % take jacobian matrix (STM, Gamma, Gu)
-        jacobian = TakeJacobian(obj, x, u, w, dt, option);
+%      % JACOBIAN PART - now included in StateUpdate in one unique process
+%         
+%         % take jacobian matrix (STM, Gamma, Gu)
+%         jacobian = JacobianUpdate(obj, x, u, w, dt, option);
+%         
+%         djacobian = TakeJacobian( obj, jacobian, x, u, w, option );
         
      % PARAMETER PART
         
