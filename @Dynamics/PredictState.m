@@ -5,7 +5,7 @@ x_curr = x;
 
 % iterate with respect to finite horizon steps
 for iStep = 1 : length(u_vec(1,:))
-    x_next = obj.StateUpdate(x_curr, u_vec(:,iStep), w_vec(:,iStep), CLOCK);
+    x_next = obj.StateUpdate(x_curr, u_vec(:,iStep), w_vec, CLOCK);
     x_pred(:,iStep) = x_next;
     x_curr = x_next;
 end

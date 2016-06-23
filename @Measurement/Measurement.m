@@ -9,7 +9,7 @@ classdef Measurement < handle
         
         y       % measurement [e_rel,n_rel,e_abs,n_abs] 
         
-        w       % random measurement noise
+        v       % random measurement noise
         R       % measurement noise variances
                 
         hist    % History 
@@ -23,25 +23,20 @@ classdef Measurement < handle
         end
        
         % parameter setting :: measurement noise covariance matrix (R)
-        SetParameters(obj, R, mode);
+        SetParameters(obj, MeasureNoiseCov, ActionMode);
         
         % initialize Mesurement setting
         InitializeMeausre(obj);
         
         % Generate Measurement matrix (H)
         % value would be with respect to agent state, target state, and sensor bias
-        output = TakeJacobian(obj, equation, value);
+        output = TakeJacobian(obj);
         
         % Generate measurement noise :: should be inside of sub-classes!
-        MakeNoise(obj);
+        MeasureNoise = MakeNoise(obj);
         
         % plotting function for measurement (in terms of locations)
         Plot(obj, PlottedClass);
-        
-        % convert states in order to take measurement (standardize
-        % coordinate to linear-bias coordinate (zero value if no bias in
-        % previous coordiate)
-        ConverState(obj, beforeSpec);
         
     end
     

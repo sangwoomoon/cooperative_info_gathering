@@ -8,7 +8,7 @@ hold on;
 %% INITIAL SETTING %%%%
 
 %--- Simulation Class Setting ----
-nAgent = 3;
+nAgent = 2;
 nTarget = 2;
 nLandMark = 1;
 SIMULATION = Simulation(nAgent,nTarget,nLandMark);
@@ -29,8 +29,8 @@ TARGET(2) = Target(ENVIRONMENT, 2, 'Dubins');
 
 %--- Agent Classes Setting ----
 AGENT(1) = Agent(TARGET, ENVIRONMENT, SIMULATION, CLOCK, 1, 'Linear', 'Linear'); % linear dynamics, linear measurement
-AGENT(2) = Agent(TARGET, ENVIRONMENT, SIMULATION, CLOCK, 2, 'LinearBias', 'Linear'); % linear model w/ sensor bias, linear measurement
-AGENT(3) = Agent(TARGET, ENVIRONMENT, SIMULATION, CLOCK, 3, 'Dubins', 'Linear'); % unicycle model, linear measurement
+AGENT(2) = Agent(TARGET, ENVIRONMENT, SIMULATION, CLOCK, 2, 'Dubins', 'Linear'); % linear model w/ sensor bias, linear measurement
+% AGENT(3) = Agent(TARGET, ENVIRONMENT, SIMULATION, CLOCK, 3, 'LinearBias', 'Linear'); % unicycle model, linear measurement
 
 %--- Individual TARGET CLASS setting ----
 TARGET(1).DYNAMICS.InitializeState([1.0,-0.1,1.0,0.1]');
@@ -44,10 +44,10 @@ AGENT(1).DYNAMICS.InitializeState([-5.5,0,5, 0]');
 AGENT(1).DYNAMICS.SetParameters([0 0 0 0], diag([0.2; 0.2]), 1e-4, 1e-6);
 
 AGENT(2).DYNAMICS.InitializeState([-0.3,0.4,1.5,0,-5, 0]');
-AGENT(2).DYNAMICS.SetParameters([1 1 0 0 0 0], diag([0.2; 0.2; 0.2; 0.2]), 1e-4, 1e-6);
+AGENT(2).DYNAMICS.SetParameters([1 1 0 0 0 0], diag([0.2; 0.2; 0.2]), 1e-4, 1e-6);
 
-AGENT(3).DYNAMICS.InitializeState([0.2,0.5,0]');
-AGENT(3).DYNAMICS.SetParameters([0 0 0], diag([0.2; 0.2; 0.2]), 1e-4, 1e-6);
+% AGENT(3).DYNAMICS.InitializeState([0.2,0.5,0]');
+% AGENT(3).DYNAMICS.SetParameters([0 0 0], diag([0.2; 0.2; 0.2; 0.2]), 1e-4, 1e-6);
  
 %--- Individual AGENT CLASS setting :: Measurement ----
 for iAgent = 1 : SIMULATION.nAgent
@@ -59,7 +59,7 @@ end
 for iTarget = 1 : SIMULATION.nTarget
     AGENT(1).MEASURE(iTarget).SetParameters('on',diag([1.15 0.15]));
     AGENT(2).MEASURE(iTarget).SetParameters('on',diag([0.15 1.15]));
-    AGENT(3).MEASURE(iTarget).SetParameters('on',diag([1.15 0.15]));
+%    AGENT(3).MEASURE(iTarget).SetParameters('on',diag([1.15 0.15]));
 end
 
 % AGENT(1).MEASURE(1).Rt = diag([0.085; 2]); % relative target 1 - agent 1
@@ -120,15 +120,18 @@ for iClock = 1 : CLOCK.nt
     % target.dynamics :: nonlinear / linear model (for kalman filter)
     % target.update :: update with respect to time
     for iTarget = 1 : SIMULATION.nTarget
-        TARGET(iTarget).DYNAMICS.TimeUpdate(TARGET(iTarget).DYNAMICS.x, TARGET(iTarget).CONTROL.u, CLOCK);
+        TARGET(iTarget).DYNAMICS.PropagateState(TARGET(iTarget).DYNAMICS.x, TARGET(iTarget).CONTROL.u, CLOCK);
     end
     
     % State predction (for testing)
-    AGENT(1).DYNAMICS.PredictState(AGENT(1).DYNAMICS.x, AccInput(1:2,iClock:iClock+10), CLOCK);
+    for iter = 1 : 10
+        PredictedNoise(iter,:) = AGENT(1).DYNAMICS.MakeNoise('Gaussian');
+    end
+    AGENT(1).DYNAMICS.PredictState(AGENT(1).DYNAMICS.x, AccInput(1:2,iClock:iClock+10), PredictedNoise, CLOCK);
     
     %--- Propagate Agent ----
     for iAgent = 1 : SIMULATION.nAgent
-        AGENT(iAgent).DYNAMICS.TimeUpdate(AGENT(iAgent).DYNAMICS.x, AGENT(iAgent).CONTROL.u, CLOCK);
+        AGENT(iAgent).DYNAMICS.PropagateState(AGENT(iAgent).DYNAMICS.x, AGENT(iAgent).CONTROL.u, CLOCK);
     end
     
     %--- Propagate Environment ----

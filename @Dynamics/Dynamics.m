@@ -9,16 +9,15 @@ classdef Dynamics < handle
         spec    % dynamic model specification (e.g. Linear / Dubins)
         
         x       % current state
-        x_pred  % predicted state
         
         bKFx    % binary array of state for using KF process.
         
-        v      % Random variable wrt movement of agent/target
+        w      % Random variable wrt movement of agent/target
         Q      % process noise for platform (accel noise)
         
         ODEoption % ODE45 integration option
         
-        % history and plotting options
+        % history and plotting options 
         hist
         
     end
@@ -39,39 +38,34 @@ classdef Dynamics < handle
         % update state and history
         % Time update with respect to dynamics
         % use the StateUpdate function to update state, and then store data
-        TimeUpdate(obj, u, CLOCK);
+        PropagateState(obj, CurrentState, Input, CLOCK);
         
         % Predict State
         % State Prediction method (N-step ahead prediction with zero noise)
         % use the StateUpdate function to update state, and then store data
-        PredictState(obj, x, u, w, CLOCK);
+        PredictState(obj, CurrentState, InputArray, ProcessNoiseArray, CLOCK);
         
-        % State Update only (this function is used to TimeUpdate /
+        % State Update only (this function is used into TimeUpdate /
         % PredictState)
-        [x,F,Gamma,Gu] = StateUpdate(obj, x, u, w, CLOCK); 
+        [PredictedState,StateJacobian,NoiseJacobian,InputJacobian] = ...
+            StateUpdate(obj, CurrentState, Input, ProcessNoise, CLOCK); 
         
         % differential equation that is called by StateUpdatefunction
         % set as a template and it must be defined into the sub-class
-        dx = StateDerivate(obj, t, x, u, w);
+        dx = StateDerivative(obj, Time, CurrentState, Input, ProcessNoise);
         
-        % make process noise
+        % make Gaussian process noise
         % set as a template and it must be defined into the sub-class        
-        w = MakeNoise(obj);
+        ProcessNoise = MakeNoise(obj, NoiseOption);
         
-%      % JACOBIAN PART - now included in StateUpdate in one unique process
-%         
-%         % take jacobian matrix (STM, Gamma, Gu)
-%         jacobian = JacobianUpdate(obj, x, u, w, dt, option);
-%         
-%         djacobian = TakeJacobian( obj, jacobian, x, u, w, option );
         
      % PARAMETER PART
         
         % Set parameters by users (so far we don't need to overload)
-        SetParameters(obj, bKFx, process_noise, RelTol, AbsTol);
+        SetParameters(obj, FlagForKF, ProcessNoiseCov, RelativeTolerance, AbsoluteTolerance);
         
         % Initialize states by users
-        InitializeState(obj, x_initial);
+        InitializeState(obj, xInitial);
         
      % PLOT PART
         

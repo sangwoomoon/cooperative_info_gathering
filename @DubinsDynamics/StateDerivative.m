@@ -1,4 +1,4 @@
-function dx = StateDerivate( obj, t, x, u, w, option )
+function dx = StateDerivative( obj, t, x, u, w, option )
 %STATEDERIVATE in Dubins Dynamics Model generates the 
 %derivatives of states to be used in ODE45.m function.
 %
@@ -20,9 +20,9 @@ function dx = StateDerivate( obj, t, x, u, w, option )
             Dmatrix = eye(3);
 
             % state
-            dx(1) = u(1)*cos(x(3)) + obj.v(1); % cosine input plus its noise
-            dx(2) = u(1)*sin(x(3)) + obj.v(2); % cosine input plus its noise
-            dx(3) = u(2) + obj.v(3);           % heading input plus its noise
+            dx(1) = u(1)*cos(x(3)) + obj.w(1); % cosine input plus its noise
+            dx(2) = u(1)*sin(x(3)) + obj.w(2); % cosine input plus its noise
+            dx(3) = u(2) + obj.w(3);           % heading input plus its noise
 
             % state transition matrix
             phi = reshape(x(4:12),3,3);
@@ -38,9 +38,9 @@ function dx = StateDerivate( obj, t, x, u, w, option )
 
             dx = [ dx(1); dx(2); dx(3); reshape(phidot, 3*3, 1); reshape(Gammadot, 3*3, 1); reshape(Gudot, 3*2, 1)];
         case('state') % integrate just state
-            dx(1) = u(1)*cos(x(3)) + obj.v(1); % cosine input plus its noise
-            dx(2) = u(1)*sin(x(3)) + obj.v(2); % cosine input plus its noise
-            dx(3) = u(2) + obj.v(3);           % heading input plus its noise
+            dx(1) = u(1)*cos(x(3)) + obj.w(1); % cosine input plus its noise
+            dx(2) = u(1)*sin(x(3)) + obj.w(2); % cosine input plus its noise
+            dx(3) = u(2) + obj.w(3);           % heading input plus its noise
             
             dx = [ dx(1); dx(2); dx(3)];
     end

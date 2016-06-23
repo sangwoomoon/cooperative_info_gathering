@@ -1,4 +1,4 @@
-function dx = StateDerivate( obj, t, x, u, w, option )
+function dx = StateDerivative( obj, t, x, u, w, option )
 %STATEDERIVATE in Linear Dynamics Model generates the derivatives of states
 %
 %   Modifications:
@@ -24,15 +24,15 @@ switch(option)
 
         % state
         dx(1) = x(2);
-        dx(2) = u(1) + obj.v(1); % acceleration input and its noise (from process)
+        dx(2) = u(1) + obj.w(1); % acceleration input and its noise (from process)
         dx(3) = x(4);
-        dx(4) = u(2) + obj.v(2); % acceleration input and its noise (from process)
+        dx(4) = u(2) + obj.w(2); % acceleration input and its noise (from process)
 
         % state transition matrix
         phi = reshape(x(5:20),4,4);
         phidot = Amatrix*phi;
 
-        % process noise transition matrix
+        % process noise transition matrix (noise for all states?)
         Gamma = reshape(x(21:36),4,4);
         Gammadot = Amatrix*Gamma + Dmatrix;
 

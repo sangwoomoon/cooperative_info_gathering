@@ -5,9 +5,9 @@ function obj = MakeNoise( obj, option )
 
 switch (option)
     case ('zero')
-        obj.v = zeros(2,1); % zero noise (used for prediction/estimation)
+        obj.w = zeros(2,1); % zero noise (used for prediction/estimation)
     otherwise
-        obj.v = (mvnrnd(zeros(1,2),obj.Q,1))'; % noise for inputs
+        obj.w = (mvnrnd(zeros(1,2),obj.Q,1))'; % noise for inputs
 end
 
 end

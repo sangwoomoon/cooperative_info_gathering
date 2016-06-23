@@ -1,4 +1,4 @@
-function obj = TimeUpdate( obj, u, CLOCK )
+function obj = PropagateState( obj, x, u, CLOCK )
 %TIMEUPDATE calls the function for updating states and store updated date into current state and its history
 
 % make random noise with respect to covariance matrix Q (set in Gaussian

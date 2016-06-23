@@ -19,7 +19,7 @@ classdef LinearBiasDynamics < Dynamics
         jacobian = TakeJacobian(obj, u, dt, option);
         
         % make process noise
-        v = MakeNoise(obj); 
+        w = MakeNoise(obj, NoiseOption); 
         
         % Plot History of states 
         % it is specified with respect to (plotting options are on the AGENT/TARGET
