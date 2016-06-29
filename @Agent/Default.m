@@ -33,7 +33,7 @@ o.Qp = diag([0.05 0.05]);
 o.hist.s = o.s; % store initial condition
 o.hist.stamp = 0; % store initialized time
 
-o.TA = TaskAllocation(TARGET, CLOCK); % Task Allocation sub-class
+o.TA = Voronoi(TARGET, CLOCK); % Task Allocation sub-class
 o.COMM = Communication(SIMULATION, CLOCK); % Communication sub-class
 
 for iTarget = 1 : length(TARGET)

@@ -27,7 +27,7 @@ classdef Agent < handle
         LOCAL_KF % KF Estimation Class (sub-class of agent)
         DECEN_KF % KF Estimation Class (sub-class of agent)
         FDDF_KF % Factorized DDF based KF Estimation Class 
-        
+                
         hist    % History
         plot    % Plot handle
         

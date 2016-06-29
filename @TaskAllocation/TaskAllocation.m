@@ -1,6 +1,11 @@
 classdef TaskAllocation < handle
     properties % ( SetAccess = public, GetAccess = public )
         
+        TrackID  % track (measured) taraget ID from TA
+        
+        hist
+        plot
+        
     end % Properties
     
     methods

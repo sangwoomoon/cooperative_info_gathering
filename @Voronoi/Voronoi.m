@@ -1,4 +1,4 @@
-classdef Voronoi < handle
+classdef Voronoi < TaskAllocation
     %VORONOI Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -10,8 +10,8 @@ classdef Voronoi < handle
     end % Properties
     
     methods
-        function o = Voronoi( CLOCK )
-             o = Default(o, CLOCK );
+        function o = Voronoi( TARGET, CLOCK )
+             o@TaskAllocation( TARGET, CLOCK );
         end
     end
     

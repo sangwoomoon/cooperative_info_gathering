@@ -23,12 +23,6 @@ nt = 100;
 FDDFt = 0.1;
 CLOCK = Clock(t0,dt,nt,FDDFt);
 
-%--- Voronoi Class (under SIM) Setting ----
-SIMULATION.VORONOI = Voronoi(CLOCK);
-
-%--- Lloyd Class (under SIM) setting ----
-SIMULATION.LLOYD = Lloyd(CLOCK);
-
 %--- Environment Classes Setting ----
 ENVIRONMENT = Environment(clock);
 
@@ -81,10 +75,7 @@ for iClock = 1 : CLOCK.nt
     
     %--- Propagate Environment ----
     ENVIRONMENT.UpdateEnvironmentDynamics(CLOCK,SIMULATION.sRandom);
-    
-    %--- Voronoi Partition ----
-    SIMULATION.VORONOI.TakeVoronoi(AGENT, ENVIRONMENT, SIMULATION );
-    
+        
     %--- Task Allocation from Voronoi cell ----
     for iAgent = 1 : SIMULATION.nAgent
        % AGENT(iAgent).TA.TaskProcedure(); 
@@ -108,29 +99,26 @@ for iClock = 1 : CLOCK.nt
         % FDDF KF Process :: same procedure as Local KF, but it uses fused
         % estimated data (Xhat, Phat) from the communication.
         % The first iteration is the same as Local KF.
-%         AGENT(iAgent).FDDF_KF.KalmanFilterAlgorithm(SIMULATION,AGENT(iAgent),CLOCK,'fDDF');
+        % AGENT(iAgent).FDDF_KF.ExtendedKalmanFilterAlgorithm(SIMULATION,AGENT(iAgent),CLOCK,'fDDF');
     end
-    
-    %--- Lloyd's Algorithm :: Compute Centroid
-    SIMULATION.LLOYD.ComputeCentroid(SIMULATION);
-    SIMULATION.LLOYD.AllocateCentroid(AGENT);
-    
-    %--- One-step Ahead Control Decision ----
-    for iAgent = 1 : SIMULATION.nAgent
-        AGENT(iAgent).CONTROL.ComputeInput(AGENT(iAgent),'Lloyd');
-    end
-    
+        
     %--- Communicate ----
 %     for iAgent = 1 : SIMULATION.nAgent
-%        AGENT(iAgent).COMM.CommunicationProcedure(AGENT, SIMULATION, AGENT(iAgent).id); 
+%         AGENT(iAgent).COMM.CommunicationProcedure(AGENT, SIMULATION, AGENT(iAgent).id);
 %     end
    
     %--- DDF Information Fusion (managing xhat and Phat) ----
-%      if rem(iClock,CLOCK.delt.FDDF) == 0
+%     if rem(iClock,CLOCK.delt.FDDF) == 0
 %         for iAgent = 1 : SIMULATION.nAgent
 %             AGENT(iAgent).FDDF.DataFusion(AGENT(iAgent), SIMULATION, CLOCK, 'MMNB');
 %         end
-%      end
+%     end
+
+    %--- Voronoi Partition ----
+    for iAgent = 1 : SIMULATION.nAgent
+        AGENT(iAgent).TA.TakeVoronoi(AGENT(iAgent), ENVIRONMENT, SIMULATION );
+        AGENT(iAgent).TA.TakeTargetID(AGENT(iAgent), SIMULATION);
+    end
     
     fprintf('iteration = %d\n',iClock);
     
