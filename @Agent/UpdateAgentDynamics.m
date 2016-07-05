@@ -6,10 +6,14 @@ sRandom;
 % chosen from the multivariate normal distribution with 1-by-D mean
 % vector MU, and D-by-D covariance matrix SIGMA.
 
-%%Simulate platform movements
-o.vp = (mvnrnd(zeros(1,2),o.Qp,1))';
-% actual bias would be exactly same
-o.s = o.Fp*o.s + o.Gamp*o.vp + o.Gu*o.CONTROL.u; 
+%%Simulate platform movements (for heading input only)
+o.vp = (mvnrnd(zeros(1,1),o.Qp,1))';
+
+% unicycle model!
+o.s(3) = o.s(3) + o.CONTROL.u*CLOCK.dt + o.vp*CLOCK.dt;
+
+o.s(1) = o.s(1) + o.speed*cos(o.s(3))*CLOCK.dt;
+o.s(2) = o.s(2) + o.speed*sin(o.s(3))*CLOCK.dt;
 
 % store current state to history
 o.hist.s(:,end+1) = o.s;

@@ -14,15 +14,19 @@ for iCell = 1 : length(o.cell)
         Vy = [Vy; o.vertices(o.cell{iCell}(iVert),2)];
     end
     
-    if inpolygon(AGENT.s(1),AGENT.s(3),Vx,Vy) 
+    if ~isempty(Vx)
         
-        for iTarget = 1 : SIMULATION.nTarget
+        if inpolygon(AGENT.s(1),AGENT.s(2),Vx,Vy)
             
-            targetPos = [AGENT.LOCAL_KF.Xhat(4*(iTarget-1)+1);...
-                         AGENT.LOCAL_KF.Xhat(4*(iTarget-1)+3)]; 
-            
-            if inpolygon(targetPos(1),targetPos(2),Vx,Vy)
-                o.TrackID = iTarget;
+            for iTarget = 1 : SIMULATION.nTarget
+                
+                targetPos = [AGENT.LOCAL_KF(iTarget).Xhat(1);...
+                    AGENT.LOCAL_KF(iTarget).Xhat(3)];
+                
+                if inpolygon(targetPos(1),targetPos(2),Vx,Vy)
+                    o.TrackID = iTarget;
+                end
+                
             end
             
         end

@@ -10,14 +10,10 @@ end
 for iAgent = 1 : o.nAgent
     AGENT(iAgent).Plot();
     legend([get(legend(gca),'string'),AGENT(iAgent).plot.legend]);
-    for iTarget = 1 : o.nTarget
-        AGENT(iAgent).MEASURE(iTarget).Plot(AGENT(iAgent));
-        legend([get(legend(gca),'string'),AGENT(iAgent).MEASURE(iTarget).plot.legend]);
-    end
-end
 
-% Voronoi Centroid plot (FIGURE 1)
-o.LLOYD.Plot();
+    AGENT(iAgent).MEASURE.Plot(AGENT(iAgent));
+    legend([get(legend(gca),'string'),AGENT(iAgent).MEASURE.plot.legend]);
+end
 
 axis equal;
 
@@ -28,8 +24,9 @@ axis equal;
 
 % Individual Estimation plot
 for iAgent = 1 : o.nAgent
-    AGENT(iAgent).LOCAL_KF.Plot(AGENT(iAgent),TARGET,CLOCK,o,'local');
-%     AGENT(iAgent).FDDF_KF.Plot(AGENT(iAgent),TARGET,CLOCK,o,'fDDF');
+    for iTarget = 1 : o.nTarget
+        AGENT(iAgent).LOCAL_KF(iTarget).Plot(AGENT(iAgent),TARGET(iTarget),CLOCK,o,'local');
+    end
 end
 
 end

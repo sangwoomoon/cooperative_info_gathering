@@ -1,9 +1,9 @@
-function G = TakeMeasurement( o, Xbar, AGENT )
+function G = TakeMeasurement( o, Xbar, s )
 %TAKEMEASUREMENT Summary of this function goes here
 %   Detailed explanation goes here
 
-G = [sqrt((Xbar(1)-AGENT.s(1))^2+(Xbar(3)-AGENT.s(3))^2);
-    atan2(Xbar(3)-AGENT.s(3),Xbar(1)-AGENT.s(1))];
+G = [sqrt((Xbar(1)-s(1))^2+(Xbar(3)-s(2))^2);
+    atan2(Xbar(3)-s(2),Xbar(1)-s(1))];
 
 end
 

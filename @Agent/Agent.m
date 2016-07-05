@@ -3,12 +3,14 @@ classdef Agent < handle
         
         id      % Agent id (integers)
         
-        s       % current state [e,edot,n,ndot]
+        speed   % constant speed
+        
+        s       % current state [e,n,theta]
         
         bKFs    % binary array of state for using KF process.
 
         
-        % Platform motion model: platform states are [e,edot,n,ndot]
+        % Platform motion model: platform states are [e,n,theta]
         Fp      % State transition matrix
         Gamp    % Process noise input matrix
         

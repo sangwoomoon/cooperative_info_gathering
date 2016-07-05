@@ -1,22 +1,10 @@
 function o = ExtendedKalmanFilterAlgorithm( o, SIMULATION, AGENT, TARGET, CLOCK, option )
 
-o.F = [];
-o.Gamma = [];
-o.Q = [];
-o.H = [];
-o.V = [];
-o.R = [];
-
-for ii = 1 : length(TARGET)
-    o.F = blkdiag(o.F, AGENT.Fp);
-    o.Gamma = blkdiag(o.Gamma, AGENT.Gamp);
-    o.Q = blkdiag(o.Q, TARGET(ii).Qt);
-    o.ComputeH(AGENT,TARGET(ii));
-    o.V = blkdiag(o.V, eye(length(AGENT.MEASURE(ii).y)));
-    o.R = blkdiag(o.R, AGENT.MEASURE(ii).Rt);
-end
-
+% re-initialize matrix
 o.Y = [];
+o.H = [];
+
+count = 0;
 
 switch (option)
     case 'central'
@@ -26,49 +14,61 @@ switch (option)
             end
         end
     case 'local'
-        for iTarget = 1 : SIMULATION.nTarget
-            o.Y = [o.Y;AGENT.MEASURE(iTarget).y];
+        for iAgent = 1 : SIMULATION.nAgent
+           if AGENT.COMM.C(iAgent) == 1 % received data from agent (include agent itself)
+              if AGENT.COMM.Z(iAgent).targetID == TARGET.id % measured target is the same as target to estimate
+                  
+                  count = count + 1;
+
+                  o.Y = [o.Y; AGENT.COMM.Z(iAgent).y];
+                      % compute measurement matrix
+                  o.ComputeH(AGENT.COMM.Z(iAgent).s,TARGET.x);
+
+              end
+           end
         end
-    case 'decentral'
-        for iTarget = 1 : SIMULATION.nTarget
-            for iAgent = 1 : SIMULATION.nAgent
-                if AGENT.id == iAgent % if index is the agent itself
-                    o.u = [o.u;AGENT.CONTROL.u];
-                    o.Y = [o.Y;AGENT.MEASURE(iTarget).y];
-                else
-                    o.u = [o.u;AGENT.COMM.Z(iAgent).u];
-                    o.Y = [o.Y;AGENT.COMM.Z(iAgent).y];
-                end
-            end
-        end
-    case 'fDDF'
-        for iTarget = 1 : SIMULATION.nTarget
-            o.Y = [o.Y; AGENT.MEASURE(iTarget).y];
-        end
-        o.Xhat = AGENT.FDDF.XhatDDF;
-        o.Phat = AGENT.FDDF.PhatDDF;
+end
+
+% initialize matrix
+o.F = TARGET.Ft;
+o.Gamma = TARGET.Gt;
+o.Q = TARGET.Qt;
+o.V = [];
+o.R = [];
+
+for ii = 1 : count
+    o.V = blkdiag(o.V, eye(length(AGENT.MEASURE.y)));
+    o.R = blkdiag(o.R, AGENT.MEASURE.Rt);
 end
     
 %%Time update
 Xbar = o.F*o.Xhat;
 Pbar = o.F*o.Phat*o.F' + o.Gamma*o.Q*o.Gamma';
 
-%%Measurement update
-L = Pbar*o.H'*(o.H*Pbar*o.H'+o.V*o.R*o.V')^(-1);
-
-G = [];
-
-%--- Measurement ----
-for iTarget = 1 : length(TARGET)
-    dG = o.TakeMeasurement(Xbar(length(TARGET(iTarget).x)*(iTarget-1)+1:length(TARGET(iTarget).x)*iTarget,1),AGENT);
-    G = [G;dG];
+if count == 0
+    Xhat = Xbar;
+    Phat = Pbar;
+else
+    
+    %%Measurement update
+    L = Pbar*o.H'*(o.H*Pbar*o.H'+o.V*o.R*o.V')^(-1);
+    
+    G = [];
+    
+    %--- Measurement ----
+    for iAgent = 1 : SIMULATION.nAgent
+        if AGENT.COMM.Z(iAgent).targetID == TARGET.id % only concerned agents that measure this target (we know the location of agents via communication)
+            dG = o.TakeMeasurement(Xbar,AGENT.COMM.Z(iAgent).s);
+            G = [G;dG];
+        end
+    end
+    
+    Xhat = Xbar+ L*(o.Y-G);
+    Phat = (eye(o.nState) - L*o.H)*Pbar;
+    
 end
 
-Xhat = Xbar+ L*(o.Y-G);
-Phat = (eye(o.nState) - L*o.H)*Pbar;
-
 %%Store and update
-o.hist.Y(:,end+1) = o.Y;
 o.hist.Xhat(:,end+1) = Xhat;
 o.hist.Phat(:,:,end+1) = Phat;
 o.hist.stamp(:,end+1) = CLOCK.ct;

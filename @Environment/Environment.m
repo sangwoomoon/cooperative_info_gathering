@@ -9,8 +9,8 @@ classdef Environment < handle
     end % Properties
     
     methods
-        function o = Environment ( clock )
-            o = Default( o, clock );
+        function o = Environment ( clock, size )
+            o = Default( o, clock, size );
         end
         
         o = get( o, varargin );

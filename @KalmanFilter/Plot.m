@@ -26,42 +26,37 @@ for iTargetState = 1 : length(TARGET(1).x)
 end
 
 
-% Target Error Plot
-for iTarget = 1 : length(TARGET)
+% Target Error Plot : for single target to draw
     
     % Target state errors:
-    figure(iTarget+1), hold on;
+    figure(TARGET.id+1), hold on;
     if AGENT.id == 1
-        suptitle(['Target ',num2str(iTarget), ' State Estimation Errors'])
+        suptitle(['Target ',num2str(TARGET.id), ' State Estimation Errors'])
     end
     
 %     if TARGET(iTarget).bLandMark == 0 % if the target is a landmark, the plot should be stopped
     for iKFstate = 1 : tl
         subplot(TargetStateList(iKFstate)), hold on;
-        plot(CLOCK.tvec,o.hist.Xhat(tl*(iTarget-1)+iKFstate,2:end)-TARGET(iTarget).hist.x(iKFidxt(iKFstate),2:end),'marker',o.plot.htmarker,'color',o.plot.htcolor);
-        plot(CLOCK.tvec,3*sqrt(squeeze(o.hist.Phat(tl*(iTarget-1)+iKFstate,tl*(iTarget-1)+iKFstate,2:end))),o.plot.phatmarker,'color',o.plot.phatcolor)
-        plot(CLOCK.tvec,-3*sqrt(squeeze(o.hist.Phat(tl*(iTarget-1)+iKFstate,tl*(iTarget-1)+iKFstate,2:end))),o.plot.phatmarker,'color',o.plot.phatcolor)
+        plot(CLOCK.tvec,o.hist.Xhat(iKFstate,2:end)-TARGET.hist.x(iKFidxt(iKFstate),2:end),'marker',o.plot.htmarker,'color',o.plot.htcolor);
+        plot(CLOCK.tvec,3*sqrt(squeeze(o.hist.Phat(iKFstate,iKFstate,2:end))),o.plot.phatmarker,'color',o.plot.phatcolor)
+        plot(CLOCK.tvec,-3*sqrt(squeeze(o.hist.Phat(iKFstate,iKFstate,2:end))),o.plot.phatmarker,'color',o.plot.phatcolor)
         
         if iKFstate == tl
             xlabel('Time (secs)')
         end
-        ylabel(AGENT(1).LOCAL_KF.plot.ylabeltarget(iKFstate));
+        ylabel(AGENT(1).LOCAL_KF(TARGET.id).plot.ylabeltarget(iKFstate));
     
         if iKFstate == 1
             switch option
                 case 'central' % Centralized Case
                     legend([get(legend(gca),'string'),SIMULATION.CENTRAL_KF.plot.legend]);
                 case 'local' % local case
-                    legend([get(legend(gca),'string'),AGENT.LOCAL_KF.plot.legend]);
-                case 'decentral' % decentralized case
-                    legend([get(legend(gca),'string'),AGENT.DECEN_KF.plot.legend]);
-                case 'fDDF' % fDDF based local case
-                    legend([get(legend(gca),'string'),AGENT.FDDF_KF.plot.legend]);
+                    legend([get(legend(gca),'string'),AGENT.LOCAL_KF(TARGET.id).plot.legend]);
             end
         end
     %         end
     end
-end
+
 
 % % Agent Error Plot.
 % for iAgent = 1 : length(AGENT)

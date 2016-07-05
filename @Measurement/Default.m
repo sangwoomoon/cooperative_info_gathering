@@ -16,6 +16,9 @@ function o = Default (o, TARGET, CLOCK, iAgent)
 for iTarget = 1 : length(TARGET)
     o.y(2*(iTarget-1)+1:2*iTarget) = nan(2,1);
     o.hist.y(2*(iTarget-1)+1:2*iTarget) = nan(2,1);
+    
+    o.id = nan(1,1);
+    o.hist.id = o.id;
 end
 
 o.y = o.y';             % transpose to make vector form

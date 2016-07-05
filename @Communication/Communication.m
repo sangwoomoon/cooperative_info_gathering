@@ -4,6 +4,8 @@ classdef Communication < handle
         C % communication Matrix (sender : row - receiver : col)
         Z % received package through communication
         
+        beta % probability of Empirical Packet model (measured on 03182012)
+        
     end % Properties
     
     methods

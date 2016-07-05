@@ -1,7 +1,8 @@
 classdef Measurement < handle
     properties % ( SetAccess = public, GetAccess = public )
         
-        y       % measurement [e_rel,n_rel,e_abs,n_abs]
+        y       % measurement [range; bearing]
+        id      % measured target ID
         
         Hp      % Ownship sensor measurement matrix (agent part)
         Ht      % Ownship sensor measurement matrix (target part)

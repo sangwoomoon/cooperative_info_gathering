@@ -1,3 +1,6 @@
 function o = Default (o, SIMULATION, CLOCK)
-    o.C = ones(SIMULATION.nAgent)-eye(SIMULATION.nAgent); % perfect communication
+    
+    o.beta = nan(1,SIMULATION.nAgent);
+    o.C = nan(1,SIMULATION.nAgent);
+    
 end

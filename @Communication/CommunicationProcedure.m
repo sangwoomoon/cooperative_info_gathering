@@ -1,25 +1,21 @@
-function o = CommunicationProcedure (o, AGENT, SIMULATION, id)
+function o = CommunicationProcedure (o, AGENT, SIMULATION )
 
-iComm = 1;
+% dataset : agent id / status, input, and measured target id/measurement
+
 for iSender = 1 : SIMULATION.nAgent
-    if o.C(iSender,id) == 1 % Receiver and Sender should be different
-        Z(iComm).id = iSender;
-        for iTarget = 1 : SIMULATION.nTarget
-            Z(iComm).y{iTarget} = AGENT(iSender).MEASURE(iTarget).y;
-        end
-        Z(iComm).u = AGENT(iSender).CONTROL.u;
-        % Z(iComm).R = AGENT(iSender).DECEN_KF.R; % beware of that this is from FDDF_KF
-        Z(iComm).Phat = AGENT(iSender).FDDF_KF.Phat; % beware of that it is combined by bias states
-        Z(iComm).Xhat = AGENT(iSender).FDDF_KF.Xhat; % beware of that without bias (ignore 5,6th element)
-    else % Receiver and Sender should be different
-        Z(iComm).id = [];
-        Z(iComm).y = [];
-        Z(iComm).u = [];
-        % Z(iComm).R = [];
-        Z(iComm).Phat = [];
-        Z(iComm).Xhat = [];
+    if o.C(iSender) == 1 
+        Z(iSender).agentID = iSender;
+        Z(iSender).targetID = AGENT(iSender).TA.TrackID;
+        Z(iSender).s = AGENT(iSender).s;
+        Z(iSender).y = AGENT(iSender).MEASURE.y;
+        Z(iSender).u = AGENT(iSender).CONTROL.u;
+    else 
+        Z(iSender).agentID = [];
+        Z(iSender).targetID = [];
+        Z(iSender).s = [];
+        Z(iSender).y = [];
+        Z(iSender).u = [];
     end
-    iComm = iComm + 1;
 end
 
 o.Z = Z; % allocate data package to agent

@@ -11,7 +11,7 @@ hold on;
 
 %--- Simulation Class Setting ----
 nAgent = 5;
-nTarget = 5;
+nTarget = 10;
 % nLandMark = 0;
 
 SIMULATION = Simulation(nAgent,nTarget);
@@ -19,12 +19,12 @@ SIMULATION = Simulation(nAgent,nTarget);
 %--- Clock Class Setting ----
 t0 = 0.1;
 dt = 0.1;
-nt = 100;
+nt = 200;
 FDDFt = 0.1;
 CLOCK = Clock(t0,dt,nt,FDDFt);
 
 %--- Environment Classes Setting ----
-ENVIRONMENT = Environment(clock);
+ENVIRONMENT = Environment(clock,[-1500,1500,-1500,1500]);
 
 %--- Target Classes Setting ----
 for iTarget = 1 : SIMULATION.nTarget
@@ -38,9 +38,7 @@ end
 
 %--- Individual Agent Measurement Setting (identical setting) ----
 for iAgent = 1 : SIMULATION.nAgent
-    for iTarget = 1 : SIMULATION.nTarget
-        AGENT(iAgent).MEASURE(iTarget).Rt = diag([5^2 (10*pi/180)^2]); % relative target 1 - agent 1
-    end
+    AGENT(iAgent).MEASURE.Rt = diag([50^2 (10*pi/180)^2]); % relative target 1 - agent 1
 end
 
 %--- Centralized KF subclass initialization ----
@@ -49,17 +47,27 @@ end
 %--- Individaulized KF subclass initialization ----
 for iAgent = 1 : SIMULATION.nAgent
     SIMULATION.iAgent = iAgent;
-    AGENT(iAgent).LOCAL_KF = KalmanFilter(SIMULATION,AGENT(iAgent),TARGET,CLOCK,'local');
-%     AGENT(iAgent).FDDF_KF = KalmanFilter(SIMULATION,AGENT(iAgent),TARGET,CLOCK,'fDDF');
-%     AGENT(iAgent).FDDF = FactorDDF(AGENT(iAgent),SIMULATION);
+    for iTarget = 1 : SIMULATION.nTarget
+        LOCAL_KF(iTarget) = KalmanFilter(SIMULATION,AGENT(iAgent),TARGET(iTarget),CLOCK,'local');
+    end
+    AGENT(iAgent).LOCAL_KF = LOCAL_KF;
 end
 
 %% MAIN PROCEDURE %%%%
 
 for iClock = 1 : CLOCK.nt
     
+    %--- Voronoi Partition ----
+    for iAgent = 1 : SIMULATION.nAgent
+        AGENT(iAgent).TA.TakeVoronoi(AGENT(iAgent), ENVIRONMENT, SIMULATION );
+        AGENT(iAgent).TA.TakeTargetID(AGENT(iAgent), SIMULATION);
+    end
+    
+    %--- to do :: control input coding (for motion input)
+    
+    
     %--- clock update ----
-    CLOCK.ct = iClock;
+    CLOCK.ct = iClock; % started from zero (directly uses the initial conditioned data)
     
     %--- Propagate Target ----
     % target.dynamics :: nonlinear / linear model (for kalman filter)
@@ -81,11 +89,16 @@ for iClock = 1 : CLOCK.nt
        % AGENT(iAgent).TA.TaskProcedure(); 
     end
     
-    %--- Measurement ----
+    %--- Measurement (single target measuring) ----
     for iAgent = 1 : SIMULATION.nAgent
-        for iTarget = 1 : SIMULATION.nTarget
-            AGENT(iAgent).MEASURE(iTarget).TakeMeasurement(AGENT(iAgent),TARGET(iTarget),ENVIRONMENT,CLOCK,SIMULATION.sRandom);
-        end
+        AGENT(iAgent).MEASURE.TakeMeasurement(AGENT(iAgent),TARGET(AGENT(iAgent).TA.TrackID),ENVIRONMENT,CLOCK,SIMULATION.sRandom);
+    end
+    
+    %--- Communicate ----
+    for iAgent = 1 : SIMULATION.nAgent
+        AGENT(iAgent).COMM.ComputeBeta(AGENT, SIMULATION, AGENT(iAgent).id);
+        AGENT(iAgent).COMM.ComputeCommArray();
+        AGENT(iAgent).COMM.CommunicationProcedure(AGENT, SIMULATION);
     end
     
     %--- Filter Update :: Centralized KF ----
@@ -94,33 +107,18 @@ for iClock = 1 : CLOCK.nt
     %--- Filter Update :: Individual KF :: Local KF and FDDF aided KF ----
     for iAgent = 1 : SIMULATION.nAgent
         % Local KF Process
-        AGENT(iAgent).LOCAL_KF.ExtendedKalmanFilterAlgorithm(SIMULATION,AGENT(iAgent),TARGET, CLOCK,'local');
-        
-        % FDDF KF Process :: same procedure as Local KF, but it uses fused
-        % estimated data (Xhat, Phat) from the communication.
-        % The first iteration is the same as Local KF.
-        % AGENT(iAgent).FDDF_KF.ExtendedKalmanFilterAlgorithm(SIMULATION,AGENT(iAgent),CLOCK,'fDDF');
+        for iTarget = 1 : SIMULATION.nTarget
+            AGENT(iAgent).LOCAL_KF(iTarget).ExtendedKalmanFilterAlgorithm(SIMULATION,AGENT(iAgent),TARGET(iTarget), CLOCK,'local');
+        end
     end
-        
-    %--- Communicate ----
-%     for iAgent = 1 : SIMULATION.nAgent
-%         AGENT(iAgent).COMM.CommunicationProcedure(AGENT, SIMULATION, AGENT(iAgent).id);
-%     end
-   
-    %--- DDF Information Fusion (managing xhat and Phat) ----
-%     if rem(iClock,CLOCK.delt.FDDF) == 0
-%         for iAgent = 1 : SIMULATION.nAgent
-%             AGENT(iAgent).FDDF.DataFusion(AGENT(iAgent), SIMULATION, CLOCK, 'MMNB');
-%         end
-%     end
 
-    %--- Voronoi Partition ----
-    for iAgent = 1 : SIMULATION.nAgent
-        AGENT(iAgent).TA.TakeVoronoi(AGENT(iAgent), ENVIRONMENT, SIMULATION );
-        AGENT(iAgent).TA.TakeTargetID(AGENT(iAgent), SIMULATION);
+    clf;
+    AGENT(1).TA.Plot();
+    for iter = 1 : 10
+        TARGET(iter).Plot();
     end
     
-    fprintf('iteration = %d\n',iClock);
+    fprintf('iteration = %d\n',CLOCK.ct);
     
 end
 

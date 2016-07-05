@@ -77,7 +77,7 @@ switch option
             {strcat('Agent ',num2str(AGENT.id),' Local KF Phat')}];
         
         for iTarget = 1 : length(TARGET)
-            o.hist.Y = [o.hist.Y; nan(length(AGENT(1).MEASURE(iTarget).y),1)];
+            o.hist.Y = [o.hist.Y; nan(length(AGENT(1).MEASURE(1).y),1)]; % just for single target measuring (others are from other agents via communication)
         end
     case 'decentral'
         o.plot.htcolor = rand(1,3);

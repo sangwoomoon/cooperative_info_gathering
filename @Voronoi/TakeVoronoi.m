@@ -9,15 +9,32 @@ w = [];
 
 for iTarget = 1 : SIMULATION.nTarget
     % collect all estimated targets' locations
-    x = [x; AGENT.LOCAL_KF.Xhat(4*(iTarget-1)+1)];
-    y = [y; AGENT.LOCAL_KF.Xhat(4*(iTarget-1)+3)];
+    x = [x; AGENT.LOCAL_KF(iTarget).Xhat(1)];
+    y = [y; AGENT.LOCAL_KF(iTarget).Xhat(3)];
    
     % compute weight from covariance matrix (trace ver.)
-    w = [w; trace(AGENT.LOCAL_KF.Phat(4*(iTarget-1)+1:4*iTarget,4*(iTarget-1)+1:4*iTarget))];
+    w = [w; 1/2*log((2*pi*exp(1))^(4)*det(AGENT.LOCAL_KF(iTarget).Phat))];
+end
+
+if AGENT.id == 1
+    fprintf('w = %d\n',w);
 end
 
 w = w./sum(w);
 
+min_wts = min(w); % take standard : minimum value
+
+for iter = 1 : length(w)
+   if min_wts == w(iter)
+       w_new(iter) = 0;
+   else
+       w_new(iter) = (w(iter)/(w(iter)+min_wts)-0.5)^2*(x(iter)^2+y(iter)^2);
+   end
+end
+
+if AGENT.id == 1
+    fprintf('w_new = %d\n',w_new);
+end
 
 rgx = max(ENVIRONMENT.bound(:,1))-min(ENVIRONMENT.bound(:,1));
 rgy = max(ENVIRONMENT.bound(:,2))-min(ENVIRONMENT.bound(:,2));
@@ -30,7 +47,7 @@ xA = [x; midx + [0;0;-5*rg;+5*rg]];
 yA = [y; midy + [-5*rg;+5*rg;0;0]];
 
 
-[vi,ci]=o.powerDiagram2([xA,yA], [w;zeros(4,1)]);
+[vi,ci]=o.powerDiagram2([xA,yA], [w_new';ones(4,1)]);
 
 
 
@@ -89,11 +106,6 @@ end
 
 o.vertices = V;
 o.cell = C; 
-
-% for iter = 1 : length(C)
-%    patch(V(C{iter},1),V(C{iter},2),rand(1,3)); hold on;
-% end
-% plot(x,y,'r+');
 
 end
 

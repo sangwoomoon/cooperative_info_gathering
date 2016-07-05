@@ -22,16 +22,16 @@ o.Gt = [0.5*CLOCK.dt^2             0   ;
  
 o.Gu = zeros(2); % 2 state - 2 state
 
-% stationary, randomized location within given environment
+% moving, randomized location within given environment
 o.x = [ENVIRONMENT.xlength(1)+(ENVIRONMENT.xlength(2)-ENVIRONMENT.xlength(1))*rand(1);...
-                                                                                    0;...
+                                                                           10*rand(1);...
        ENVIRONMENT.ylength(1)+(ENVIRONMENT.ylength(2)-ENVIRONMENT.ylength(1))*rand(1);...
-                                                                                    0];
+                                                                           10*rand(1)];
        
 o.hist.x = o.x; % store initial condition
 o.hist.stamp = 0; % store initialized time
 
-o.Qt = diag([0.05; 0.05]); 
+o.Qt = diag([1; 1]); 
 
 o.plot.statecolor = rand(1,3);
 o.plot.marker = ['^';'x']; % start; end
