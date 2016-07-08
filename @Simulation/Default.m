@@ -1,14 +1,16 @@
-function o = Default( o, nAgent, nTarget )
+function o = Default( o, nAgent, nSeed, bPlot )
 
 % default setting for simulation
 % input : empty Simulation Class
 %
 % output : set Simulation Class
 
-o.nTarget = nTarget;
 o.nAgent = nAgent;
-% o.nLandMark = nLandMark;
 
-o.sRandom = rng(333555532);
+o.sRandom = rng(nSeed);
+
+o.bPlot = bPlot;
+
+o.hist.util = nan;
 
 end

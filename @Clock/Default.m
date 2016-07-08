@@ -1,4 +1,4 @@
-function o = Default (o, t0, dt, nt, FDDFt)
+function o = Default (o, t0, nt, SIM)
 
 % default setting for simulation
 % input : empty Clock Class
@@ -8,20 +8,14 @@ function o = Default (o, t0, dt, nt, FDDFt)
 o.t0 = t0;
 
 o.ct = 0;
-o.dt = dt; % general time step for basic process;
-
-o.delt.control = o.dt;
-o.delt.target = o.dt;
-o.delt.agent = o.dt;
-o.delt.environment = o.dt;
-o.delt.measurement = o.dt;
-o.delt.communicate = o.dt;
-o.delt.filter = o.dt;
-o.delt.FDDF = FDDFt/o.dt;
 
 o.nt = nt;
-o.tf = o.dt*o.nt;
+o.tf = o.nt;
 
-o.tvec = o.t0:o.dt:o.tf;
+o.tvec = o.t0:o.tf;
+
+if SIM.bPlot == 1
+    o.plot.h.title = title(['Iteration : ', num2str(0)]);
+end
 
 end

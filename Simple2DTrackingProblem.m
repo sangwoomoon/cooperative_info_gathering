@@ -1,5 +1,4 @@
 
-% range - bearing error / bias error is not added : EKF
 
 close all;
 clear all;
@@ -7,120 +6,105 @@ clc;
 format compact;
 hold on;
 
-%% INITIAL SETTING %%%%
+%% MONTE-CARLO SETTING %%%%
 
-%--- Simulation Class Setting ----
-nAgent = 5;
-nTarget = 10;
-% nLandMark = 0;
+nSim = 50;
 
-SIMULATION = Simulation(nAgent,nTarget);
+CentralUtil = nan(1,nSim);
+DistribUtil = nan(1,nSim);
 
-%--- Clock Class Setting ----
-t0 = 0.1;
-dt = 0.1;
-nt = 200;
-FDDFt = 0.1;
-CLOCK = Clock(t0,dt,nt,FDDFt);
-
-%--- Environment Classes Setting ----
-ENVIRONMENT = Environment(clock,[-1500,1500,-1500,1500]);
-
-%--- Target Classes Setting ----
-for iTarget = 1 : SIMULATION.nTarget
-    TARGET(iTarget) = Target(CLOCK, ENVIRONMENT, iTarget, SIMULATION.sRandom);
-end
-
-%--- Agent Classes Setting ----
-for iAgent = 1 : SIMULATION.nAgent
-    AGENT(iAgent) = Agent(TARGET, ENVIRONMENT, SIMULATION, CLOCK, iAgent);
-end
-
-%--- Individual Agent Measurement Setting (identical setting) ----
-for iAgent = 1 : SIMULATION.nAgent
-    AGENT(iAgent).MEASURE.Rt = diag([50^2 (10*pi/180)^2]); % relative target 1 - agent 1
-end
-
-%--- Centralized KF subclass initialization ----
-% SIMULATION.CENTRAL_KF = KalmanFilter(SIMULATION,AGENT,TARGET,CLOCK,'central'); 
-
-%--- Individaulized KF subclass initialization ----
-for iAgent = 1 : SIMULATION.nAgent
-    SIMULATION.iAgent = iAgent;
-    for iTarget = 1 : SIMULATION.nTarget
-        LOCAL_KF(iTarget) = KalmanFilter(SIMULATION,AGENT(iAgent),TARGET(iTarget),CLOCK,'local');
-    end
-    AGENT(iAgent).LOCAL_KF = LOCAL_KF;
-end
-
-%% MAIN PROCEDURE %%%%
-
-for iClock = 1 : CLOCK.nt
+for iSim = 1 : nSim
     
-    %--- Voronoi Partition ----
-    for iAgent = 1 : SIMULATION.nAgent
-        AGENT(iAgent).TA.TakeVoronoi(AGENT(iAgent), ENVIRONMENT, SIMULATION );
-        AGENT(iAgent).TA.TakeTargetID(AGENT(iAgent), SIMULATION);
+    %% INITIAL SETTING %%%%
+    
+    %--- Simulation Class Setting ----
+    nAgent = 4;
+    iDFC = 3;
+    nSeed = iSim;
+    
+    bPlot = 0;
+    
+    SIM = Simulation(nAgent, nSeed, bPlot);
+    
+    %--- Clock Class Setting ----
+    t0 = 0;
+    nt = 200; % iteration number
+    CLOCK = Clock(t0,nt,SIM);
+    
+    %--- Environment Classes Setting ----
+    ENVIRONMENT = Environment(CLOCK,[-10,10,-10,10],2);
+    
+    %--- Agent Classes Setting ----
+    for iAgent = 1 : SIM.nAgent
+        AGENT(iAgent) = Agent(ENVIRONMENT, SIM, CLOCK, iAgent, iDFC);
     end
     
-    %--- to do :: control input coding (for motion input)
+    %--- Central Decision-Making Setting ----
+    SIM.DM = CentralDM(SIM,AGENT);
     
+    %% MAIN PROCEDURE %%%%
     
-    %--- clock update ----
-    CLOCK.ct = iClock; % started from zero (directly uses the initial conditioned data)
-    
-    %--- Propagate Target ----
-    % target.dynamics :: nonlinear / linear model (for kalman filter)
-    % target.update :: update with respect to time
-    for iTarget = 1 : SIMULATION.nTarget
-        TARGET(iTarget).UpdateTargetDynamics(CLOCK,SIMULATION.sRandom);
-    end
-    
-    %--- Propagate Agent ----
-    for iAgent = 1 : SIMULATION.nAgent
-        AGENT(iAgent).UpdateAgentDynamics(CLOCK,SIMULATION.sRandom);
-    end
-    
-    %--- Propagate Environment ----
-    ENVIRONMENT.UpdateEnvironmentDynamics(CLOCK,SIMULATION.sRandom);
+    for iClock = 1 : CLOCK.nt
         
-    %--- Task Allocation from Voronoi cell ----
-    for iAgent = 1 : SIMULATION.nAgent
-       % AGENT(iAgent).TA.TaskProcedure(); 
+        %- Centralized DM --
+        %--- Compute Action Set ----
+        SIM.DM.ComputeAction(0.1, 4, ENVIRONMENT);
+        %--- Compute Utility ----
+        SIM.DM.ComputeUtility(AGENT,ENVIRONMENT,'SDFC');
+        %--- Take Action ----
+        SIM.DM.TakeAction();
+        
+        %- Distributed DM --
+        %--- Compute Action Set ----
+        for iAgent = 1 : SIM.nAgent
+            AGENT(iAgent).ComputeAction(0.1, 4, ENVIRONMENT);
+        end
+        
+        %--- Compute Utility ----
+        for iAgent = 1 : SIM.nAgent
+            AGENT(iAgent).ComputeUtility(AGENT,ENVIRONMENT,'SDFC');
+            % AGENT(iAgent).TakeAction();
+        end
+        
+        %--- Take Action ----
+        for iAgent = 1 : SIM.nAgent
+            AGENT(iAgent).TakeAction();
+        end
+        
+        %--- Compute Global Utility ----
+        SIM.ComputeGlobalUtility(AGENT, ENVIRONMENT, 'SDFC');
+        
+        %--- clock update ----
+        CLOCK.ct = iClock;
+        
+        %--- plot ----
+        if SIM.bPlot == 1
+            SIM.Plot(AGENT,CLOCK);
+        end
+        
     end
     
-    %--- Measurement (single target measuring) ----
-    for iAgent = 1 : SIMULATION.nAgent
-        AGENT(iAgent).MEASURE.TakeMeasurement(AGENT(iAgent),TARGET(AGENT(iAgent).TA.TrackID),ENVIRONMENT,CLOCK,SIMULATION.sRandom);
-    end
     
-    %--- Communicate ----
-    for iAgent = 1 : SIMULATION.nAgent
-        AGENT(iAgent).COMM.ComputeBeta(AGENT, SIMULATION, AGENT(iAgent).id);
-        AGENT(iAgent).COMM.ComputeCommArray();
-        AGENT(iAgent).COMM.CommunicationProcedure(AGENT, SIMULATION);
-    end
-    
-    %--- Filter Update :: Centralized KF ----
-%     SIMULATION.CENTRAL_KF.KalmanFilterAlgorithm(SIMULATION,AGENT,CLOCK,'central');
-    
-    %--- Filter Update :: Individual KF :: Local KF and FDDF aided KF ----
-    for iAgent = 1 : SIMULATION.nAgent
-        % Local KF Process
-        for iTarget = 1 : SIMULATION.nTarget
-            AGENT(iAgent).LOCAL_KF(iTarget).ExtendedKalmanFilterAlgorithm(SIMULATION,AGENT(iAgent),TARGET(iTarget), CLOCK,'local');
+    %--- utility profile plot ----
+    if SIM.bPlot == 1
+        for iAgent = 1 : SIM.nAgent
+            figure(2)
+            plot(AGENT(iAgent).hist.util,'color',AGENT(iAgent).plot.statecolor,'LineWidth',2); hold on;
+            text(CLOCK.ct,AGENT(iAgent).hist.util(end),num2str(AGENT(iAgent).id));
+            plot(SIM.hist.util,'--','LineWidth',3);
+            plot(SIM.DM.hist.util,'.-','LineWidth',3);
         end
     end
-
-    clf;
-    AGENT(1).TA.Plot();
-    for iter = 1 : 10
-        TARGET(iter).Plot();
-    end
     
-    fprintf('iteration = %d\n',CLOCK.ct);
+    CentralUtil(iSim) = SIM.DM.hist.util(end);
+    DistribUtil(iSim) = SIM.hist.util(end);
     
+    fprintf('Sim # = %d\n',iSim)
 end
 
-%% PLOT %%%%
-SIMULATION.Plot(AGENT,TARGET,CLOCK);
+if nSim > 1
+   figure(3)
+   percent = DistribUtil./CentralUtil;
+   hist(percent);
+end
+

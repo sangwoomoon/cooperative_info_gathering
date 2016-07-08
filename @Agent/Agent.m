@@ -3,32 +3,26 @@ classdef Agent < handle
         
         id      % Agent id (integers)
         
-        speed   % constant speed
+        s       % current state [e,n]
+        act     % candidate state (for action)
+        util    % final utility (act -> R)
         
-        s       % current state [e,n,theta]
+        utilCnd % utility candidate
         
-        bKFs    % binary array of state for using KF process.
-
+        bDFC    % binary value for data fusion center
         
-        % Platform motion model: platform states are [e,n,theta]
-        Fp      % State transition matrix
-        Gamp    % Process noise input matrix
+        rMove
+        nMove
         
-        Gu      % Control input matrix
+        alpha
+        beta
         
-        vp      % Random variable wrt movement of agent
-        Qp      % process noise for platform (accel noise)
+        eta
+        gamma
         
-        TA      % Task Allocation Class (sub-class of agent)
+        w       % weight after computing utility
+        
         COMM    % Communication Class (sub-class of agent)
-        MEASURE % Measurement Class (usb-class of agent)
-        CONTROL % Control Class (sub-class of agent)
-        
-        FDDF    % Factorized DDF Class
-       
-        LOCAL_KF % KF Estimation Class (sub-class of agent)
-        DECEN_KF % KF Estimation Class (sub-class of agent)
-        FDDF_KF % Factorized DDF based KF Estimation Class 
                 
         hist    % History
         plot    % Plot handle
@@ -36,8 +30,8 @@ classdef Agent < handle
     end % Properties
     
     methods
-        function o = Agent( TARGET, ENVIRONMENT, SIMULATION, CLOCK ,iAgent )
-             o = Default(o, TARGET, ENVIRONMENT, SIMULATION, CLOCK ,iAgent );
+        function o = Agent( ENVIRONMENT, SIMULATION, CLOCK ,iAgent, iDFC )
+             o = Default(o, ENVIRONMENT, SIMULATION, CLOCK ,iAgent, iDFC );
         end
         
         o = get( o, varargin );

@@ -1,7 +1,13 @@
 function o = Plot ( o )
 
-plot(o.hist.s(1,:),o.hist.s(2,:),o.plot.line,'LineWidth',0.5); hold on;
-plot(o.hist.s(1,1),o.hist.s(2,1),o.plot.marker(1),'color',o.plot.statecolor,'MarkerSize',o.plot.markersize,'LineWidth',o.plot.linewidth); hold on;
-plot(o.hist.s(1,end),o.hist.s(2,end),o.plot.marker(2),'color',o.plot.statecolor,'MarkerSize',o.plot.markersize,'LineWidth',o.plot.linewidth); hold on;
+figure(1)
+set(o.plot.h.curr,'XData',o.s(1),'YData',o.s(2)); % plot current position
+
+xD = [get(o.plot.h.path,'XData'),o.s(1)];
+yD = [get(o.plot.h.path,'YData'),o.s(2)];
+
+set(o.plot.h.path,'XData',xD,'YData',yD); % plot path
+
+set(o.plot.h.num,'Position',[o.s(1)+0.3,o.s(2)-0.3]); % plot agent index
 
 end
