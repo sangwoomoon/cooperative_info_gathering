@@ -8,7 +8,9 @@ for iAgent = 1 : o.nAgent
 end
 
 % Central DM plot
-o.DM.Plot();
+if o.bCentral == 1
+    o.DM.Plot();
+end
 
 drawnow;
 

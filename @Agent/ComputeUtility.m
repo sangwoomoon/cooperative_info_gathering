@@ -1,4 +1,4 @@
-function o = ComputeUtility( o, AGENT, ENVIRONMENT, option )
+function o = ComputeUtility( o, AGENT, ENVIRONMENT, option, bComm )
 %COMPUTEUTILITY Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -26,14 +26,14 @@ function o = ComputeUtility( o, AGENT, ENVIRONMENT, option )
                             if AGENT(iAgent).id ~= o.id
                                 utility = utility...
                                     *(1-...
-                                    o.ComputeProbComm(AGENT(iAgent).s,AGENT(DFCid).s)...
+                                    o.ComputeProbComm(AGENT(iAgent).s,AGENT(DFCid).s,bComm)...
                                     *o.ComputeProbDetect(AGENT(iAgent).s,[ENVIRONMENT.x(iPointx,iPointy);ENVIRONMENT.y(iPointx,iPointy)]));
                             end
                             
                         end
                         
                         utility = utility...
-                            *o.ComputeProbComm(o.act(iter,:),AGENT(DFCid).s)*o.ComputeProbDetect(o.act(iter,:),[ENVIRONMENT.x(iPointx,iPointy);ENVIRONMENT.y(iPointx,iPointy)]);
+                            *o.ComputeProbComm(o.act(iter,:),AGENT(DFCid).s,bComm)*o.ComputeProbDetect(o.act(iter,:),[ENVIRONMENT.x(iPointx,iPointy);ENVIRONMENT.y(iPointx,iPointy)]);
                         
                         o.utilCnd(iter) = o.utilCnd(iter) + utility;
                     

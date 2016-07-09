@@ -14,6 +14,7 @@ function o = ComputeAction( o, r, n, ENVIRONMENT )
                 ii = ii + 1;
             end
         end
+        o.act(iAgent,ii+1,:) = o.s(:,iAgent); % stop action
     end
 
 end

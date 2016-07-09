@@ -34,8 +34,6 @@ o.hist.stamp = 0; % store initialized time
 
 o.hist.util = o.util;
 
-o.COMM = Communication(SIMULATION, CLOCK); % Communication sub-class
-
 if SIMULATION.bPlot == 1
     
     o.plot.h.num = text(o.s(1),o.s(2),num2str(o.id));

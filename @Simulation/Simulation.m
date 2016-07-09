@@ -8,6 +8,8 @@ classdef Simulation < handle
         sRandom         % Specification of Random Variables (seeds for Random #)
         
         bPlot           % binary value for plot
+        bCentral        % binary value for centralization (central optimization is performed when 1)
+        bComm           % binary value for communication-awareness
         
         DM              % central Decision Making handle
         
@@ -18,8 +20,8 @@ classdef Simulation < handle
     
 
     methods
-        function o = Simulation( nAgent, nSeed, bPlot )
-            o = Default(o, nAgent, nSeed, bPlot );
+        function o = Simulation( nAgent, nSeed, bCentral, bPlot, bComm )
+            o = Default(o, nAgent, nSeed, bCentral, bPlot, bComm );
         end
         
         o = get( o, varargin );
