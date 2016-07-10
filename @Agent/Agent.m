@@ -4,7 +4,10 @@ classdef Agent < handle
         id      % Agent id (integers)
         
         s       % current state [e,n]
+        
         act     % candidate state (for action)
+        actIdx  % action index
+        
         util    % final utility (act -> R)
         
         utilCnd % utility candidate

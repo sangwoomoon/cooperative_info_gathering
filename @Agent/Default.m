@@ -29,6 +29,9 @@ o.gamma = 5;
    
 o.util = nan; % utility
 
+o.actIdx = nan; % action index
+o.hist.actIdx = o.actIdx;
+
 o.hist.s = o.s; % store initial condition
 o.hist.stamp = 0; % store initialized time
 

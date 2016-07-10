@@ -1,6 +1,9 @@
 classdef Simulation < handle
     properties   ( SetAccess = public, GetAccess = public )
         
+        mode            % single information sink (SDFC), multiple information sinks (MDFC)
+        bSim            % binary value for terminate simulation (terminate when 0)
+        
         nAgent          % Number of Agents
         
         iAgent          % operated agent ID
@@ -20,8 +23,8 @@ classdef Simulation < handle
     
 
     methods
-        function o = Simulation( nAgent, nSeed, bCentral, bPlot, bComm )
-            o = Default(o, nAgent, nSeed, bCentral, bPlot, bComm );
+        function o = Simulation( nAgent, nSeed, bCentral, bPlot, bComm, mode )
+            o = Default(o, nAgent, nSeed, bCentral, bPlot, bComm, mode );
         end
         
         o = get( o, varargin );

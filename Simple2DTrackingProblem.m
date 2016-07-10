@@ -22,14 +22,22 @@ for iSim = 1 : nSim
     
     %--- Simulation Class Setting ----
     nAgent = 4;
-    iDFC = 3;
     nSeed = iSim;
     
     bPlot = 0;
-    bCentral = 0;
-    bComm = 0;
+    bCentral = 1;
+    bComm = 1;
     
-    SIM = Simulation(nAgent, nSeed, bCentral, bPlot, bComm);
+    % mode = 'SDFC';
+    mode = 'MDFC';
+    
+    if strcmp(mode,'SDFC')
+        iDFC = 3;
+    else
+        iDFC = nan;
+    end
+    
+    SIM = Simulation(nAgent, nSeed, bCentral, bPlot, bComm, mode);
     
     %--- Clock Class Setting ----
     t0 = 0;
@@ -62,7 +70,7 @@ for iSim = 1 : nSim
             %--- Compute Action Set ----
             SIM.DM.ComputeAction(0.15, 4, ENVIRONMENT);
             %--- Compute Utility ----
-            SIM.DM.ComputeUtility(AGENT,ENVIRONMENT,'SDFC');
+            SIM.DM.ComputeUtility(AGENT,ENVIRONMENT,SIM.mode);
             %--- Take Action ----
             SIM.DM.TakeAction();
         end
@@ -75,7 +83,7 @@ for iSim = 1 : nSim
         
         %--- Compute Utility ----
         for iAgent = 1 : SIM.nAgent
-            AGENT(iAgent).ComputeUtility(AGENT,ENVIRONMENT,'SDFC',SIM.bComm);
+            AGENT(iAgent).ComputeUtility(AGENT,ENVIRONMENT,SIM.mode,SIM.bComm);
         end
         
         %--- Take Action ----
@@ -84,7 +92,7 @@ for iSim = 1 : nSim
         end
         
         %--- Compute Global Utility ----
-        SIM.ComputeGlobalUtility(AGENT, ENVIRONMENT, 'SDFC');
+        SIM.ComputeGlobalUtility(AGENT, ENVIRONMENT, SIM.mode);
         
         %--- clock update ----
         CLOCK.ct = iClock;
@@ -96,6 +104,12 @@ for iSim = 1 : nSim
             axis([ENVIRONMENT.xlength(1) ENVIRONMENT.xlength(2)...
                 ENVIRONMENT.ylength(1) ENVIRONMENT.ylength(2)]);
             axis equal;
+        end
+        
+        %--- check the procedure ----
+        SIM.CheckTerminateSim(AGENT);
+        if SIM.bSim == 0
+           break; 
         end
         
     end
@@ -141,7 +155,7 @@ if nSim > 1
         axis([0 1 0 100]);
         
         figure(4)
-        h1 = boxplot(DistribUtil,'Distributed');
+        h1 = boxplot([DistribUtil',CentralUtil'],{'Distributed','Centralized'});
         ylabel('W','fontsize',20);
         set(gca,'fontsize',20)
     end

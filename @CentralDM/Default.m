@@ -10,6 +10,9 @@ o.hist.s = o.s;
 o.util = nan;
 o.hist.util = o.util;
 
+o.actIdx = nan(SIMULATION.nAgent,1);
+o.hist.actIdx = o.actIdx;
+
 o.alpha = AGENT(1).alpha;
 o.beta = AGENT(1).beta;
 

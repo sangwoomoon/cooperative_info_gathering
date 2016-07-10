@@ -12,7 +12,7 @@ function o = ComputeAction( o, r, n, ENVIRONMENT )
             o.act(ii,:) = temp;
             ii = ii + 1;
         end
-        o.act(ii+1,:) = o.s; % stop action
+        o.act(ii,:) = o.s; % stop action
     end
 
 end

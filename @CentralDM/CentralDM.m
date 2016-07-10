@@ -2,7 +2,10 @@ classdef CentralDM < handle
     properties ( SetAccess = public, GetAccess = public )
         
         s           % agent array
+        
         act         % action profile
+        actIdx      % action index
+        
         util        % utility
         
         utilCnd
