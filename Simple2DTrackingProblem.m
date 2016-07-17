@@ -155,7 +155,7 @@ if nSim > 1
         axis([0 1 0 100]);
         
         figure(4)
-        h1 = boxplot([DistribUtil',CentralUtil'],{'Distributed','Centralized'});
+        h1 = boxplot([DistribUtil',CentralUtil'],{'Game Theoretical','Centralized'});
         ylabel('W','fontsize',20);
         set(gca,'fontsize',20)
     end
