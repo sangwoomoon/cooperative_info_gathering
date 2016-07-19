@@ -11,8 +11,8 @@ classdef Target < handle
     end % Properties
     
     methods
-        function o = Target( ENVIRONMENT, iTarget, option )
-            o = Default( o, ENVIRONMENT, iTarget, option );
+        function obj = Target( targetID, option )
+            obj = Declare( obj, targetID, option );
         end
         
     end

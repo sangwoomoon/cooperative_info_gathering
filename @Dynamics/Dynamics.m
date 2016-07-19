@@ -9,9 +9,7 @@ classdef Dynamics < handle
         spec    % dynamic model specification (e.g. Linear / Dubins)
         
         x       % current state
-        
-        bKFx    % binary array of state for using KF process.
-        
+            
         w      % Random variable wrt movement of agent/target
         Q      % process noise for platform (accel noise)
         
@@ -38,12 +36,12 @@ classdef Dynamics < handle
         % update state and history
         % Time update with respect to dynamics
         % use the StateUpdate function to update state, and then store data
-        PropagateState(obj, CurrentState, Input, CLOCK);
+        PropagateState(obj, Input, CLOCK);
         
         % Predict State
         % State Prediction method (N-step ahead prediction with zero noise)
         % use the StateUpdate function to update state, and then store data
-        PredictState(obj, CurrentState, InputArray, ProcessNoiseArray, CLOCK);
+        PredictState(obj, InputArray, ProcessNoiseArray, CLOCK);
         
         % State Update only (this function is used into TimeUpdate /
         % PredictState)
@@ -62,7 +60,7 @@ classdef Dynamics < handle
      % PARAMETER PART
         
         % Set parameters by users (so far we don't need to overload)
-        SetParameters(obj, FlagForKF, ProcessNoiseCov, RelativeTolerance, AbsoluteTolerance);
+        SetParameters(obj, ProcessNoiseCov, RelativeTolerance, AbsoluteTolerance);
         
         % Initialize states by users
         InitializeState(obj, xInitial);

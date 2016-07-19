@@ -1,14 +1,16 @@
-function obj = SetParameters( obj, mode, R )
+function obj = SetParameters( obj, biasQinput, SensedObject, R )
 %SETPARAMETERS set parameters in measurement class
 %   meausrement covariance matirx is defined by users, and it could also
 %   be adjustable before/during simulation
 
-% set measurement action mode
-obj.mode = mode;
-
 if nargin > 1 % overload process (should be modified in a better way)
-	% set measurement noise covariance
+	% set process noise covariance for bias
+    obj.Q = biasQinput;
+    
+    % set measurement noise covariance
     obj.R = R;
+    
+    obj.subject = SensedObject;
 end
 
 end

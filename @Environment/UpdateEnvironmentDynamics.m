@@ -1,5 +1,6 @@
-function o = UpdateEnvironmentDynamics(o, CLOCK, sRandom)
+function obj = UpdateEnvironmentDynamics(obj, CLOCK)
 
-sRandom;
+% propagate Landmark (set as stationary, with zero process noise)
+obj.LANDMARK.DYNAMICS.PropagateState(zeros(2,1),CLOCK);
 
 end

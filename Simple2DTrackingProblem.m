@@ -24,51 +24,36 @@ CLOCK = Clock(t0,dt,nt,FDDFt);
 ENVIRONMENT = Environment(CLOCK);
 
 %--- Target Classes Setting ----
-TARGET(1) = Target(ENVIRONMENT, 1, 'Linear');
-TARGET(2) = Target(ENVIRONMENT, 2, 'Dubins');
+TARGET(1) = Target(1, 'Linear');
+TARGET(2) = Target(2, 'Dubins');
 
 %--- Agent Classes Setting ----
-AGENT(1) = Agent(TARGET, ENVIRONMENT, SIMULATION, CLOCK, 1, 'Linear', 'Linear'); % linear dynamics, linear measurement
-AGENT(2) = Agent(TARGET, ENVIRONMENT, SIMULATION, CLOCK, 2, 'Dubins', 'Linear'); % linear model w/ sensor bias, linear measurement
+AGENT(1) = Agent(1, TARGET, SIMULATION, CLOCK, 'Linear', 'RelCartCoord'); % linear dynamics, linear measurement
+AGENT(2) = Agent(2, TARGET, SIMULATION, CLOCK, 'Dubins', 'RelCartCoord'); % linear model w/ sensor bias, linear measurement
 % AGENT(3) = Agent(TARGET, ENVIRONMENT, SIMULATION, CLOCK, 3, 'LinearBias', 'Linear'); % unicycle model, linear measurement
 
 %--- Individual TARGET CLASS setting ----
 TARGET(1).DYNAMICS.InitializeState([1.0,-0.1,1.0,0.1]');
-TARGET(1).DYNAMICS.SetParameters([1 1 1 1], diag([0.2; 0.2]), 1e-4, 1e-6); % parameter setting order : bKFx, Q, RelTol, AbsTol (last two is for ODE45)
+TARGET(1).DYNAMICS.SetParameters(diag([0.2; 0.2]), 1e-4, 1e-6); % parameter setting order : bKFx, Q, RelTol, AbsTol (last two is for ODE45)
 
 TARGET(2).DYNAMICS.InitializeState([-1.0,0.1,0]');
-TARGET(2).DYNAMICS.SetParameters([1 1 1], diag([0.2; 0.2; 0.2]), 1e-4, 1e-6);
+TARGET(2).DYNAMICS.SetParameters(diag([0.2; 0.2; 0.2]), 1e-4, 1e-6);
 
 %--- Individual AGENT CLASS setting :: Dynamics ----
 AGENT(1).DYNAMICS.InitializeState([-5.5,0,5, 0]');
-AGENT(1).DYNAMICS.SetParameters([0 0 0 0], diag([0.2; 0.2]), 1e-4, 1e-6);
+AGENT(1).DYNAMICS.SetParameters(diag([0.2; 0.2]), 1e-4, 1e-6);
 
-AGENT(2).DYNAMICS.InitializeState([-0.3,0.4,1.5,0,-5, 0]');
-AGENT(2).DYNAMICS.SetParameters([1 1 0 0 0 0], diag([0.2; 0.2; 0.2]), 1e-4, 1e-6);
+% AGENT(2).DYNAMICS.InitializeState([-0.3,0.4,1.5,0,-5, 0]');
+% AGENT(2).DYNAMICS.SetParameters([1 1 0 0 0 0], diag([0.2; 0.2; 0.2]), 1e-4, 1e-6);
 
-% AGENT(3).DYNAMICS.InitializeState([0.2,0.5,0]');
-% AGENT(3).DYNAMICS.SetParameters([0 0 0], diag([0.2; 0.2; 0.2; 0.2]), 1e-4, 1e-6);
+AGENT(2).DYNAMICS.InitializeState([0.2,0.5,0]');
+AGENT(2).DYNAMICS.SetParameters(diag([0.2; 0.2; 0.2]), 1e-4, 1e-6);
  
-%--- Individual AGENT CLASS setting :: Measurement ----
-for iAgent = 1 : SIMULATION.nAgent
-    for iTarget = 1 : SIMULATION.nTarget
-        AGENT(iAgent).MEASURE(iTarget).InitializeMeasure('Target',iAgent,iTarget);
-    end
-end
-
-for iTarget = 1 : SIMULATION.nTarget
-    AGENT(1).MEASURE(iTarget).SetParameters('on',diag([1.15 0.15]));
-    AGENT(2).MEASURE(iTarget).SetParameters('on',diag([0.15 1.15]));
-%    AGENT(3).MEASURE(iTarget).SetParameters('on',diag([1.15 0.15]));
-end
-
-% AGENT(1).MEASURE(1).Rt = diag([0.085; 2]); % relative target 1 - agent 1
-% AGENT(2).MEASURE(1).Rt = diag([2; 0.085]); % relative target 1 - agent 2
-% AGENT(3).MEASURE(1).Rt = diag([0.5; 0.5]); % relative target 1 - agent 3
-% 
-% AGENT(1).MEASURE(2).Rt = diag([2; 0.0085]); % relative target 2 - agent 1
-% AGENT(2).MEASURE(2).Rt = diag([0.0085; 2]); % relative target 2 - agent 2
-% AGENT(3).MEASURE(2).Rt = diag([0.5; 0.5]); % relative target 2 - agent 3
+%--- Individual AGENT CLASS setting :: Sensor ----
+AGENT(1).SENSOR.InitializeSensor([0.2, -0.3]',AGENT(1).id);
+AGENT(1).SENSOR.SetParameters('Target',diag([0.2 0.2]),diag([1.15 0.15]));
+AGENT(2).SENSOR.InitializeSensor([0.5; 0.1]',AGENT(2).id);
+AGENT(2).SENSOR.SetParameters('Target',diag([0.2 0.2]),diag([0.15 1.15]));
 
 %--- Network class initialization ----
 NETWORK = Network(inf);
@@ -94,8 +79,8 @@ load('AccelerationInput.mat');
 %AccInput(5:6,:) = 0.5*AccInput(1:2,:);
 %AccInput(7:8,:) = 0.8*AccInput(3:4,:);
 
-AccInput(5,1:60) = 5; % m/s
-AccInput(6,1:60) = 1; % rad/s
+AccInput(3,1:60) = 5; % m/s
+AccInput(4,1:60) = 1; % rad/s
 
 for iClock = 1 : CLOCK.nt
     
@@ -120,29 +105,27 @@ for iClock = 1 : CLOCK.nt
     % target.dynamics :: nonlinear / linear model (for kalman filter)
     % target.update :: update with respect to time
     for iTarget = 1 : SIMULATION.nTarget
-        TARGET(iTarget).DYNAMICS.PropagateState(TARGET(iTarget).DYNAMICS.x, TARGET(iTarget).CONTROL.u, CLOCK);
+        TARGET(iTarget).DYNAMICS.PropagateState(TARGET(iTarget).CONTROL.u, CLOCK);
     end
     
-    % State predction (for testing)
-    for iter = 1 : 10
-        PredictedNoise(iter,:) = AGENT(1).DYNAMICS.MakeNoise('Gaussian');
-    end
-    AGENT(1).DYNAMICS.PredictState(AGENT(1).DYNAMICS.x, AccInput(1:2,iClock:iClock+10), PredictedNoise, CLOCK);
+%     % State predction (for testing)
+%     for iter = 1 : 10
+%         PredictedNoise(iter,:) = AGENT(1).DYNAMICS.MakeNoise('Gaussian');
+%     end
+%     AGENT(1).DYNAMICS.PredictState(AGENT(1).DYNAMICS.x, AccInput(1:2,iClock:iClock+10), PredictedNoise, CLOCK);
     
     %--- Propagate Agent ----
     for iAgent = 1 : SIMULATION.nAgent
-        AGENT(iAgent).DYNAMICS.PropagateState(AGENT(iAgent).DYNAMICS.x, AGENT(iAgent).CONTROL.u, CLOCK);
+        AGENT(iAgent).DYNAMICS.PropagateState(AGENT(iAgent).CONTROL.u, CLOCK);
     end
     
     %--- Propagate Environment ----
-    ENVIRONMENT.UpdateEnvironmentDynamics(CLOCK,SIMULATION.sRandom);
+    ENVIRONMENT.UpdateEnvironmentDynamics(CLOCK);
     
     %--- Measurement ----
-%     for iAgent = 1 : SIMULATION.nAgent
-%         for iTarget = 1 : SIMULATION.nTarget
-%             AGENT(iAgent).MEASURE(iTarget).TakeMeasurement(AGENT(iAgent),TARGET(iTarget),ENVIRONMENT,CLOCK,SIMULATION.sRandom);
-%         end
-%     end
+    for iAgent = 1 : SIMULATION.nAgent
+        AGENT(iAgent).SENSOR.Measure(AGENT(iAgent).DYNAMICS.GetPosition(),TARGET,ENVIRONMENT.LANDMARK,CLOCK.ct);
+    end
     
     %--- Filter Update :: Centralized KF ----
 %    CENTRAL_KF.KalmanFilterAlgorithm(SIMULATION,AGENT,CLOCK,'central');
@@ -163,17 +146,17 @@ for iClock = 1 : CLOCK.nt
     
     %--- Communicate ----
     %--- Send Data to Network Class ----
-%    for iAgent = 1 : SIMULATION.nAgent
-%       AGENT(iAgent).COMM.SendData(NETWORK,AGENT(iAgent),SIMULATION); 
-%    end
+    for iAgent = 1 : SIMULATION.nAgent
+        AGENT(iAgent).COMM.SendData(NETWORK,AGENT(iAgent),SIMULATION);
+    end
     
     %--- Set Network Graph under Network Class ---
-%    NETWORK.DetermineCommStatus(SIMULATION,AGENT);
+    NETWORK.DetermineCommStatus(SIMULATION,AGENT);
     
     %--- Receive Data from Network Class ----
-%    for iAgent = 1 : SIMULATION.nAgent
-%       AGENT(iAgent).COMM.ReceiveData(NETWORK,AGENT(iAgent),SIMULATION); 
-%    end
+    for iAgent = 1 : SIMULATION.nAgent
+        AGENT(iAgent).COMM.ReceiveData(NETWORK,AGENT(iAgent),SIMULATION);
+    end
     
     %--- DDF Information Fusion (managing xhat and Phat) ----
  %    if rem(iClock,CLOCK.delt.FDDF) == 0
@@ -187,5 +170,4 @@ for iClock = 1 : CLOCK.nt
 end
 
 %% PLOT %%%%
-SIMULATION.Plot(AGENT,TARGET,CLOCK);
-% SIMULATION.Plot(AGENT,TARGET,CENTRAL_KF,CLOCK);
+SIMULATION.Plot(AGENT,TARGET,ENVIRONMENT,CLOCK);

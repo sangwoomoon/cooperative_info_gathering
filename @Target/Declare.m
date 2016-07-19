@@ -1,4 +1,4 @@
-function o = Default( o, ENVIRONMENT, iTarget, option)
+function o = Declare( o, targetID, option)
 
 % default setting for targets
 % input : empty Target Class
@@ -9,10 +9,10 @@ function o = Default( o, ENVIRONMENT, iTarget, option)
 % Target also has dynamics with constant velocity.
 
 
-o.id = iTarget;
+o.id = targetID;
 
 % initialize control class
-o.CONTROL = Control(ENVIRONMENT); % Control sub-class
+o.CONTROL = Control(); % Control sub-class
 
 % initialize dynamics class with respect to specified dynamics model
 switch (option)
@@ -33,9 +33,16 @@ o.plot.markersize = 7;
 o.plot.line = '.-';
 o.plot.linewidth = 5;
 
-o.plot.legend = [{strcat('Target ',num2str(o.id))},...
-    {strcat('Target ',num2str(o.id),' start')},...
-    {strcat('Target ',num2str(o.id),' end')}];
+switch (o.id)
+    case ('LANDMARK') % if it is landmark in the environment
+        o.plot.legend = [{strcat('Landmark ',num2str(o.id))},...
+            {strcat('Landmark ',num2str(o.id),' start')},...
+            {strcat('Landmark ',num2str(o.id),' end')}];
+    otherwise % if it is target
+        o.plot.legend = [{strcat('Target ',num2str(o.id))},...
+            {strcat('Target ',num2str(o.id),' start')},...
+            {strcat('Target ',num2str(o.id),' end')}];
+end
 
     
 end

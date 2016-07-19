@@ -8,7 +8,7 @@ classdef Communication < handle
     
     methods
         function o = Communication( SIMULATION, CLOCK )
-             o = Default(o, SIMULATION, CLOCK );
+             o = Declare(o, SIMULATION, CLOCK );
         end
         
         o = get( o, varargin );

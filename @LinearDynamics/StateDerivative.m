@@ -10,45 +10,48 @@ function dx = StateDerivative( obj, t, x, u, w, option )
 %   what the user has set under options. (not yet implemented)
 %   ======================================================================
 
+% state
+dx(1) = x(2);
+dx(2) = u(1) + obj.w(1); % acceleration input and its noise (from process)
+dx(3) = x(4);
+dx(4) = u(2) + obj.w(2); % acceleration input and its noise (from process)
+
 switch(option)
+    
     case('default')
-        Amatrix =  [0 1 0 0;
-                    0 0 0 0;
-                    0 0 0 1;
-                    0 0 0 0];
-
-        Dmatrix =  [0 0 0 0;
-                    0 1 0 0;
-                    0 0 0 0;
-                    0 0 0 1];
-
-        % state
-        dx(1) = x(2);
-        dx(2) = u(1) + obj.w(1); % acceleration input and its noise (from process)
-        dx(3) = x(4);
-        dx(4) = u(2) + obj.w(2); % acceleration input and its noise (from process)
+        
+        Amatrix = [0 1 0 0;
+                   0 0 0 0;
+                   0 0 0 1;
+                   0 0 0 0];
+        
+        Dmatrix = [0 0;
+                   1 0;
+                   0 0;
+                   0 1];
+                       
+        x_length = length(obj.x);
+        w_length = length(w);
+        u_length = length(u);
 
         % state transition matrix
-        phi = reshape(x(5:20),4,4);
+        phi = reshape(x(x_length+1:x_length+x_length*x_length),x_length,x_length);
         phidot = Amatrix*phi;
 
-        % process noise transition matrix (noise for all states?)
-        Gamma = reshape(x(21:36),4,4);
+        % process noise transition matrix
+        Gamma = reshape(x(x_length+x_length*x_length+1:x_length+x_length*x_length+x_length*w_length),x_length,w_length);
         Gammadot = Amatrix*Gamma + Dmatrix;
 
         % control input transition matrix
-        Gu = reshape(x(37:end),4,2);
+        Gu = reshape(x(x_length+x_length*x_length+x_length*w_length+1:end),x_length,u_length);
         Gudot = Amatrix*Gu;
 
-        dx = [ dx(1); dx(2); dx(3); dx(4); reshape(phidot, 4*4, 1); reshape(Gammadot, 4*4, 1); reshape(Gudot, 4*2, 1)];
+        dx = [ dx'; reshape(phidot, x_length*x_length, 1); reshape(Gammadot, x_length*w_length, 1); reshape(Gudot, x_length*u_length, 1)];
+        
     case('state')
-        % state
-        dx(1) = x(2);
-        dx(2) = u(1) + obj.v(1); % acceleration input and its noise (from process)
-        dx(3) = x(4);
-        dx(4) = u(2) + obj.v(2); % acceleration input and its noise (from process) 
 
-        dx = [ dx(1); dx(2); dx(3); dx(4)];
+        dx = dx';
 end
+
 end
 

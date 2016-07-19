@@ -8,15 +8,17 @@ if ~exist('option','var')
     option = 'default';
 end
 
+x_length = length(x_k);
+w_length = length(w_k);
+u_length = length(u_k);
+
 switch(option)
     case('default')
         % vector with initial conditions: state, state TM, process noise TM, control input TM
-        switch(obj.spec)
-            case('Linear')
-                IC = [ x_k; reshape(eye(4),4*4,1); reshape(zeros(4),4*2,1); reshape(zeros(4,2),4*2,1)];
-            case('Dubins')
-                IC = [ x_k; reshape(eye(3),3*3,1); reshape(zeros(3),3*3,1); reshape(zeros(3,2),3*2,1)];
-        end
+        IC = [ x_k;...
+            reshape(eye(x_length),x_length*x_length,1);... % state transition matrix
+            reshape(zeros(x_length,w_length),x_length*w_length,1);... % process noise transition matrix
+            reshape(zeros(x_length,u_length),x_length*u_length,1)]; % input transition matrix
     case('state')
         % vector with initial conditions: state
         IC = x_k;
@@ -30,30 +32,18 @@ TimeProfile = 0:CLOCK.dt:CLOCK.dt;
 
 switch(option)
     case('default')
-        switch(obj.spec)
-            case('Linear')
-                xNext = xout(end,1:4)';
-                F_Next = reshape(xout(end,5:20),4,4);
-                GammaNext = reshape(xout(end,21:36),4,4);
-                GuNext = reshape(xout(end,37:end),4,2);
-            case('Dubins')
-                xNext = xout(end,1:3)';
-                F_Next = reshape(xout(end,4:12),3,3);
-                GammaNext = reshape(xout(end,13:21),3,3);
-                GuNext = reshape(xout(end,22:end),3,2);
-        end
+        
+        xNext = xout(end,1:x_length)';
+        F_Next = reshape(xout(end,x_length+1:x_length+x_length*x_length),x_length,x_length);
+        GammaNext = reshape(xout(end,x_length+x_length*x_length+1:x_length+x_length*x_length+x_length*w_length),x_length,w_length);
+        GuNext = reshape(xout(end,x_length+x_length*x_length+x_length*w_length+1:end),x_length,u_length);
+
     case('state')
-        switch(obj.spec)
-            case('Linear')
-                xNext = xout(end,1:4)';
-                F_Next = [];
-                GammaNext = [];
-                GuNext = [];
-            case('Dubins')
-                xNext = xout(end,1:3)';
-                F_Next = [];
-                GammaNext = [];
-                GuNext = [];
-        end
+        
+        xNext = xout(end,1:x_length)';
+        F_Next = [];
+        GammaNext = [];
+        GuNext = [];
+        
 
 end

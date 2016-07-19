@@ -1,12 +1,6 @@
 classdef Control < handle
     properties % ( SetAccess = public, GetAccess = public )
-        
-        % symbolic form
-        
-        u_sym   % symbolic form of inputs
-        
-        % numeric form
-        
+                
         u       % acceleration input [eddot,nddot]
         
         hist    % History
@@ -15,11 +9,11 @@ classdef Control < handle
     end % Properties
     
     methods
-        function o = Control( ENVIRONMENT )
-             o = Default(o, ENVIRONMENT );
+        function obj = Control()
+             obj = Declare(obj);
         end
         
-        o = get( o, varargin );
+        obj = get( obj, varargin );
     end
     
 end

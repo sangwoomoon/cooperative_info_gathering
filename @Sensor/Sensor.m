@@ -1,16 +1,17 @@
-classdef Measurement < handle
+classdef Sensor < handle
     properties % ( SetAccess = public, GetAccess = public )
         
         spec    % measurement model (e.g. linear, range/bearing ...)
-        mode    % is it measured at the current time? (on/off)
         
-        subject % who is the measured one? (e.g. target/agent)
-        id      % what is the number of agent/target to be measured?
+        bias    % sensor bias
+        meas    % measurement [.id and .y] 
         
-        y       % measurement [e_rel,n_rel,e_abs,n_abs] 
+        subject % sensing agent? or target?
         
         v       % random measurement noise
-        R       % measurement noise variances
+        R       % measurement noise covariances
+        
+        Q       % bias process noise covariances
                 
         hist    % History 
         plot    % Plot handle
@@ -18,15 +19,18 @@ classdef Measurement < handle
     end % Properties
     
     methods
-        function obj = Measurement()
+        function obj = Sensor()
              obj = Declare(obj);
         end
        
-        % parameter setting :: measurement noise covariance matrix (R)
-        SetParameters(obj, MeasureNoiseCov, ActionMode);
+        % take measurement
+        Measure(obj, s, TARGET, LANDMARK, current_time);
         
-        % initialize Mesurement setting
-        InitializeMeausre(obj);
+        % parameter setting :: measurement noise covariance matrix (R)
+        SetParameters(obj, biasQinput, SensedObject, SensorNoiseCov);
+        
+        % initialize Sensor setting
+        InitializeSensor(obj, SensorBias, AgentID);
         
         % Generate Measurement matrix (H)
         % value would be with respect to agent state, target state, and sensor bias

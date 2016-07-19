@@ -1,21 +1,19 @@
-function obj = Default ( obj, TARGET, ENVIRONMENT, SIMULATION, CLOCK, iAgent, DyanmicsOption, MeasureOption)
+function obj = Declare ( obj, id, TARGET, SIMULATION, CLOCK, DynamicsOption, SensorOption)
 
 % default setting for targets
 % input : empty Agent Class
 %
 % output : set Agent Class
 
-obj.id = iAgent;
+obj.id = id;
 
 % initialize control class
-obj.CONTROL = Control(ENVIRONMENT); % Control sub-class
+obj.CONTROL = Control(); % Control sub-class
 
 % initialize dynamics class with respect to specified dynamics model
-switch (DyanmicsOption)
+switch (DynamicsOption)
     case ('Linear')
         obj.DYNAMICS = LinearDynamics();
-    case ('LinearBias')
-        obj.DYNAMICS = LinearBiasDynamics();
     case ('Dubins')
         obj.DYNAMICS = DubinsDynamics();
     otherwise
@@ -23,19 +21,17 @@ switch (DyanmicsOption)
 end
 
 % initialize measurement class with respect to specified measurement model
-for iTarget = 1 : length(TARGET)
-    switch (MeasureOption)
-        case ('Linear')
-            MEASURE(iTarget) = LinearMeasure();
-        case ('RangeBearing')
-            MEASURE(iTarget) = RangeBearingMeasure();
-        case ('RangeRate')
-            MEASURE(iTarget) = RangeRateMeasure();
-        otherwise
-            MEASURE(iTarget) = Measurement();
-    end
+switch (SensorOption)
+    case ('RelPolarCoord')
+        obj.SENSOR = RelPolarCoordSensor();
+    case ('RelCartCoord')
+        obj.SENSOR = RelCartCoordSensor();
+    case ('InertCartCoord')
+        obj.SENSOR = InertCartCoordSensor();
+    otherwise
+        obj.SENSOR = Sensor();
 end
-obj.MEASURE = MEASURE;
+
 
 
 obj.TA = TaskAllocation(TARGET, CLOCK); % Task Allocation sub-class

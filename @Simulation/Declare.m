@@ -1,4 +1,4 @@
-function o = Default( o, nAgent, nTarget, nLandMark )
+function o = Declare( o, nAgent, nTarget, nLandmark )
 
 % default setting for simulation
 % input : empty Simulation Class
@@ -7,7 +7,7 @@ function o = Default( o, nAgent, nTarget, nLandMark )
 
 o.nTarget = nTarget;
 o.nAgent = nAgent;
-o.nLandMark = nLandMark;
+o.nLandmark = nLandmark;
 
 o.sRandom = 333555532;
 

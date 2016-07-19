@@ -7,7 +7,7 @@ classdef Agent < handle
         COMM     % Communication Class (element of agent)
         
         DYNAMICS % Dynamics Class (element of agent, superclass of Linear/Dubins/LinearBias)
-        MEASURE  % Measurement Class (element of agent)
+        SENSOR   % Sensor Class (element of agent)
         CONTROL  % Control Class (element of agent)
         
         FDDF     % Factorized DDF Class (element of agent)
@@ -19,8 +19,8 @@ classdef Agent < handle
     end % Properties
     
     methods
-        function obj = Agent( TARGET, ENVIRONMENT, SIMULATION, CLOCK ,iAgent, DynamicsOption, MeasureOption )
-             obj = Default(obj, TARGET, ENVIRONMENT, SIMULATION, CLOCK ,iAgent, DynamicsOption, MeasureOption );
+        function obj = Agent( iAgent, TARGET, SIMULATION, CLOCK , DynamicsOption, SensorOption )
+             obj = Declare(obj, iAgent, TARGET, SIMULATION, CLOCK , DynamicsOption, SensorOption );
         end
         
     end

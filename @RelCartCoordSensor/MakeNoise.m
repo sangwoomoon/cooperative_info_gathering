@@ -6,7 +6,7 @@ function obj = MakeNoise( obj, option )
 
 switch (option)
     case ('Gaussian')
-        obj.w = (mvnrnd(zeros(1,2),obj.R,1))'; % measurement noise vector
+        obj.w = (mvnrnd(zeros(1,4),obj.R,1))'; % Gaussian measurement noise vector
 end
 
 end

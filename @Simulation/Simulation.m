@@ -1,9 +1,9 @@
 classdef Simulation 
     properties   ( SetAccess = public, GetAccess = public )
         
-        nTarget         % Number of Targets (pure target + landmark)
+        nTarget         % Number of Targets
         nAgent          % Number of Agents
-        nLandMark       % Number of Landmarks (considered as targets)
+        nLandmark       % Number of Landmarks (treated as TARGET classes)
         
         iTarget         % operated target ID
         iAgent          % operated agent ID
@@ -16,8 +16,8 @@ classdef Simulation
     
 
     methods
-        function o = Simulation( nAgent, nTarget, nLandMark )
-            o = Default(o, nAgent, nTarget, nLandMark );
+        function o = Simulation( nAgent, nTarget, nLandmark )
+            o = Declare(o, nAgent, nTarget, nLandmark );
         end
         
         o = get( o, varargin );

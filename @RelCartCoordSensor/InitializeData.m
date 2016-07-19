@@ -3,8 +3,11 @@ function obj = InitializeData( obj )
 %   It is overloaded function because measurement vector is varied with
 %   respect to the measurement spec (sub-class of measurement class)
 
-obj.y = nan(2,1);
-obj.hist.y = nan(2,1);
+obj.meas.id = nan;
+obj.meas.y = nan(4,1);
+
+obj.hist.meas{1}.id = obj.meas.id;
+obj.hist.meas{1}.y = obj.meas.y;
 
 end
 
