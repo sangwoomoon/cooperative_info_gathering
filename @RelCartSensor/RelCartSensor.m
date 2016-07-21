@@ -1,14 +1,15 @@
-classdef RelCartCoordSensor < Sensor
+classdef RelCartSensor < Sensor
     %LINEARMEASURE is a sub-class of Meausrement class
     %   measurement : [abs_e, abs_n, rel_e, rel_n]'
     
     properties
         
+        
     end
     
     methods
         
-        function obj = RelCartCoordSensor()
+        function obj = RelCartSensor()
             obj@Sensor();
         end
         
@@ -21,8 +22,8 @@ classdef RelCartCoordSensor < Sensor
         % Initialize measurement data and its history
         InitializeData(obj);
         
-        % Plot History of states 
-        Plot(obj);
+        % Plot History of states (environment class is for plotting measurement for landmarks 
+        Plot(obj, ENVIRONMENT);
     end
     
 end

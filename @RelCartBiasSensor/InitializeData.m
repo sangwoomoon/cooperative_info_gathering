@@ -4,7 +4,7 @@ function obj = InitializeData( obj )
 %   respect to the measurement spec (sub-class of measurement class)
 
 obj.meas.id = nan;
-obj.meas.y = nan(4,1);
+obj.meas.y = nan(2,1); % east and north only (should be considered later)
 
 obj.hist.meas{1}.id = obj.meas.id;
 obj.hist.meas{1}.y = obj.meas.y;

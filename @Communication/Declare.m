@@ -1,3 +1,3 @@
-function o = Default (o, SIMULATION, CLOCK)
+function o = Declare (o)
     
 end

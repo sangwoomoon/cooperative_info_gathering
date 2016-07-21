@@ -1,113 +1,72 @@
-function o = Plot (o, AGENT, TARGET, CLOCK, SIMULATION, option)
+function obj = Plot (obj, AGENT, TARGET, CLOCK, SIM, option)
 
-tl=sum(TARGET(1).bKFx);  % number of state for targets concerned with KF process
-al=sum(AGENT(1).DYNAMICS.bKFs);   % number of state for agents concerned with KF process
 
-AgentStateList1 = [];
-AgentStateList2 = [];
+nBiasState=length(AGENT(1).SENSOR.bias); 
+nTgtState=(AGENT(1).ESTIMATOR.nState - nBiasState)/SIM.nTarget;
 
-TargetStateList = [];
+BiasList = [];
+TargetList = [];
 
-iKFplotidx = 0;
-iKFidxp = [];
-for iAgentState = 1 : length(AGENT(1).DYNAMICS.s)
-    if AGENT(1).DYNAMICS.bKFs(iAgentState) == 1
-        iKFplotidx = iKFplotidx + 1;
-        AgentStateList1 = [AgentStateList1, al*100+20+2*(iKFplotidx-1)+1];
-        AgentStateList2 = [AgentStateList2, al*100+20+2*iKFplotidx];
-        iKFidxp = [iKFidxp,iAgentState];
-    end
+% make index of subplot : bias state
+for iBiasState = 1 : nBiasState
+    BiasList = [BiasList, nBiasState*100+10+iBiasState];
 end
-AgentStateList = [AgentStateList1, AgentStateList2];
 
-iKFplotidx = 0;
-iKFidxt = [];
-for iTargetState = 1 : length(TARGET(1).x)
-    if TARGET(1).bKFx(iTargetState) == 1
-        iKFplotidx = iKFplotidx + 1;
-        TargetStateList = [TargetStateList, tl*100+10+iKFplotidx];
-        iKFidxt = [iKFidxt,iTargetState];
-    end
+% make index of subplot : target state
+for iTgtState = 1 : nTgtState
+    TargetList = [TargetList, nTgtState*100+10+iTgtState];
 end
+
 
 % Target Error Plot
 for iTarget = 1 : length(TARGET)
     
     % Target state errors:
     figure(iTarget+1), hold on;
-    if strcmp(option,'central')
+    if strcmp(option,'central') % should be moidified! (to central)
         suptitle(['Target ',num2str(iTarget), ' State Estimation Errors'])
     end
     
-    if TARGET(iTarget).bLandMark == 0 % if the target is a landmark, the plot should be stopped
-        for iKFstate = 1 : tl
-            subplot(TargetStateList(iKFstate)), hold on;
-            plot(CLOCK.tvec,o.hist.Xhat(tl*(iTarget-1)+iKFstate,2:end)-TARGET(iTarget).hist.x(iKFidxt(iKFstate),2:end),'marker',o.plot.htmarker,'color',o.plot.htcolor);
-            plot(CLOCK.tvec,2*sqrt(squeeze(o.hist.Phat(tl*(iTarget-1)+iKFstate,tl*(iTarget-1)+iKFstate,2:end))),o.plot.phatmarker,'color',o.plot.phatcolor)
-            plot(CLOCK.tvec,-2*sqrt(squeeze(o.hist.Phat(tl*(iTarget-1)+iKFstate,tl*(iTarget-1)+iKFstate,2:end))),o.plot.phatmarker,'color',o.plot.phatcolor)
-            
-            
-            xlabel('Time (secs)')
-            ylabel(o.plot.ylabeltarget(iKFstate));
-            
-            if iKFstate == 1
-                switch option
-                    case 'central' % Centralized Case
-                        legend([get(legend(gca),'string'),o.plot.legend]);
-                    case 'local' % local case
-                        legend([get(legend(gca),'string'),AGENT.LOCAL_KF.plot.legend]);
-                    case 'decentral' % decentralized case
-                        legend([get(legend(gca),'string'),AGENT.DECEN_KF.plot.legend]);
-                    case 'fDDF' % fDDF based local case
-                        legend([get(legend(gca),'string'),AGENT.FDDF_KF.plot.legend]);
-                        
-                end
-            end
+    for iKFstate = 1 : nTgtState
+        subplot(TargetList(iKFstate)), hold on;
+        plot(CLOCK.tvec,obj.hist.xhat(nTgtState*(iTarget-1)+iKFstate+nBiasState,2:end)-TARGET(iTarget).DYNAMICS.hist.x(iKFstate,2:end),'marker',obj.plot.htmarker,'color',obj.plot.htcolor);
+        plot(CLOCK.tvec,2*sqrt(squeeze(obj.hist.Phat(nTgtState*(iTarget-1)+iKFstate,nTgtState*(iTarget-1)+iKFstate,2:end))),obj.plot.phatmarker,'color',obj.plot.phatcolor)
+        plot(CLOCK.tvec,-2*sqrt(squeeze(obj.hist.Phat(nTgtState*(iTarget-1)+iKFstate,nTgtState*(iTarget-1)+iKFstate,2:end))),obj.plot.phatmarker,'color',obj.plot.phatcolor)
+        
+        
+        xlabel('Time (secs)')
+        ylabel(obj.plot.ylabeltarget(iKFstate));
+        
+        if iKFstate == 1
+            legend([get(legend(gca),'string'),obj.plot.legend]);
         end
     end
+    
 end
 
 % Agent Error Plot.
 for iAgent = 1 : length(AGENT)
     % state errors:
-    if strcmp(option,'central') % Centralized Case
-        figure((length(TARGET)-SIMULATION.nLandMark)+1+iAgent), hold on;
+    if strcmp(option,'central') % should be moidified! (to central)
+        figure(SIM.nTarget+1+iAgent), hold on;
         suptitle(['Platform ',num2str(iAgent),' Bias Estimation Errors'])
-        idx = iAgent;
-    else % local/decentralized Case
-        figure((length(TARGET)-SIMULATION.nLandMark)+1+AGENT.id), hold on;
-        idx = iAgent;
+    else % local estimation
+        figure(SIM.nTarget+1+AGENT.id), hold on;
     end
     
-    for iKFstate = 1 : 2*al
-        if iKFstate < al + 1
-            subplot(AgentStateList(iKFstate)), hold on
-            plot(CLOCK.tvec,o.hist.Xhat((length(TARGET)-SIMULATION.nLandMark)*tl+al*(idx-1)+iKFstate,2:end)-AGENT(iAgent).hist.s(iKFidxp(iKFstate),2:end),'marker',o.plot.hpmarker,'color',o.plot.hpcolor);
-            plot(CLOCK.tvec,2*sqrt(squeeze(o.hist.Phat((length(TARGET)-SIMULATION.nLandMark)*tl+al*(idx-1)+iKFstate,(length(TARGET)-SIMULATION.nLandMark)*tl+al*(iAgent-1)+iKFstate,2:end))),o.plot.phatmarker,'color',o.plot.phatcolor)
-            plot(CLOCK.tvec,-2*sqrt(squeeze(o.hist.Phat((length(TARGET)-SIMULATION.nLandMark)*tl+al*(idx-1)+iKFstate,(length(TARGET)-SIMULATION.nLandMark)*tl+al*(iAgent-1)+iKFstate,2:end))),o.plot.phatmarker,'color',o.plot.phatcolor)
-        else
-            subplot(AgentStateList(iKFstate)), hold on
-            plot(CLOCK.tvec,...
-                (o.hist.Xhat((length(TARGET)-SIMULATION.nLandMark)*tl+al*(idx-1)+iKFstate-al,2:end)-AGENT(iAgent).hist.s(iKFidxp(iKFstate-al),2:end))...
-                ./((abs(o.hist.Xhat((length(TARGET)-SIMULATION.nLandMark)*tl+al*(idx-1)+iKFstate-al,2:end))+abs(AGENT(iAgent).hist.s(iKFidxp(iKFstate-al),2:end)))./2)*100,...
-                'marker',o.plot.hpmarker,'color',o.plot.hpcolor);
-            
-        end
+    for iKFstate = 1 : nBiasState
+        subplot(BiasList(iKFstate)), hold on;
+        plot(CLOCK.tvec,obj.hist.xhat(nBiasState*(iAgent-1)+iKFstate,2:end)-AGENT(iAgent).SENSOR.bias(iKFstate),'marker',obj.plot.hbmarker,'color',obj.plot.hbcolor);
+        plot(CLOCK.tvec,2*sqrt(squeeze(obj.hist.Phat(nBiasState*(iAgent-1)+iKFstate,nBiasState*(iAgent-1)+iKFstate,2:end))),obj.plot.phatmarker,'color',obj.plot.phatcolor)
+        plot(CLOCK.tvec,-2*sqrt(squeeze(obj.hist.Phat(nBiasState*(iAgent-1)+iKFstate,nBiasState*(iAgent-1)+iKFstate,2:end))),obj.plot.phatmarker,'color',obj.plot.phatcolor)
+        
+        
         xlabel('Time (secs)')
-        ylabel(o.plot.ylabelagent(iKFstate));
+        ylabel(obj.plot.ylabelbias(iKFstate));
         
         if iKFstate == 1
-            switch option
-                case 'central' % Centralized Case
-                    legend([get(legend(gca),'string'),o.plot.legend]);
-                case 'local' % local case
-                    legend([get(legend(gca),'string'),AGENT.LOCAL_KF.plot.legend]);
-                case 'decentral' % decentralized case
-                    legend([get(legend(gca),'string'),AGENT.DECEN_KF.plot.legend]);
-                case 'fDDF' % fDDF based local case
-                    legend([get(legend(gca),'string'),AGENT.FDDF_KF.plot.legend]);
-                    
-            end
+            legend([get(legend(gca),'string'),AGENT.ESTIMATOR.plot.legend]);
+            
         end
     end
 end

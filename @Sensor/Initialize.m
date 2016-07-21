@@ -1,9 +1,6 @@
-function obj = InitializeSensor( obj, bias, id )
+function obj = Initialize( obj, id )
 %INITIALIZEMEASURE allocates initial conditions of measurement for
 %measurement data and measurement history
-
-% set subject (target/agent) into sensor class
-obj.bias = bias;
 
 % initialize meausrement data and history : dependent on the measurement
 % spec

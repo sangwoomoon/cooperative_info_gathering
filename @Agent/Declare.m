@@ -1,4 +1,4 @@
-function obj = Declare ( obj, id, TARGET, SIMULATION, CLOCK, DynamicsOption, SensorOption)
+function obj = Declare ( obj, id, TARGET, SIMULATION, CLOCK, DynamicsOption, SensorOption, EstimationOption)
 
 % default setting for targets
 % input : empty Agent Class
@@ -22,20 +22,31 @@ end
 
 % initialize measurement class with respect to specified measurement model
 switch (SensorOption)
-    case ('RelPolarCoord')
-        obj.SENSOR = RelPolarCoordSensor();
-    case ('RelCartCoord')
-        obj.SENSOR = RelCartCoordSensor();
-    case ('InertCartCoord')
-        obj.SENSOR = InertCartCoordSensor();
+    case ('RelPolar')
+        obj.SENSOR = RelPolarSensor();
+    case ('RelCart')
+        obj.SENSOR = RelCartSensor();
+    case ('RelCartBias')
+        obj.SENSOR = RelCartBiasSensor();
+    case ('InertCart')
+        obj.SENSOR = InertCartSensor();
     otherwise
         obj.SENSOR = Sensor();
 end
 
+%obj.TA = TaskAllocation(TARGET, CLOCK); % Task Allocation sub-class
 
+% initialize communication : could use sub-class with respect to comm
+% package
+obj.COMM = Communication(); 
 
-obj.TA = TaskAllocation(TARGET, CLOCK); % Task Allocation sub-class
-obj.COMM = Communication(SIMULATION, CLOCK); % Communication sub-class
+% initialize estimator class with respect to specified estimation process
+switch (EstimationOption)
+    case ('KF')
+        obj.ESTIMATOR = KalmanFilter();
+    otherwise
+        obj.ESTIMATOR = Estimator();
+end
 
 % plotting options setting
 obj.plot.statecolor = rand(1,3);

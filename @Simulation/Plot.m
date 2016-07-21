@@ -20,7 +20,7 @@ end
 
 % Measurement plot (FIGURE 1)
 for iAgent = 1 : obj.nAgent
-    AGENT(iAgent).SENSOR.Plot();
+    AGENT(iAgent).SENSOR.Plot(ENVIRONMENT);
 end
 axis equal;
 
@@ -30,9 +30,8 @@ axis equal;
 % CENTRAL_KF.Plot(AGENT,TARGET,CLOCK,o,'central');
 
 % Individual Estimation plot
-% for iAgent = 1 : o.nAgent
-%     AGENT(iAgent).LOCAL_KF.Plot(AGENT(iAgent),TARGET,CLOCK,o,'local');
-%     AGENT(iAgent).FDDF_KF.Plot(AGENT(iAgent),TARGET,CLOCK,o,'fDDF');
-% end
+for iAgent = 1 : obj.nAgent
+    AGENT(iAgent).ESTIMATOR.Plot(AGENT(iAgent),TARGET,CLOCK,obj,'local'); hold on;
+end
 
 end

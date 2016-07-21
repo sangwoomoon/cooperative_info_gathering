@@ -3,16 +3,13 @@ classdef Sensor < handle
         
         spec    % measurement model (e.g. linear, range/bearing ...)
         
-        bias    % sensor bias
         meas    % measurement [.id and .y] 
         
         subject % sensing agent? or target?
         
         v       % random measurement noise
         R       % measurement noise covariances
-        
-        Q       % bias process noise covariances
-                
+                        
         hist    % History 
         plot    % Plot handle
         
@@ -26,15 +23,17 @@ classdef Sensor < handle
         % take measurement
         Measure(obj, s, TARGET, LANDMARK, current_time);
         
-        % parameter setting :: measurement noise covariance matrix (R)
-        SetParameters(obj, biasQinput, SensedObject, SensorNoiseCov);
+        % parameter setting :: measurement noise covariance matrix (R),
+        % sensed object.
+        % dependent on the subclasses of Sensor class
+        SetParameters(obj, SensedObject, SensorNoiseCov);
         
         % initialize Sensor setting
-        InitializeSensor(obj, SensorBias, AgentID);
+        Initialize(obj, SensorBias, AgentID);
         
         % Generate Measurement matrix (H)
         % value would be with respect to agent state, target state, and sensor bias
-        output = TakeJacobian(obj);
+        output = TakeJacobian(obj, option);
         
         % Generate measurement noise :: should be inside of sub-classes!
         MeasureNoise = MakeNoise(obj);
@@ -42,6 +41,14 @@ classdef Sensor < handle
         % plotting function for measurement (in terms of locations)
         Plot(obj, PlottedClass);
         
+        % gathers measurements for all targets to use in Estimator class
+        Y = GatherMeasurements( obj );
+        
+        % gathers measurement noise covariance matrix to use in Estimator
+        % class
+        R = GatherMeasNoiseCovMatrix(obj);
+
+                
     end
     
 end

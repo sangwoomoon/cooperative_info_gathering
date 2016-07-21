@@ -1,17 +1,22 @@
 classdef Communication < handle
     properties % ( SetAccess = public, GetAccess = public )
         
-        % C % communication Matrix (sender : row - receiver : col)
-        Z % received package through communication
+        range % possible communication range (N/A, but available in the future)
+        Z % received package from Network class
         
     end % Properties
     
     methods
-        function o = Communication( SIMULATION, CLOCK )
-             o = Declare(o, SIMULATION, CLOCK );
+        function obj = Communication()
+             obj = Declare(obj);
         end
         
-        o = get( o, varargin );
+        % Send Z to Network class
+        SentPackage = SendPackage(obj, preferredAgent);
+        
+        % Receive package from Network class
+        ReceivePackage(obj, ReceivedPackge )
+        
     end
     
 end

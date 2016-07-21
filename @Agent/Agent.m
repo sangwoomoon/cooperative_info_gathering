@@ -19,9 +19,14 @@ classdef Agent < handle
     end % Properties
     
     methods
-        function obj = Agent( iAgent, TARGET, SIMULATION, CLOCK , DynamicsOption, SensorOption )
-             obj = Declare(obj, iAgent, TARGET, SIMULATION, CLOCK , DynamicsOption, SensorOption );
+        function obj = Agent( iAgent, TARGET, SIMULATION, CLOCK , DynamicsOption, SensorOption, EstimatorOption )
+             obj = Declare(obj, iAgent, TARGET, SIMULATION, CLOCK , DynamicsOption, SensorOption, EstimatorOption );
         end
+        
+        % group jacobian : since this function should uses the TARGET,
+        % LANDMARK classes. should be modified because AGENT cannot know
+        % actual dynamics of TARGET
+        jacobian = GatherJacobian(obj, TARGET, CLOCK, option) % option: state / noise
         
     end
     

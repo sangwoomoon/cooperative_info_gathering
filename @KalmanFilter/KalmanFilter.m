@@ -1,39 +1,26 @@
-classdef KalmanFilter < handle
+classdef KalmanFilter < Estimator
     properties ( SetAccess = public, GetAccess = public )
     
-        nState      % # of total states (for all agents - all targets if centralized KF)
-        nY          % # of total measurements (for all agents' measurement if centralized KF)
+        y           % current measurement
         
-        Xhat        % initial setting as a true state
-        Phat        % can play with this; will not be issue with Info filter...
-        Y           % current measurement set
+        F           % state transition matrix (given by AGENT class, added AGENT.SENSOR class if bias is considered for estimation)
         
-        F           % [Ft1 0 0...0; 0 Ft2 ... 0; 0 ... 0 Fp1 ... 0; 0 ... 0 Fp2 ... 0] type
-        Gamma       % [Gt1 0 0...0; 0 Gt2 ... 0; 0 ... 0 Gamp1 ... 0; 0 ... 0 Gamp2 ... 0] type
-        Gu          % [zeros(2,4); Gu1, zeros(4,2); zeros(4,2),Gu2] type
-        H           % [1 0  -1 0 0 0   0 0 0 0 ;
-                    %  0 1   0 0-1 0   0 0 0 0 ;
-                    %  0 0   1 0 0 0   0 0 0 0 ;
-                    %  0 0   0 0 1 0   0 0 0 0 ;
-                    %  1 0   0 0 0 0  -1 0 0 0 ;
-                    %  0 1   0 0 0 0   0 0-1 0 ;
-                    %  0 0   0 0 0 0   1 0 0 0 ;
-                    %  0 0   0 0 0 0   0 0 1 0 ] type (for 1target - 2agent)
-        Q           % [Qt1 0 0...0; 0 Qt2 ... 0; 0 ... 0 Qp1 ... 0; 0 ... 0 Qp2 ... 0] type
+        Gamma       % noise matrix (given by AGENT class, added AGENT.SENSOR class if bias is considered for estimation)
+        Q           % process noise covariacne matrix (given by AGENT class, added AGENT.SENSOR class if bias is considered for estimation)
+        
+        H           % measurement matrix (given by AGENT.SENSOR class)
         R           % [Rt1 0 0...0; 0 Rt2 ... 0; 0 ... 0 Rp1 ... 0; 0 ... 0 Rp2 ... 0] type
-        u           % [upvec1;upvec2] type
         
-        hist        % history of valuable
-        plot        % plot handle
+        Gu          % input matrix (given by AGENT class)
+        u           % [upvec1;upvec2] type
 
     end % Properties
     
     methods
-        function o = KalmanFilter ( SIMULATION,AGENT,TARGET,CLOCK,option )
-            o = Default( o, SIMULATION,AGENT,TARGET,CLOCK,option );
+        function obj = KalmanFilter()
+            obj@Estimator();
         end
         
-        o = get( o, varargin );
     end
     
 end

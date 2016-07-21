@@ -8,7 +8,7 @@ function djacobian = TakeJacobian( obj, jacobian, x, u, w, option )
 
 % consider af/ax(x(t+delta_t/2))delta_t
 switch(option.jacobian)
-    case ('F') % or state
+    case ('state') 
         
         jacobian = reshape(jacobian,size(x),size(x));
         Amatrix = [ 0 0 -u(1)*cos(x(3));
@@ -18,7 +18,7 @@ switch(option.jacobian)
         djacobian = Amatrix*jacobian;
         djacobian = reshape(djacobian,size(x)*size(x),1);
         
-    case ('Gamma') % Gw is better, name w
+    case ('noise') 
         
         jacobian = reshape(jacobian,size(x),size(x));
         Amatrix = [ 0 0 -u(1)*cos(x(3));
@@ -30,7 +30,7 @@ switch(option.jacobian)
         djacobian = Amatrix*jacobian + Dmatrix;
         djacobian = reshape(djacobian,size(x)*size(x),1);
         
-    case ('Gu') % use u instead of Gu
+    case ('input')
         
  
 end

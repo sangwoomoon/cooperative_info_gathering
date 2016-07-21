@@ -20,7 +20,10 @@ classdef Simulation
             o = Declare(o, nAgent, nTarget, nLandmark );
         end
         
-        o = get( o, varargin );
+        % group jacobian : since this function should uses the AGENT, TARGET,
+        % LANDMARK classes for centralized estimation.
+        % should be modified because AGENT cannot know actual dynamics of TARGET
+        jacobian = GroupJacobian(obj, AGENT, TARGET, CLOCK, option) % option: state / noise
     end
     
 end
