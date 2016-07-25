@@ -6,7 +6,7 @@ R_total = [];
 
 % for bias part : it depends on the spec of sensor
 if strcmp(obj.spec,'RelCartBias') == 1 % when bias is considered
-    R_total = blkdiag(R_total,obj.R_bias);
+    R_total = blkdiag(R_total,obj.R);
 end
 
 for iMeasure = 1 : length(obj.meas)

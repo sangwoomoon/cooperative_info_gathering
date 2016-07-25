@@ -6,11 +6,10 @@ classdef Environment < handle
     end % Properties
     
     methods
-        function o = Environment ( clock )
-            o = Declare( o, clock );
+        function obj = Environment ( )
+            obj = Declare( obj );
         end
         
-        o = get( o, varargin );
     end
     
 end

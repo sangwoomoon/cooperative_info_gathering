@@ -29,7 +29,12 @@ for iTarget = 1 : length(TARGET)
     
     for iKFstate = 1 : nTgtState
         subplot(TargetList(iKFstate)), hold on;
-        plot(CLOCK.tvec,obj.hist.xhat(nTgtState*(iTarget-1)+iKFstate+nBiasState,2:end)-TARGET(iTarget).DYNAMICS.hist.x(iKFstate,2:end),'marker',obj.plot.htmarker,'color',obj.plot.htcolor);
+        %plot(CLOCK.tvec,obj.hist.xhat(nTgtState*(iTarget-1)+iKFstate+nBiasState,2:end)-TARGET(iTarget).DYNAMICS.hist.x(iKFstate,2:end),'marker',obj.plot.htmarker,'color',obj.plot.htcolor);
+        if rem(iKFstate,2) == 1 % ad-hoc, should be changed! (coordinate conversion function is required!)
+            plot(CLOCK.tvec,obj.hist.xhat(nTgtState*(iTarget-1)+iKFstate+nBiasState,2:end)-TARGET(iTarget).DYNAMICS.hist.pos((iKFstate==1)*1+(iKFstate==3)*2,2:end),'marker',obj.plot.htmarker,'color',obj.plot.htcolor);
+        else
+            plot(CLOCK.tvec,obj.hist.xhat(nTgtState*(iTarget-1)+iKFstate+nBiasState,2:end)-TARGET(iTarget).DYNAMICS.hist.vel((iKFstate==2)*1+(iKFstate==4)*2,2:end),'marker',obj.plot.htmarker,'color',obj.plot.htcolor);
+        end
         plot(CLOCK.tvec,2*sqrt(squeeze(obj.hist.Phat(nTgtState*(iTarget-1)+iKFstate,nTgtState*(iTarget-1)+iKFstate,2:end))),obj.plot.phatmarker,'color',obj.plot.phatcolor)
         plot(CLOCK.tvec,-2*sqrt(squeeze(obj.hist.Phat(nTgtState*(iTarget-1)+iKFstate,nTgtState*(iTarget-1)+iKFstate,2:end))),obj.plot.phatmarker,'color',obj.plot.phatcolor)
         

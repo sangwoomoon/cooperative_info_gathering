@@ -16,6 +16,8 @@ switch (DynamicsOption)
         obj.DYNAMICS = LinearDynamics();
     case ('Dubins')
         obj.DYNAMICS = DubinsDynamics();
+    case ('Static')
+        obj.DYNAMICS = StaticDynamics();
     otherwise
         obj.DYNAMICS = Dynamics();
 end

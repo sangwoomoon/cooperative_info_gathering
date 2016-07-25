@@ -13,8 +13,15 @@ switch (option)
         jacobian = [0  0; % N/A
                     0  0];
     case ('BiasMeasure') % H_bias
-        jacobian = [1  0;
-                    0  1];
+        
+        jacobian = [];
+        jacobian_element = [1  0;  % bias measurement matrix for single target
+                            0  1];
+        
+        for iMeasure = 1 : length(obj.meas)
+            jacobian = [jacobian; jacobian_element];
+        end
+        
 end
 
 end

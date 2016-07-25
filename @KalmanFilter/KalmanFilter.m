@@ -1,7 +1,7 @@
 classdef KalmanFilter < Estimator
     properties ( SetAccess = public, GetAccess = public )
     
-        y           % current measurement
+        Y           % current measurement
         
         F           % state transition matrix (given by AGENT class, added AGENT.SENSOR class if bias is considered for estimation)
         

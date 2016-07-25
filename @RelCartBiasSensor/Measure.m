@@ -18,9 +18,6 @@ for iTarget = 1 : length(TARGET)
     
 end
 
-%%Simulate relative position measurements to sensor bias
-obj.v = mvnrnd(zeros(1,2),obj.R_bias,1);
-
 for iLandmark = 1 : length(LANDMARK)
     obj.meas(length(TARGET)+iLandmark).id = LANDMARK.id;
     obj.meas(length(TARGET)+iLandmark).y(1,1) = obj.bias(1) + obj.v(1); % bias + noise

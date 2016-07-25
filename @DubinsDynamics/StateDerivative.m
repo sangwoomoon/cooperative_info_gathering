@@ -13,7 +13,7 @@ function dx = StateDerivative( obj, t, x, u, w, option )
 
 % state
 dx(1) = u(1)*cos(x(3)) + obj.w(1); % cosine input plus its noise
-dx(2) = u(1)*sin(x(3)) + obj.w(2); % cosine input plus its noise
+dx(2) = u(1)*sin(x(3)) + obj.w(2); % sine input plus its noise
 dx(3) = u(2) + obj.w(3);           % heading input plus its noise
 
 switch(option)

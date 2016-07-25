@@ -44,7 +44,7 @@ classdef Dynamics < handle
         PredictState(obj, InputArray, ProcessNoiseArray, CLOCK);
         
         % State Update only (this function is used into TimeUpdate /
-        % PredictState)
+        % PredictState) : dependent on the spec of dynamics model
         [PredictedState,StateJacobian,NoiseJacobian,InputJacobian] = ...
             StateUpdate(obj, CurrentState, Input, ProcessNoise, CLOCK); 
         

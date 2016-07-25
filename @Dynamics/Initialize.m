@@ -1,4 +1,4 @@
-function obj = InitializeState( obj, input_state )
+function obj = Initialize( obj, input_state )
 %INITIALIZESTATE Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -8,6 +8,9 @@ function obj = InitializeState( obj, input_state )
     % store history
     obj.hist.x = obj.x;
     obj.hist.x_pred = nan(length(obj.x),1);
+    
+    obj.hist.pos = obj.GetPosition();
+    obj.hist.vel = obj.GetVelocity(); % should think over
     
     obj.hist.stamp = 0; % initial time step (zero IC for time)
 

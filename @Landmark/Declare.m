@@ -1,18 +1,15 @@
-function obj = Declare( obj, targetID, option)
+function obj = Declare( obj, landmarkID, option)
 
-% default setting for targets
+% default setting for landmarks
 % input : empty Target Class
 %
-% output : set Target Class
+% output : set Landmark Class
 
-% InfoTech Version : consider states with bias,
-% Target also has dynamics with constant velocity.
+% InfoTech Version : consider to used for bias,
+% Landmark also has dynamics with constant velocity.
 
 
-obj.id = targetID;
-
-% initialize control class
-obj.CONTROL = Control(); % Control sub-class
+obj.id = landmarkID;
 
 % initialize dynamics class with respect to specified dynamics model
 switch (option)

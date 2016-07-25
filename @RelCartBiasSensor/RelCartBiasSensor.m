@@ -6,7 +6,6 @@ classdef RelCartBiasSensor < Sensor
         
         bias    % sensor bias
         Q       % sensor bias noise cov matrix
-        R_bias  % sensor bias measurement noise matrix
         
     end
     
@@ -25,7 +24,7 @@ classdef RelCartBiasSensor < Sensor
         % parameter setting :: measurement noise covariance matrix (R),
         % sensed object.
         % dependent on the subclasses of Sensor class
-        SetParameters(obj, SensedObject, bias, biasQinput, biasNoiseCov, SensorNoiseCov);
+        SetParameters(obj, SensedObject, bias, biasQinput, SensorNoiseCov);
         
         % Initialize measurement data and its history
         InitializeData(obj);

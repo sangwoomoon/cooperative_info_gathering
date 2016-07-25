@@ -21,43 +21,61 @@ FDDFt = 1.0;
 CLOCK = Clock(t0,dt,nt,FDDFt);
 
 %--- Environment Classes Setting ----
-ENV = Environment(CLOCK);
+%                      Dyn.Spec    State      
+landmarkParam(1,:) = {'Static';   [ 5.0; -2.5]};
+
+ENV = Environment();
+
+for iLandmark = 1 : SIM.nLandmark
+    landmarkSpec = landmarkParam(1,1);
+    ENV.LANDMARK = Landmark('landmark',landmarkSpec{:});
+    ENV.LANDMARK.DYNAMICS.Initialize(cell2mat(landmarkParam(iLandmark,2)));
+    ENV.LANDMARK.DYNAMICS.SetParameters([],[],[]); % parameter setting order : bKFx, Q, RelTol, AbsTol (last two is for ODE45)
+end
 
 %--- Target Classes Setting ----
-TARGET(1) = Target(1, 'Linear');
-TARGET(2) = Target(2, 'Linear');
+%                   Dyn.Spec    State                   Q               RelTol  AbsTol  
+targetParam(1,:) = {'Dubins';   [1.0;-0.5;1.0];        [1.2;1.2;0.04];  1e-4;   1e-6};
+targetParam(2,:) = {'Dubins';   [-10.0;0.1;0.0];       [1.2;1.2;0.05];  1e-4;   1e-6};
+
 
 %--- Agent Classes Setting ----
-AGENT(1) = Agent(1, TARGET, SIM, CLOCK, 'Linear', 'RelCartBias','KF'); % linear dynamics, linear measurement, Kalman filter estimation
-AGENT(2) = Agent(2, TARGET, SIM, CLOCK, 'Linear', 'RelCartBias','KF'); 
-AGENT(3) = Agent(3, TARGET, SIM, CLOCK, 'Dubins', 'RelCartBias','KF'); % unicycle model, linear measurement, Kalman filter estimation
+%                   Dyn.Spec    State                     Q                     RelTol  AbsTol    Meas.Spec       Meas.Obj  bias             R                   Esti.Spec
+agentParam(1,:) = {'Linear';    [-5.5; 0.0;  5.0; 0.0];   [0.2; 0.2];           1e-4;   1e-6;    'RelCartBias';  'Target';  [ 0.2; -0.3];    [10.15; 0.015];    'KF'};
+agentParam(2,:) = {'Linear';    [ 1.5; 0.0; -5.0; 0.0];   [0.2; 0.2];           1e-4;   1e-6;    'RelCartBias';  'Target';  [ 0.5;  0.1];	 [ 0.015;10.15];    'KF'};
+agentParam(3,:) = {'Dubins';    [ 0.2; 0.5;  0.0];        [0.02; 0.02; 0.2];	1e-4;   1e-6;    'RelCartBias';  'Target';  [ 0.0; -0.5];	 [ 0.55;  0.85];    'KF'};
 
-%--- Individual TARGET CLASS setting ----
-TARGET(1).DYNAMICS.InitializeState([1.0,-0.5,1.0,0.5]');
-TARGET(1).DYNAMICS.SetParameters(diag([1.2; 1.2]), 1e-4, 1e-6); % parameter setting order : bKFx, Q, RelTol, AbsTol (last two is for ODE45)
 
-% TARGET(2).DYNAMICS.InitializeState([-10.0,-5.0,-1.0]'); % Dubins
-% TARGET(2).DYNAMICS.SetParameters(diag([1.2; 1.2; 1.2]), 1e-4, 1e-6); % Dubins
-TARGET(2).DYNAMICS.InitializeState([-10.0,1.5,-5.0,-1.0]');
-TARGET(2).DYNAMICS.SetParameters(diag([1.2; 1.2]), 1e-4, 1e-6);
+%--- Guessed Target (and bias) Setting ----
+%                 Target 1 Dyn.Spec Target 2 Dyn. Spec   Target 1 guess            Target 2 guess              Bias guess       P                        bias Q            target 1 process Q   target 2 process Q       
+estiParam(1,:) = {'Linear';         'Linear';           [ 5.0;  0.1; 3.0; 0.5];   [-5.0;  0.0;-0.2; 0.0];     [0.0;0.2];       10*eye(2+SIM.nTarget*4); [0.03;0.03];      [1.5;0.5];            [1.5;0.5]};
+estiParam(2,:) = {'Linear';         'Linear';           [ 5.0;  0.1; 3.0; 0.5];   [-5.0;  0.0;-0.2; 0.0];     [0.3;0.1];       10*eye(2+SIM.nTarget*4); [0.05;0.05];      [1.5;1.0];            [1.5;1.0]};
+estiParam(3,:) = {'Linear';         'Linear';           [ 5.0;  0.1; 3.0; 0.5];   [-5.0;  0.0;-0.2; 0.0];     [0.2;0.5];       10*eye(2+SIM.nTarget*4); [0.55;0.01];      [1.8;0.3];            [1.8;0.3]};
 
-%--- Individual AGENT CLASS setting :: Dynamics ----
-AGENT(1).DYNAMICS.InitializeState([-5.5,0,5, 0]');
-AGENT(1).DYNAMICS.SetParameters(diag([0.2; 0.2]), 1e-4, 1e-6);
 
-AGENT(2).DYNAMICS.InitializeState([1.5,0,-5, 0]');
-AGENT(2).DYNAMICS.SetParameters(diag([0.2; 0.2]), 1e-4, 1e-6);
+for iTarget = 1 : SIM.nTarget
+    targetSpec = targetParam(iTarget,1);
+    TARGET(iTarget) = Target(iTarget, targetSpec{:});
+    TARGET(iTarget).DYNAMICS.Initialize(cell2mat(targetParam(iTarget,2)));
+    TARGET(iTarget).DYNAMICS.SetParameters(diag(cell2mat(targetParam(iTarget,3))), cell2mat(targetParam(iTarget,4)), cell2mat(targetParam(iTarget,5)));
+end
 
-AGENT(3).DYNAMICS.InitializeState([0.2,0.5,0]');
-AGENT(3).DYNAMICS.SetParameters(diag([0.2; 0.2; 0.2]), 1e-4, 1e-6);
- 
-%--- Individual AGENT CLASS setting :: Sensor ----
-AGENT(1).SENSOR.Initialize(AGENT(1).id);
-AGENT(1).SENSOR.SetParameters('Target',[0.2, -0.3]',diag([0.03 0.05]),diag([0.05 0.05]),diag([10.15 0.015]));
-AGENT(2).SENSOR.Initialize(AGENT(2).id);
-AGENT(2).SENSOR.SetParameters('Target',[0.5; 0.1]',diag([0.05 0.03]),diag([0.05 0.05]),diag([0.015 10.15]));
-AGENT(3).SENSOR.Initialize(AGENT(3).id);
-AGENT(3).SENSOR.SetParameters('Target',[0; -0.5]',diag([0.10 0.10]),diag([0.05 0.05]),diag([0.55 0.85]));
+
+for iAgent = 1 : SIM.nAgent
+    agentSpec = agentParam(iAgent,1);
+    agentSens = agentParam(iAgent,6);
+    agentEsti = agentParam(iAgent,10);
+    agentSobj = agentParam(iAgent,7);
+    
+    AGENT(iAgent) = Agent(iAgent, TARGET, SIM, CLOCK, agentSpec{:}, agentSens{:}, agentEsti{:});
+    
+    AGENT(iAgent).DYNAMICS.Initialize(cell2mat(agentParam(iAgent,2)));
+    AGENT(iAgent).DYNAMICS.SetParameters(diag(cell2mat(agentParam(iAgent,3))), cell2mat(agentParam(iAgent,4)), cell2mat(agentParam(iAgent,5)));
+    
+    AGENT(iAgent).SENSOR.Initialize(AGENT(1).id);
+    AGENT(iAgent).SENSOR.SetParameters(agentSobj{:},cell2mat(agentParam(iAgent,8)),diag(cell2mat(agentParam(iAgent,9)))); % Track Object / bias / R
+end
+
 
 %--- Network class initialization ----
 NET = DiskModelNetwork();
@@ -68,7 +86,9 @@ NET.InitializeNetwork(SIM.nAgent,20);
 
 %--- Individaulized KF subclass initialization ----
 for iAgent = 1 : SIM.nAgent
-    AGENT(iAgent).ESTIMATOR.Initialize([0 0.2, 5.0 0.1 3.0 0.5, -5.0,0,2.0,0]',10*eye(10));
+    AGENT(iAgent).ESTIMATOR.Initialize(...
+        [estiParam(iAgent,1);estiParam(iAgent,2)],{cell2mat(estiParam(iAgent,5));cell2mat(estiParam(iAgent,3));cell2mat(estiParam(iAgent,4))},...
+        cell2mat(estiParam(iAgent,6)),{diag(cell2mat(estiParam(iAgent,7)));diag(cell2mat(estiParam(iAgent,8)));diag(cell2mat(estiParam(iAgent,9)))});
     AGENT(iAgent).ESTIMATOR.SetParameters('local',AGENT(iAgent).id);
 end
 
@@ -137,22 +157,8 @@ for iClock = 1 : CLOCK.nt
     %--- Filter Update :: Local KF ----
     for iAgent = 1 : SIM.nAgent
         
-        % Take matrix for estimation : should be belonged and excuted
-        % in the Kalman Filter sub-class (not generalized one!)
-        F = AGENT(iAgent).GatherJacobian(TARGET,CLOCK,'state');
-        Gamma = AGENT(iAgent).GatherJacobian(TARGET,CLOCK,'noise');
-        
-        Y = AGENT(iAgent).SENSOR.GatherMeasurements();
-        H = AGENT(iAgent).SENSOR.TakeJacobian();
-        
-        Q = AGENT(iAgent).GatherProcNoiseCovMatrix(TARGET);
-        R = AGENT(iAgent).SENSOR.GatherMeasNoiseCovMatrix();
-        
-        % Set matrix for estimation
-        AGENT(iAgent).ESTIMATOR.SetMatrices(Y,F,Gamma,H,Q,R);
-        
         % Local KF Process
-        AGENT(iAgent).ESTIMATOR.TakeProcess();
+        AGENT(iAgent).ESTIMATOR.TakeProcess(AGENT(iAgent).SENSOR,CLOCK);
         
         % FDDF KF Process :: same procedure as Local KF, but it uses fused
         % estimated data (Xhat, Phat) from the communication.
