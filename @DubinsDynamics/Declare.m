@@ -3,6 +3,7 @@ function obj = Declare( obj )
 %   s = [e, n, theta]
     
     obj.spec = 'Dubins';
+    obj.nState = 3;
     
 end
 

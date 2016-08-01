@@ -1,5 +1,5 @@
-function obj = InitializeNetwork( obj, nAgent, Range )
-%INITIALIZESTATE Initialize network 
+function obj = Initialize( obj, nAgent, Range )
+%INITIALIZE Initialize network 
 %   initialized properties :: probability matrix, network graph, range
 %   array
 

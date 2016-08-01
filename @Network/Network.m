@@ -14,6 +14,7 @@ classdef Network < handle
         Z % received data package from agents
         
         hist % history for prob matrix and network graph
+        plot % plotting options
     end
     
     methods

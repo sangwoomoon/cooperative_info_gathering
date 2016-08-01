@@ -9,6 +9,7 @@ classdef Dynamics < handle
         spec    % dynamic model specification (e.g. Linear / Dubins)
         
         x       % current state
+        nState % estimation state number
             
         w      % Random variable wrt movement of agent/target
         Q      % process noise for platform (accel noise)

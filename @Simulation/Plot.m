@@ -1,9 +1,10 @@
-function obj = Plot(obj, AGENT, TARGET, ENVIRONMENT, CLOCK)
+function obj = Plot(obj, AGENT, TARGET, ENV, CLOCK)
 
 % Environment (Landmark) plot (FIGURE 1)
+figure(obj.iFigure)
 for iLandmark = 1 : obj.nLandmark
-    ENVIRONMENT.LANDMARK.DYNAMICS.Plot(ENVIRONMENT.LANDMARK(iLandmark)); % TARGET input for plotting option (TARGET.plot is better)
-    legend([get(legend(gca),'string'),ENVIRONMENT.LANDMARK(iLandmark).plot.legend]);
+    ENV.LANDMARK.DYNAMICS.Plot(ENV.LANDMARK(iLandmark)); % TARGET input for plotting option (TARGET.plot is better)
+    legend([get(legend(gca),'string'),ENV.LANDMARK(iLandmark).plot.legend]);
 end
 
 % Target plot (FIGURE 1)
@@ -20,14 +21,19 @@ end
 
 % Measurement plot (FIGURE 1)
 for iAgent = 1 : obj.nAgent
-    AGENT(iAgent).SENSOR.Plot(ENVIRONMENT);
+    AGENT(iAgent).SENSOR.Plot(ENV);
 end
 axis equal;
+obj.iFigure = obj.iFigure+1;
+
+% communication status plot (FIGURE 2)
+figure(obj.iFigure)
+obj.NETWORK.Plot(CLOCK);
 
 % Centralized Estimation plot
 % FIGURE 2- : TARGET POSITION ERROR PLOT
 % FIGURE 3-(nAGENT*nTarget+3): AGENT-TARGET ERROR PLOT
-% CENTRAL_KF.Plot(AGENT,TARGET,CLOCK,o,'central');
+obj.ESTIMATOR.Plot(AGENT,TARGET,CLOCK,obj,'central');
 
 % Individual Estimation plot
 for iAgent = 1 : obj.nAgent

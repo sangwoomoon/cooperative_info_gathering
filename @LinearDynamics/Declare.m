@@ -4,6 +4,7 @@ function obj = Declare( obj )
 %   s = [east, east_dot, north, north_dot]
 
     obj.spec = 'Linear';
+    obj.nState = 4;
     
 end
 

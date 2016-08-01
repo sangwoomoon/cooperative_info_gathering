@@ -1,8 +1,7 @@
 classdef Communication < handle
     properties % ( SetAccess = public, GetAccess = public )
         
-        range % possible communication range (N/A, but available in the future)
-        Z % received package from Network class
+        Z % received package
         
     end % Properties
     
@@ -12,7 +11,7 @@ classdef Communication < handle
         end
         
         % Send Z to Network class
-        SentPackage = SendPackage(obj, preferredAgent);
+        SentPackage = SendPackage(obj, Z_agent, NETWORK);
         
         % Receive package from Network class
         ReceivePackage(obj, ReceivedPackge )

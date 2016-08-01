@@ -8,7 +8,12 @@ classdef Simulation
         iTarget         % operated target ID
         iAgent          % operated agent ID
         
+        iFigure         % index of figure that is handled now
+        
         sRandom         % Specification of Random Variables (seeds for Random #)
+        
+        ESTIMATOR       % centralized estimation class
+        NETWORK         % network class
         
         plot            % plot for whole result (legends)
         
@@ -16,14 +21,10 @@ classdef Simulation
     
 
     methods
-        function o = Simulation( nAgent, nTarget, nLandmark )
-            o = Declare(o, nAgent, nTarget, nLandmark );
+        function obj = Simulation( nAgent, nTarget, nLandmark, EstimationOption, NetworkOption )
+            obj = Declare(obj, nAgent, nTarget, nLandmark, EstimationOption, NetworkOption );
         end
         
-        % group jacobian : since this function should uses the AGENT, TARGET,
-        % LANDMARK classes for centralized estimation.
-        % should be modified because AGENT cannot know actual dynamics of TARGET
-        jacobian = GroupJacobian(obj, AGENT, TARGET, CLOCK, option) % option: state / noise
     end
     
 end

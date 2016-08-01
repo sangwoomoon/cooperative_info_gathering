@@ -1,31 +1,29 @@
-classdef FactorDDF < handle
+classdef FactorDDF < Fusion
     properties % ( SetAccess = public, GetAccess = public )
         
-        XhatDDF % Xhat processed by DDF
-        PhatDDF % Phat processed by DDF
+        xhat % xhat processed by DDF
+        Phat % Phat processed by DDF
         
-        XhatMgn % Marginalized KF state (extract target state from Xhat)
+        xhatMgn % Marginalized KF state (extract target state from Xhat)
         PhatMgn % Marginalized Covariance Matrix of KF process
         
-        XhatTemp % temporary stored Xhat DDF (at each step for sequential process)
+        xhatTemp % temporary stored Xhat DDF (at each step for sequential process)
         PhatTemp % temporary stored Phat DDF (at each step for sequential process)
         
         omega   % factorizing parameter
         
         M       % Information matrix
-        m       % Information vector
-        
-        hist    % History
-        plot    % Plot handle
+        m       % Information vector        
         
     end % Properties
     
     methods
-        function o = FactorDDF( AGENT, SIMULATION )
-             o = Default(o, AGENT, SIMULATION );
+        function obj = FactorDDF()
+             obj@Fusion();
         end
         
-        o = get( o, varargin );
+        % initialize all properties into FDDF class
+        Initialize(obj, xhat, Phat, nTargetState, agentID, nAgent);
     end
     
 end

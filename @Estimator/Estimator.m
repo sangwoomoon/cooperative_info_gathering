@@ -4,7 +4,7 @@ classdef Estimator < handle
         spec        % characteristics of estimation process
         
         TARGET      % estimated targets (array form)
-        bias        % estimated bias
+        SENSOR      % estimated sensor
         
         nState      % # of states 
         nY          % # of measurements 

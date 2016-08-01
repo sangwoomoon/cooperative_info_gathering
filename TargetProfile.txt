@@ -1,0 +1,13 @@
+ID  1
+Type    Dubins
+State   [1;1;0.5]
+Q       [1.2;1.2;0.04]	
+RelTol  1e-4
+AbsTol  1e-6
+
+ID  2
+Type    Dubins
+State   [-10.0;0.1;0.0]
+Q       [1.2;1.2;0.05]	
+RelTol  1e-4
+AbsTol  1e-6

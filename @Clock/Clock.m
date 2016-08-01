@@ -1,4 +1,4 @@
-classdef Clock 
+classdef Clock < handle
     properties   ( SetAccess = public, GetAccess = public )
         
         t0 % initial time
@@ -15,11 +15,12 @@ classdef Clock
     
 
     methods
-        function o = Clock( initialTime, TimeStep, IterationNumber, FDDFInterval )
-           o = Default(o, initialTime, TimeStep, IterationNumber, FDDFInterval );
+        function obj = Clock()
+           obj = Declare(obj);
         end
         
-        o = get( o, varargin );
+        % set properties
+        Initialize(obj, initialTime, TimeStep, IterationNumber, FDDFInterval);
     end
     
 end

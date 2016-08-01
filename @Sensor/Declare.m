@@ -3,5 +3,6 @@ function obj = Declare ( obj )
 %option for measurement class should be defined by users
 
 fprintf('Agent Sensor is not assigned : should be modelized by users!\n')
+obj.nState = 0;
 
 end

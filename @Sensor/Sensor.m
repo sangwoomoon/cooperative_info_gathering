@@ -2,6 +2,7 @@ classdef Sensor < handle
     properties % ( SetAccess = public, GetAccess = public )
         
         spec    % measurement model (e.g. linear, range/bearing ...)
+        nState  % sensor measurement state (for estimation)
         
         meas    % measurement [.id and .y] 
         

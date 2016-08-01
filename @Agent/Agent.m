@@ -10,7 +10,7 @@ classdef Agent < handle
         SENSOR   % Sensor Class (element of agent)
         CONTROL  % Control Class (element of agent)
         
-        FDDF     % Factorized DDF Class (element of agent)
+        FUSION   % Sensor Data Fusion Class (element of agent)
        
         ESTIMATOR % Estimator Class (super class of KF, EKF..)
         
@@ -19,14 +19,12 @@ classdef Agent < handle
     end % Properties
     
     methods
-        function obj = Agent( iAgent, TARGET, SIMULATION, CLOCK , DynamicsOption, SensorOption, EstimatorOption )
-             obj = Declare(obj, iAgent, TARGET, SIMULATION, CLOCK , DynamicsOption, SensorOption, EstimatorOption );
+        function obj = Agent()
+             obj = Declare(obj);
         end
         
-        % group jacobian : since this function should uses the TARGET,
-        % LANDMARK classes. should be modified because AGENT cannot know
-        % actual dynamics of TARGET
-        jacobian = GatherJacobian(obj, TARGET, CLOCK, option) % option: state / noise
+        % Initialize Agent class
+        Initialize(obj, iAgent, DynamicsOption, SensorOption, EstimatorOption, FusionOption);
         
     end
     

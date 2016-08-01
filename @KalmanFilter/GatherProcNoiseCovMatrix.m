@@ -1,4 +1,4 @@
-function Q_total = GatherProcNoiseCovMatrix( obj, SENSOR )
+function Q_total = GatherProcNoiseCovMatrix( obj )
 %GATHERPROCCOVMATRIX generates process covariance matrix for SINGLE agent
 %that matches to all targets
 
@@ -8,8 +8,10 @@ function Q_total = GatherProcNoiseCovMatrix( obj, SENSOR )
 Q_total = [];
 
 % for bias part : it depends on the spec of sensor
-if strcmp(SENSOR.spec,'RelCartBias') == 1 % when bias is considered
-    Q_total = blkdiag(Q_total,obj.bias.Q);
+for iSensor = 1 : length(obj.SENSOR)
+    if strcmp(obj.SENSOR{iSensor}.spec,'RelCartBias') == 1 % when bias is considered
+        Q_total = blkdiag(Q_total,obj.SENSOR{iSensor}.Q);
+    end
 end
 
 for iTarget = 1 : length(obj.TARGET)

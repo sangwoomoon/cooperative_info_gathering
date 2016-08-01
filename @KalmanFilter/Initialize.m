@@ -1,4 +1,4 @@
-function obj = Initialize( obj, spec, xhat_0, Phat_0, Q )
+function obj = Initialize( obj, targetSpec, sensorSpec, xhat_0, Phat_0, Q, R )
 %INITIALIZEESTIMATOR initialize 
 %   Detailed explanation goes here
 
@@ -6,24 +6,23 @@ function obj = Initialize( obj, spec, xhat_0, Phat_0, Q )
     for iState = 1 : length(xhat_0)
         xhat = [xhat;xhat_0{iState}];
     end
-
-    if length(spec(:,1)) < length(xhat_0) % when it has bias term for estimation    
-        obj.bias.x = xhat_0{1};
-        obj.bias.Q = Q{1};
-        for iTarget = 1 : length(spec(:,1))
-            specParam = spec(iTarget);
-            TARGET(iTarget) = Target(iTarget,specParam{:});
-            TARGET(iTarget).DYNAMICS.Q = Q{iTarget+1};
-            TARGET(iTarget).DYNAMICS.x = xhat_0{iTarget+1};
-        end
-    else
-        for iTarget = 1 : length(spec(:,1))
-            specParam = spec(iTarget);
-            TARGET(iTarget) = Target(iTarget,specParam{:});
-            TARGET(iTarget).DYNAMICS.Q = Q{iTarget};
-            TARGET(iTarget).DYNAMICS.x = xhat_0{iTarget};
-        end
+        
+    nAgent = length(xhat_0) - length(targetSpec(:,1)); % positive when it has bias term for estimation
+    for iAgent = 1 : nAgent % skip when nAgent = 0 (no agent part (e.g. bias)
+        SENSOR{iAgent} = SensorClassDeclare(sensorSpec(iAgent,:));
+        SENSOR{iAgent}.bias = xhat_0{iAgent};
+        SENSOR{iAgent}.Q = Q{iAgent};
+        SENSOR{iAgent}.R = R{iAgent};
     end
+    
+    obj.SENSOR = SENSOR;
+    
+    for iTarget = 1 : length(targetSpec(:,1))
+        TARGET(iTarget) = Target(iTarget,targetSpec(iTarget,:));
+        TARGET(iTarget).DYNAMICS.Q = Q{iTarget+nAgent};
+        TARGET(iTarget).DYNAMICS.x = xhat_0{iTarget+nAgent};
+    end
+    
     
     obj.TARGET = TARGET;
     
@@ -41,3 +40,12 @@ function obj = Initialize( obj, spec, xhat_0, Phat_0, Q )
 
 end
 
+
+function SENSOR = SensorClassDeclare(sensorSpec)
+
+    switch (sensorSpec)
+        case ('RelCartBias')
+            SENSOR = RelCartBiasSensor();
+    end
+
+end

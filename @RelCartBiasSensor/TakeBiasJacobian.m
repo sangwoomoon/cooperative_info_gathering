@@ -1,4 +1,4 @@
-function jacobian = TakeBiasJacobian( obj, option )
+function jacobian = TakeBiasJacobian( obj, option, Y_k )
 %TAKETARGETJACOBIAN generates jacobian matrix for "SINGLE" target
 %   this function is used for both centralized and local estimation
 
@@ -18,7 +18,7 @@ switch (option)
         jacobian_element = [1  0;  % bias measurement matrix for single target
                             0  1];
         
-        for iMeasure = 1 : length(obj.meas)
+        for iMeasure = 1 : length(Y_k)
             jacobian = [jacobian; jacobian_element];
         end
         

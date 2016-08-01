@@ -7,7 +7,7 @@ function obj = ComputeProbMatrix( obj )
             if iSender == iReceiver
                 obj.prob(iSender,iReceiver) = 0; % not to communicate itself
             else
-                if distance(obj.Z{iSender,iReceiver}.pos,obj.Z{iReceiver,iSender}.pos) < obj.range
+                if distance(obj.Z(iSender).pos,obj.Z(iReceiver).pos) < obj.range
                     obj.prob(iSender,iReceiver) = 1; % within range, they can communicate
                 else
                     obj.prob(iSender,iReceiver) = 0; % out of range

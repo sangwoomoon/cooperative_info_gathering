@@ -1,16 +1,22 @@
-function obj = TakeProcess( obj, SENSOR, CLOCK )
+function obj = TakeProcess( obj, Y_k, CLOCK )
 %TAKEPROCESS takes estimation process given by the spec of estimation
 
 % Take matrix for estimation which is belonged and excuted
 % in the Kalman Filter sub-class
-obj.F = obj.GatherJacobian(SENSOR,CLOCK,'state');
-obj.Gamma = obj.GatherJacobian(SENSOR,CLOCK,'noise');
+obj.F = obj.GatherJacobian(CLOCK,'state', []);
+obj.Gamma = obj.GatherJacobian(CLOCK,'noise', []);
 
-obj.Y = SENSOR.GatherMeasurements();
-obj.H = SENSOR.TakeJacobian();
+obj.H = obj.GatherJacobian(CLOCK,'measure',Y_k);
 
-obj.Q = obj.GatherProcNoiseCovMatrix(SENSOR);
-obj.R = SENSOR.GatherMeasNoiseCovMatrix();
+obj.Y = [];
+for iSensor = 1 : length(Y_k)
+    for iMeasure = 1 : length(Y_k{iSensor})
+        obj.Y = [obj.Y; Y_k{iSensor}(iMeasure).y];
+    end
+end
+
+obj.Q = obj.GatherProcNoiseCovMatrix();
+obj.R = obj.GatherMeasNoiseCovMatrix(Y_k);
 
 
 %%Time update

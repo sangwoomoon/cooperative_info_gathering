@@ -36,7 +36,7 @@ classdef RelCartBiasSensor < Sensor
         Jacobian = TakeTargetJacobian(obj, measTargetID);
         
         % make jacobian for bias
-        Jacobian = TakeBiasJacobian(obj, option);
+        Jacobian = TakeBiasJacobian(obj, option, measurement); % measurement is only for taking H
     end
     
 end
