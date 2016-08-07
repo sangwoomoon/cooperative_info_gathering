@@ -9,7 +9,7 @@ hold on;
 
 %--- Simulation Class Setting ----
 nAgent = 3;
-nTarget = 2;
+nTarget = 3;
 nLandMark = 1;
 SIM = Simulation(nAgent,nTarget,nLandMark,'KF','Disk');
 
@@ -22,10 +22,10 @@ CLOCK = Clock();
 CLOCK.Initialize(t0,dt,nt,FDDFt);
 
 % Import input files
-[ agentParam, targetParam, landmarkParam, centEstiParam, locEstiParam ] = SIM.ImportInput();
+[ agentParam, targetParam, landmarkParam, centEstiParam, locEstiParam, networkParam ] = SIM.ImportInput();
 
 % Initialize simulation
-[ AGENT, TARGET, ENV] = SIM.Initialize(agentParam, targetParam, landmarkParam, centEstiParam, locEstiParam );
+[ AGENT, TARGET, ENV] = SIM.Initialize(agentParam, targetParam, landmarkParam, centEstiParam, locEstiParam, networkParam );
 
 %% MAIN PROCEDURE %%%%
 
@@ -77,26 +77,13 @@ for iClock = 1 : CLOCK.nt
     end
 
     %--- Communicate ----
-    %--- Make Package and send this to the Network Class (not physical class!) for each agent ----
-    SIM.NETWORK.NullifyPackage();
-    for iAgent = 1 : SIM.nAgent
-        Z = AGENT(iAgent).FUSION.CreatePackage(AGENT(iAgent).id, AGENT(iAgent).DYNAMICS.GetPosition(),...
-            AGENT(iAgent).SENSOR.meas, AGENT(iAgent).CONTROL.u, AGENT(iAgent).ESTIMATOR.Phat, AGENT(iAgent).ESTIMATOR.xhat);
-        SIM.NETWORK = AGENT(iAgent).COMM.SendPackage(Z,SIM.NETWORK);
-    end
-    
-    %--- Set Network Graph under Network Class ---
-    SIM.NETWORK.DeliverPackage();
-    
-    %--- Receive Data from Network Class ----
-    for iAgent = 1 : SIM.nAgent
-        AGENT(iAgent).COMM.ReceivePackage(SIM.NETWORK.Z(:,iAgent)');
-    end
+    SIM.NETWORK.DeliverPackage(AGENT);
     
     %--- DDF Information Fusion (managing xhat and Phat) ----
     if rem(iClock,CLOCK.delt.FDDF) == 0
        for iAgent = 1 : SIM.nAgent
-           AGENT(iAgent).FUSION.TakeProcess(AGENT(iAgent).ESTIMATOR.xhat, AGENT(iAgent).ESTIMATOR.Phat, AGENT(iAgent).COMM.Z, CLOCK.ct, 'trace');
+           AGENT(iAgent).FUSION.TakeProcess(AGENT(iAgent).ESTIMATOR.xhat, AGENT(iAgent).ESTIMATOR.Phat,...
+               AGENT(iAgent).COMM.Z, AGENT(iAgent).SENSOR.bTrack, CLOCK.ct, 'trace');
            AGENT(iAgent).FUSION.AllocateFusionData(AGENT(iAgent).ESTIMATOR);
        end
        

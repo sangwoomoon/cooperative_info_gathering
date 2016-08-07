@@ -1,4 +1,4 @@
-function [ AGENT, TARGET, ENV ] = Initialize( obj, agentParam, targetParam, landmarkParam, centEstiParam, locEstiParam )
+function [ AGENT, TARGET, ENV ] = Initialize( obj, agentParam, targetParam, landmarkParam, centEstiParam, locEstiParam, networkParam )
 %INITIALIZE initializes all classes for simulation with imported data from
 %text files
 
@@ -32,13 +32,17 @@ for iAgent = 1 : obj.nAgent
     AGENT(iAgent).Initialize(str2num(agentParam{2}{length(agentParam{2})/obj.nAgent*(iAgent-1)+1}),...
         agentParam{2}{length(agentParam{2})/obj.nAgent*(iAgent-1)+2},...
         agentParam{2}{length(agentParam{2})/obj.nAgent*(iAgent-1)+7},...
-        agentParam{2}{length(agentParam{2})/obj.nAgent*(iAgent-1)+11},...
-        agentParam{2}{length(agentParam{2})/obj.nAgent*(iAgent-1)+12});
+        agentParam{2}{length(agentParam{2})/obj.nAgent*(iAgent-1)+12},...
+        agentParam{2}{length(agentParam{2})/obj.nAgent*(iAgent-1)+13});
+    
+    % load and convert bTrackingTarget as double-array
+    bTrackingTarget = agentParam{2}{length(agentParam{2})/obj.nAgent*(iAgent-1)+9}; bTrackingTarget(regexp(bTrackingTarget,'[[,]]')) = [];
+    bTrackingTarget = str2double(strsplit(bTrackingTarget,';'));
     
     state = agentParam{2}{length(agentParam{2})/obj.nAgent*(iAgent-1)+3}; state(regexp(state,'[[,]]')) = [];
     Q = agentParam{2}{length(agentParam{2})/obj.nAgent*(iAgent-1)+4}; Q(regexp(Q,'[[,]]')) = [];
-    bias = agentParam{2}{length(agentParam{2})/obj.nAgent*(iAgent-1)+9}; bias(regexp(bias,'[[,]]')) = [];
-    R = agentParam{2}{length(agentParam{2})/obj.nAgent*(iAgent-1)+10}; R(regexp(R,'[[,]]')) = [];
+    bias = agentParam{2}{length(agentParam{2})/obj.nAgent*(iAgent-1)+10}; bias(regexp(bias,'[[,]]')) = [];
+    R = agentParam{2}{length(agentParam{2})/obj.nAgent*(iAgent-1)+11}; R(regexp(R,'[[,]]')) = [];
     
     AGENT(iAgent).DYNAMICS.Initialize(str2double(strsplit(state,';')'));
     AGENT(iAgent).DYNAMICS.SetParameters(diag(str2double(strsplit(Q,';')')),...
@@ -46,58 +50,112 @@ for iAgent = 1 : obj.nAgent
         str2double(agentParam{2}{length(agentParam{2})/obj.nAgent*(iAgent-1)+6}));
     
     AGENT(iAgent).SENSOR.Initialize(AGENT(iAgent).id);
-    AGENT(iAgent).SENSOR.SetParameters(agentParam{2}{length(agentParam{2})/obj.nAgent*(iAgent-1)+8},...
-        str2double(strsplit(bias,';')'),diag(str2double(strsplit(R,';')'))); % Track Object / bias / R
+    switch (agentParam{2}{length(agentParam{2})/obj.nAgent*(iAgent-1)+7})
+        case ('RelCart')
+            AGENT(iAgent).SENSOR.SetParameters(agentParam{2}{length(agentParam{2})/obj.nAgent*(iAgent-1)+8},bTrackingTarget,...
+                diag(str2double(strsplit(R,';')'))); % Track Object / bTrackingTarget / R
+        case ('RelCartBias')
+            AGENT(iAgent).SENSOR.SetParameters(agentParam{2}{length(agentParam{2})/obj.nAgent*(iAgent-1)+8},bTrackingTarget,...
+                str2double(strsplit(bias,';')'),diag(str2double(strsplit(R,';')'))); % Track Object / bTrackingTarget / bias / R
+    end
 end
 
 
 %--- Network class initialization ----
-obj.NETWORK.Initialize(obj.nAgent,20);
+range = str2double(networkParam{2}{2});
+obj.NETWORK.Initialize(obj.nAgent,range);
 obj.NETWORK.SetParameter();
 
 
 %--- Individaul KF subclass initialization ----
 for iAgent = 1 : obj.nAgent
     
-    x_bias = locEstiParam{2}{length(locEstiParam{2})/obj.nAgent*(iAgent-1)+9}; x_bias(regexp(x_bias,'[[,]]')) = [];
-    Q_bias = locEstiParam{2}{length(locEstiParam{2})/obj.nAgent*(iAgent-1)+10}; Q_bias(regexp(Q_bias,'[[,]]')) = [];
-    x_target1 = locEstiParam{2}{length(locEstiParam{2})/obj.nAgent*(iAgent-1)+3}; x_target1(regexp(x_target1,'[[,]]')) = [];
-    Q_target1 = locEstiParam{2}{length(locEstiParam{2})/obj.nAgent*(iAgent-1)+4}; Q_target1(regexp(Q_target1,'[[,]]')) = [];
-    x_target2 = locEstiParam{2}{length(locEstiParam{2})/obj.nAgent*(iAgent-1)+6}; x_target2(regexp(x_target2,'[[,]]')) = [];
-    Q_target2 = locEstiParam{2}{length(locEstiParam{2})/obj.nAgent*(iAgent-1)+7}; Q_target2(regexp(Q_target2,'[[,]]')) = [];
-    R = locEstiParam{2}{length(locEstiParam{2})/obj.nAgent*(iAgent-1)+11}; R(regexp(R,'[[,]]')) = [];
+    Q = [];
+    R = [];
+    xhat_0 = [];
+    targetSpec = [];
+    sensorSpec = [];
     
-    AGENT(iAgent).ESTIMATOR.Initialize(...
-        [locEstiParam{2}{length(locEstiParam{2})/obj.nAgent*(iAgent-1)+2};locEstiParam{2}{length(locEstiParam{2})/obj.nAgent*(iAgent-1)+5}],...
-        locEstiParam{2}{length(locEstiParam{2})/obj.nAgent*(iAgent-1)+8},...
-        {str2double(strsplit(x_bias,';')');str2double(strsplit(x_target1,';')');str2double(strsplit(x_target2,';')')},...
-        str2double(locEstiParam{2}{length(locEstiParam{2})/obj.nAgent*(iAgent-1)+12})*eye(10),...
-        {diag(str2double(strsplit(Q_bias,';')'));diag(str2double(strsplit(Q_target1,';')'));diag(str2double(strsplit(Q_target2,';')'))},...
-        {diag(str2double(strsplit(R,';')'))});
+    % load and convert guessed bias info as double matrix/vector
+    xhat_0{1} = locEstiParam{2}{length(locEstiParam{2})/obj.nAgent*(iAgent-1)+3+obj.nTarget*3}; xhat_0{1}(regexp(xhat_0{1},'[[,]]')) = [];
+    xhat_0{1} = str2double(strsplit(xhat_0{1},';')');
+    
+    Q{1} = locEstiParam{2}{length(locEstiParam{2})/obj.nAgent*(iAgent-1)+3+obj.nTarget*3+1}; Q{1}(regexp(Q{1},'[[,]]')) = [];
+    Q{1} = diag(str2double(strsplit(Q{1},';')'));
+    
+    % load guessed sensor info
+    sensorSpec{1} = locEstiParam{2}{length(locEstiParam{2})/obj.nAgent*(iAgent-1)+obj.nTarget*3+2}; % cell type :: for centralized Estimation
+    R = locEstiParam{2}{length(locEstiParam{2})/obj.nAgent*(iAgent-1)+obj.nTarget*3+5}; R(regexp(R,'[[,]]')) = [];
+    R = {diag(str2double(strsplit(R,';')'))}; % cell type :: for centralized Estimation
+    
+    % load and convert guessed target info as double matrix/vector
+    nState = length(xhat_0{1});
+    for iTarget = 1 : obj.nTarget
+        if (AGENT(iAgent).SENSOR.bTrack(iTarget) == 1)
+            targetSpec{end+1} = locEstiParam{2}{length(locEstiParam{2})/obj.nAgent*(iAgent-1)+3*(iTarget-1)+2};
+            
+            xhat_0{end+1} = locEstiParam{2}{length(locEstiParam{2})/obj.nAgent*(iAgent-1)+3*(iTarget-1)+3}; xhat_0{end}(regexp(xhat_0{end},'[[,]]')) = [];
+            xhat_0{end} = str2double(strsplit(xhat_0{end},';')');
+            nState = nState + length(xhat_0{end});
+            
+            Q{end+1} = locEstiParam{2}{length(locEstiParam{2})/obj.nAgent*(iAgent-1)+3*(iTarget-1)+4}; Q{end}(regexp(Q{end},'[[,]]')) = [];
+            Q{end} = diag(str2double(strsplit(Q{end},';')'));
+        end
+    end
+    
+    % load and convert initial Phat as double matrix
+    iniVariance = str2double(locEstiParam{2}{length(locEstiParam{2})/obj.nAgent*(iAgent-1)+obj.nTarget*3+6});
+    Phat_0 = iniVariance*eye(nState);
+    
+    AGENT(iAgent).ESTIMATOR.Initialize(AGENT(iAgent).SENSOR.bTrack,targetSpec,sensorSpec,xhat_0,Phat_0,Q,R);
     AGENT(iAgent).ESTIMATOR.SetParameter('fusion',AGENT(iAgent).id);
 end
 
 %--- Centralized KF subclass initialization ----
 
-x_a1bias = centEstiParam{2}{8}; x_a1bias(regexp(x_a1bias,'[[,]]')) = [];
-Q_a1bias = centEstiParam{2}{9}; Q_a1bias(regexp(Q_a1bias,'[[,]]')) = [];
-x_a2bias = centEstiParam{2}{12}; x_a2bias(regexp(x_a2bias,'[[,]]')) = [];
-Q_a2bias = centEstiParam{2}{13}; Q_a2bias(regexp(Q_a2bias,'[[,]]')) = [];
-x_a3bias = centEstiParam{2}{16}; x_a3bias(regexp(x_a3bias,'[[,]]')) = [];
-Q_a3bias = centEstiParam{2}{17}; Q_a3bias(regexp(Q_a3bias,'[[,]]')) = [];
-x_target1 = centEstiParam{2}{2}; x_target1(regexp(x_target1,'[[,]]')) = [];
-Q_target1 = centEstiParam{2}{3}; Q_target1(regexp(Q_target1,'[[,]]')) = [];
-x_target2 = centEstiParam{2}{5}; x_target2(regexp(x_target2,'[[,]]')) = [];
-Q_target2 = centEstiParam{2}{6}; Q_target2(regexp(Q_target2,'[[,]]')) = [];
-R_a1 = centEstiParam{2}{10}; R_a1(regexp(R_a1,'[[,]]')) = [];
-R_a2 = centEstiParam{2}{14}; R_a2(regexp(R_a2,'[[,]]')) = [];
-R_a3 = centEstiParam{2}{18}; R_a3(regexp(R_a3,'[[,]]')) = [];
+Q = [];
+R = [];
+xhat_0 = [];
+targetSpec = [];
+sensorSpec = [];
 
-obj.ESTIMATOR.Initialize([centEstiParam{2}{1};centEstiParam{2}{4}],[centEstiParam{2}{7};centEstiParam{2}{11};centEstiParam{2}{15}],...
-    {str2double(strsplit(x_a1bias,';')');str2double(strsplit(x_a2bias,';')');str2double(strsplit(x_a3bias,';')');str2double(strsplit(x_target1,';')');str2double(strsplit(x_target2,';')')},...
-    str2double(centEstiParam{2}{19})*eye(14),...
-    {diag(str2double(strsplit(Q_a1bias,';')'));diag(str2double(strsplit(Q_a2bias,';')'));diag(str2double(strsplit(Q_a3bias,';')'));diag(str2double(strsplit(Q_target1,';')'));diag(str2double(strsplit(Q_target2,';')'))},...
-    {diag(str2double(strsplit(R_a1,';')'));diag(str2double(strsplit(R_a2,';')'));diag(str2double(strsplit(R_a3,';')'))});
+nState = 0;
+bTrack = [];
+
+% gather guessed agant's sensor bias info (even if it is not assigned by users!) and its measurement cov matrix
+for iAgent = 1 : obj.nAgent
+    
+    sensorSpec{iAgent} = centEstiParam{2}{obj.nTarget*3+1+4*(iAgent-1)};
+    bTrack = [bTrack;AGENT(iAgent).SENSOR.bTrack];
+    
+    xhat_0{iAgent} = centEstiParam{2}{obj.nTarget*3+2+4*(iAgent-1)}; xhat_0{iAgent}(regexp(xhat_0{iAgent},'[[,]]')) = [];
+    xhat_0{iAgent} = str2double(strsplit(xhat_0{iAgent},';')');
+    nState = nState + length(xhat_0{iAgent});
+    
+    Q{iAgent} = centEstiParam{2}{obj.nTarget*3+3+4*(iAgent-1)}; Q{iAgent}(regexp(Q{iAgent},'[[,]]')) = [];
+    Q{iAgent} = diag(str2double(strsplit(Q{iAgent},';')'));
+    
+    R{iAgent} = centEstiParam{2}{obj.nTarget*3+4+4*(iAgent-1)}; R{iAgent}(regexp(R{iAgent},'[[,]]')) = [];
+    R{iAgent} = diag(str2double(strsplit(R{iAgent},';')'));
+end
+
+% gather guessed target info
+for iTarget = 1 : obj.nTarget
+    targetSpec{iTarget} = centEstiParam{2}{1+3*(iTarget-1)};
+    
+    xhat_0{obj.nAgent+iTarget} = centEstiParam{2}{2+3*(iTarget-1)}; xhat_0{obj.nAgent+iTarget}(regexp(xhat_0{obj.nAgent+iTarget},'[[,]]')) = [];
+    xhat_0{obj.nAgent+iTarget} = str2double(strsplit(xhat_0{obj.nAgent+iTarget},';')');
+    nState = nState + length(xhat_0{obj.nAgent+iTarget});
+    
+    Q{obj.nAgent+iTarget} = centEstiParam{2}{3+3*(iTarget-1)}; Q{obj.nAgent+iTarget}(regexp(Q{obj.nAgent+iTarget},'[[,]]')) = [];
+    Q{obj.nAgent+iTarget} = diag(str2double(strsplit(Q{obj.nAgent+iTarget},';')'));
+end
+
+% load and convert initial Phat as double matrix
+iniVariance = str2double(locEstiParam{2}{end});
+Phat_0 = iniVariance*eye(nState);
+
+obj.ESTIMATOR.Initialize(bTrack,targetSpec,sensorSpec,xhat_0,Phat_0,Q,R);
 obj.ESTIMATOR.SetParameter('central',[]);
 
 %--- Data Fusion subclass initialization ----

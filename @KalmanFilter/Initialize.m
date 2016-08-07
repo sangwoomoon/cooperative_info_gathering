@@ -1,4 +1,4 @@
-function obj = Initialize( obj, targetSpec, sensorSpec, xhat_0, Phat_0, Q, R )
+function obj = Initialize( obj, bTrackTarget, targetSpec, sensorSpec, xhat_0, Phat_0, Q, R )
 %INITIALIZEESTIMATOR initialize 
 %   Detailed explanation goes here
 
@@ -7,20 +7,27 @@ function obj = Initialize( obj, targetSpec, sensorSpec, xhat_0, Phat_0, Q, R )
         xhat = [xhat;xhat_0{iState}];
     end
         
-    nAgent = length(xhat_0) - length(targetSpec(:,1)); % positive when it has bias term for estimation
+    nAgent = length(xhat_0) - length(targetSpec(1,:)); % positive when it has bias term for estimation
     for iAgent = 1 : nAgent % skip when nAgent = 0 (no agent part (e.g. bias)
-        SENSOR{iAgent} = SensorClassDeclare(sensorSpec(iAgent,:));
-        SENSOR{iAgent}.bias = xhat_0{iAgent};
+        SENSOR{iAgent} = SetSensorClass(sensorSpec{iAgent},bTrackTarget(iAgent,:),xhat_0{iAgent},R{iAgent});
         SENSOR{iAgent}.Q = Q{iAgent};
-        SENSOR{iAgent}.R = R{iAgent};
     end
     
     obj.SENSOR = SENSOR;
     
-    for iTarget = 1 : length(targetSpec(:,1))
-        TARGET(iTarget) = Target(iTarget,targetSpec(iTarget,:));
-        TARGET(iTarget).DYNAMICS.Q = Q{iTarget+nAgent};
-        TARGET(iTarget).DYNAMICS.x = xhat_0{iTarget+nAgent};
+    TARGET = [];
+    idxTarget = 0;
+    for iTarget = 1 : length(bTrackTarget(1,:))
+        if (sum(bTrackTarget(:,iTarget) == 1) >= 1) % at least one of agents track this target
+            idxTarget=idxTarget+1;
+            if idxTarget == 1
+                TARGET = Target(iTarget,targetSpec{idxTarget});
+            else
+                TARGET(idxTarget) = Target(iTarget,targetSpec{idxTarget});
+            end
+            TARGET(idxTarget).DYNAMICS.Q = Q{nAgent+idxTarget};
+            TARGET(idxTarget).DYNAMICS.x = xhat_0{nAgent+idxTarget};
+        end
     end
     
     
@@ -41,11 +48,12 @@ function obj = Initialize( obj, targetSpec, sensorSpec, xhat_0, Phat_0, Q, R )
 end
 
 
-function SENSOR = SensorClassDeclare(sensorSpec)
+function SENSOR = SetSensorClass(sensorSpec,bTrackingTarget,bias,R)
 
     switch (sensorSpec)
         case ('RelCartBias')
             SENSOR = RelCartBiasSensor();
+            SENSOR.SetParameters([],bTrackingTarget,bias,R); % Track Object / bTrackingTarget / bias / R
     end
 
 end

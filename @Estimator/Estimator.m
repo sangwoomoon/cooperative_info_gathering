@@ -2,9 +2,10 @@ classdef Estimator < handle
     properties ( SetAccess = public, GetAccess = public )
     
         spec        % characteristics of estimation process
+        bTrackTarget% tracking target binary array
         
-        TARGET      % estimated targets (array form)
-        SENSOR      % estimated sensor
+        TARGET      % guessed target model (array form)
+        SENSOR      % guessed sensor model
         
         nState      % # of states 
         nY          % # of measurements 

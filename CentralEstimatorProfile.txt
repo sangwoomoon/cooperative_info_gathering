@@ -4,6 +4,9 @@ Target1Q           [1.5;0.5]
 Target2DynType     Linear
 Target2State       [-5.0;0.0;-0.2;0.0]
 Target2Q           [0.8;1.0]
+Target3DynType     Linear
+Target3State       [7.0;0.3;5.0;-0.5]
+Target3Q           [0.1;1.5]
 Agent1biasType     RelCartBias
 Agent1bias         [0.0;0.2]
 Agent1biasQ        [0.03;0.03]

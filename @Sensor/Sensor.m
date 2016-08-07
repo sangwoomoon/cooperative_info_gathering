@@ -4,6 +4,8 @@ classdef Sensor < handle
         spec    % measurement model (e.g. linear, range/bearing ...)
         nState  % sensor measurement state (for estimation)
         
+        bTrack  % tracking target binary array
+        
         meas    % measurement [.id and .y] 
         
         subject % sensing agent? or target?

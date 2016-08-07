@@ -1,4 +1,4 @@
-function [ agentParam, targetParam, landmarkParam, centEstiParam, locEstiParam ] = ImportInput(obj)
+function [ agentParam, targetParam, landmarkParam, centEstiParam, locEstiParam, networkParam ] = ImportInput(obj)
 %IMPORTINPUTS incodes all files related to the simulation from text files
 
 %--- Landmark input file import ----
@@ -26,6 +26,10 @@ centEstiFileID = fopen('CentralEstimatorProfile.txt');
 centEstiParam = textscan(centEstiFileID,'%s %s');
 fclose(centEstiFileID);
 
+%--- Network input file import ----
+networkFileID = fopen('NetworkProfile.txt');
+networkParam = textscan(networkFileID,'%s %s');
+fclose(networkFileID);
 
 end
 

@@ -33,7 +33,7 @@ obj.NETWORK.Plot(CLOCK);
 % Centralized Estimation plot
 % FIGURE 2- : TARGET POSITION ERROR PLOT
 % FIGURE 3-(nAGENT*nTarget+3): AGENT-TARGET ERROR PLOT
-obj.ESTIMATOR.Plot(AGENT,TARGET,CLOCK,obj,'central');
+%obj.ESTIMATOR.Plot(AGENT,TARGET,CLOCK,obj,'central');
 
 % Individual Estimation plot
 for iAgent = 1 : obj.nAgent

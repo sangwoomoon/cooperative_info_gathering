@@ -7,7 +7,7 @@ jacobian = [];
 for iMeasure = 1 : length(Y_k)
     
     jacobian_element = [1  0  0  0; % H for single target
-        0  0  1  0];
+                        0  0  1  0];
     
     if length(Y_k(iMeasure).id) == 1 % if measured one is target
         jacobian = blkdiag(jacobian,jacobian_element); % since homogeneous measuring for targets
