@@ -16,8 +16,8 @@ SIM = Simulation(nAgent,nTarget,nLandMark,'KF','Disk');
 %--- Clock Class Setting ----
 t0 = 0.1;
 dt = 0.1;
-nt = 100;
-FDDFt = 0.5;
+nt = 200;
+FDDFt = 1.0;
 CLOCK = Clock();
 CLOCK.Initialize(t0,dt,nt,FDDFt);
 
