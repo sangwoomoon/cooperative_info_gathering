@@ -83,7 +83,7 @@ for iClock = 1 : CLOCK.nt
     if rem(iClock,CLOCK.delt.FDDF) == 0
        for iAgent = 1 : SIM.nAgent
            AGENT(iAgent).FUSION.TakeProcess(AGENT(iAgent).ESTIMATOR.xhat, AGENT(iAgent).ESTIMATOR.Phat,...
-               AGENT(iAgent).COMM.Z, AGENT(iAgent).SENSOR.bTrack, CLOCK.ct, 'trace');
+               AGENT(iAgent).COMM.Z, AGENT(iAgent).SENSOR.bTrack, CLOCK.ct, 'diag');
            AGENT(iAgent).FUSION.AllocateFusionData(AGENT(iAgent).ESTIMATOR);
        end
        

@@ -52,8 +52,8 @@ end
 
 % initialize fusion class with respect to specified fusion process
 switch (FusionOption)
-    case ('FDDF')
-        obj.FUSION = FactorDDF();
+    case ('CIWEP')
+        obj.FUSION = CIWEP();
     otherwise
         obj.FUSION = Fusion();
 end

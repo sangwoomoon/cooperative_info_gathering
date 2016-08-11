@@ -1,4 +1,4 @@
-classdef FactorDDF < Fusion
+classdef CIWEP < Fusion
     properties % ( SetAccess = public, GetAccess = public )
         
         xhat % xhat processed by DDF
@@ -18,7 +18,7 @@ classdef FactorDDF < Fusion
     end % Properties
     
     methods
-        function obj = FactorDDF()
+        function obj = CIWEP()
              obj@Fusion();
         end
         

@@ -10,7 +10,7 @@ bTrack      [1;1;0]
 bias        [-0.3;0.1]
 R           [10.15;0.015]
 EstiType    KF
-FusType     FDDF
+FusType     CIWEP
 
 ID          2
 DynType     Linear
@@ -24,7 +24,7 @@ bTrack      [1;0;1]
 bias        [1.2;0.8]
 R           [0.015;10.15]
 EstiType    KF
-FusType     FDDF
+FusType     CIWEP
 
 ID          3
 DynType     Dubins
@@ -38,4 +38,4 @@ bTrack      [0;1;1]
 bias        [0.5;0.5]
 R           [0.55;0.85]
 EstiType    KF
-FusType     FDDF
+FusType     CIWEP
