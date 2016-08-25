@@ -1,7 +1,7 @@
 function Z = CreatePackage( obj, agentID, position, bTrackTarget, measurement, input, Phat, xhat )
 %CREATEPACKAGE creates package to send another agent for fusion process 
 
-nTotalState = length(xhat);
+nTotalState = length(xhat{1});
 nTargetState = length(obj.hist.xhatMgn(:,1,1));
 nBiasState = nTotalState-nTargetState;
 
@@ -23,8 +23,10 @@ nBiasState = nTotalState-nTargetState;
             Z{iAgent}.u = input;
             
             % add estimates
-            Z{iAgent}.Phat = Phat(nBiasState+1:end,nBiasState+1:end); % only for target info
-            Z{iAgent}.xhat = xhat(nBiasState+1:end); % only for target info
+            for iEsti = 1 : length(Phat)
+                Z{iAgent}.Phat{iEsti} = Phat{iEsti}(nBiasState+1:end,nBiasState+1:end); % only for target info
+                Z{iAgent}.xhat{iEsti} = xhat{iEsti}(nBiasState+1:end); % only for target info
+            end
             
         else
             

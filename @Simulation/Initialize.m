@@ -107,8 +107,11 @@ for iAgent = 1 : obj.nAgent
     iniVariance = str2double(locEstiParam{2}{length(locEstiParam{2})/obj.nAgent*(iAgent-1)+obj.nTarget*3+6});
     Phat_0 = iniVariance*eye(nState);
     
-    AGENT(iAgent).ESTIMATOR.Initialize(AGENT(iAgent).SENSOR.bTrack,targetSpec,sensorSpec,xhat_0,Phat_0,Q,R);
-    AGENT(iAgent).ESTIMATOR.SetParameter('fusion',AGENT(iAgent).id);
+    for iEsti = 1 : 2
+        AGENT(iAgent).ESTIMATOR(iEsti).Initialize(AGENT(iAgent).SENSOR.bTrack,targetSpec,sensorSpec,xhat_0,Phat_0,Q,R);
+        AGENT(iAgent).ESTIMATOR(iEsti).SetParameter('fusion',AGENT(iAgent).id);
+    end
+    
 end
 
 %--- Centralized KF subclass initialization ----

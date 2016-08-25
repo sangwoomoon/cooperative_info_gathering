@@ -1,5 +1,11 @@
 function obj = TakeProcess(obj, xhat, Phat, Z, bTrack, current_time, option)
 
+switch (option)
+    case ('MMNB')
+        iEsti = 1;
+    case ('diag')
+        iEsti = 2;
+end
 
 nTotalState = length(xhat);
 nTargetState = length(obj.hist.xhatMgn(:,1,1));
@@ -18,7 +24,7 @@ for iMerge = 1 : length(obj.hist.omega(:,1)) % number of agents
         [commonStateIdx_i,commonStateIdx_j, exclusiveStateIdx] = obj.TakeCommonExclusiveStateIndex(bTrack,Z{iMerge}.bTrack);
         
         [obj.xhatMgn, obj.PhatMgn] = obj.TakeMarginalEstimation(commonStateIdx_i, obj.xhatTemp, obj.PhatTemp);
-        [xhatMgn_j, PhatMgn_j] = obj.TakeMarginalEstimation(commonStateIdx_j, Z{iMerge}.xhat, Z{iMerge}.Phat);
+        [xhatMgn_j, PhatMgn_j] = obj.TakeMarginalEstimation(commonStateIdx_j, Z{iMerge}.xhat{iEsti}, Z{iMerge}.Phat{iEsti});
         
         [obj.xhatTemp, obj.PhatTemp] = obj.PermuteEstimation(commonStateIdx_i,exclusiveStateIdx, obj.xhatTemp, obj.PhatTemp);
         

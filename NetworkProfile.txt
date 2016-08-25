@@ -1,2 +1,2 @@
 Model       Disk
-Range       inf
+Range       20

@@ -45,7 +45,12 @@ obj.COMM = Communication();
 % initialize estimator class with respect to specified estimation process
 switch (EstimationOption)
     case ('KF')
-        obj.ESTIMATOR = KalmanFilter();
+        
+        for iEsti = 1 : 2 % for two fusion processes
+            ESTIMATOR(iEsti) = KalmanFilter();
+        end
+        obj.ESTIMATOR = ESTIMATOR; % KalmanFilter();
+        
     otherwise
         obj.ESTIMATOR = Estimator();
 end

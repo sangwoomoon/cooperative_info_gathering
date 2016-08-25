@@ -9,6 +9,8 @@ for iAgent = 1 : nAgent
             subplot(nAgent*100+10+iAgent),stairs(CLOCK.tvec,squeeze(obj.hist.graph(2:end,jAgent,iAgent))',...
                 'LineWidth',obj.plot.lineWidth(jAgent),'color',obj.plot.color(jAgent,:)); hold on; % 1st : sender, 2nd : receiver
             legend([get(legend(gca),'string'),obj.plot.legend(jAgent)]);
+            
+            set(gca,'fontsize',12);
         end
     end
     

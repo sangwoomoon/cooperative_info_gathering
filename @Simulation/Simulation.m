@@ -1,5 +1,9 @@
-classdef Simulation 
+classdef Simulation < handle
     properties   ( SetAccess = public, GetAccess = public )
+        
+        nSim            % simulation running number
+        
+        cost            % simulation performance cost (array, 1: centralized, 2: Fusion_MMNB, 3: Fusion_diag)
         
         nTarget         % Number of Targets
         nAgent          % Number of Agents
@@ -21,8 +25,8 @@ classdef Simulation
     
 
     methods
-        function obj = Simulation( nAgent, nTarget, nLandmark, EstimationOption, NetworkOption )
-            obj = Declare(obj, nAgent, nTarget, nLandmark, EstimationOption, NetworkOption );
+        function obj = Simulation( nSim, nAgent, nTarget, nLandmark, EstimationOption, NetworkOption )
+            obj = Declare(obj, nSim, nAgent, nTarget, nLandmark, EstimationOption, NetworkOption );
         end
         
     end

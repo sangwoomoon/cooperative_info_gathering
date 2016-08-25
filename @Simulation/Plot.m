@@ -1,5 +1,16 @@
 function obj = Plot(obj, AGENT, TARGET, ENV, CLOCK)
 
+%% sim performance plot
+% 
+% figure(obj.iFigure)
+% boxplot([obj.cost(1,:)',obj.cost(2,:)',obj.cost(3,:)'],{'Central','MMNB Fusion','Diag. Fusion'});
+% ylabel('max.variance','fontsize',20);
+% set(gca,'fontsize',20)
+% 
+% obj.iFigure = obj.iFigure + 1;
+
+%% one simulation plot (for final sim run)
+
 % Environment (Landmark) plot (FIGURE 1)
 figure(obj.iFigure)
 for iLandmark = 1 : obj.nLandmark
@@ -37,7 +48,8 @@ obj.ESTIMATOR.Plot(AGENT,TARGET,CLOCK,obj,'central');
 
 % Individual Estimation plot
 for iAgent = 1 : obj.nAgent
-    AGENT(iAgent).ESTIMATOR.Plot(AGENT(iAgent),TARGET,CLOCK,obj,'local'); hold on;
+    AGENT(iAgent).ESTIMATOR(1).Plot(AGENT(iAgent),TARGET,CLOCK,obj,'local'); hold on; % MMNB Method
+    AGENT(iAgent).ESTIMATOR(2).Plot(AGENT(iAgent),TARGET,CLOCK,obj,'local'); hold on; % diag Method
 end
 
 end

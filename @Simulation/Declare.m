@@ -1,15 +1,18 @@
-function obj = Declare( obj, nAgent, nTarget, nLandmark, EstimationOption, NetworkOption )
+function obj = Declare( obj, nSim, nAgent, nTarget, nLandmark, EstimationOption, NetworkOption )
 
 % default setting for simulation
 % input : empty Simulation Class
 %
 % output : set Simulation Class
 
+obj.nSim = nSim;
 obj.nTarget = nTarget;
 obj.nAgent = nAgent;
 obj.nLandmark = nLandmark;
 
-obj.sRandom = 333555532;
+for iSimSeed = 1 : nSim
+    obj.sRandom(iSimSeed) = iSimSeed;
+end
 
 % initialize estimator class with respect to specified estimation process
 switch (EstimationOption)
@@ -29,5 +32,6 @@ end
 
 % initialize current figure
 obj.iFigure = 1;
+
 
 end

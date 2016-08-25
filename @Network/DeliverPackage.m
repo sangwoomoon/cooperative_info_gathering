@@ -8,7 +8,8 @@ obj.NullifyPackage();
 for iAgent = 1 : length(AGENT)
     Z = AGENT(iAgent).FUSION.CreatePackage(AGENT(iAgent).id, AGENT(iAgent).DYNAMICS.GetPosition(),...
         AGENT(iAgent).SENSOR.bTrack, AGENT(iAgent).SENSOR.meas, AGENT(iAgent).CONTROL.u,...
-        AGENT(iAgent).ESTIMATOR.Phat, AGENT(iAgent).ESTIMATOR.xhat);
+        {AGENT(iAgent).ESTIMATOR(1).Phat;AGENT(iAgent).ESTIMATOR(1).Phat},...
+        {AGENT(iAgent).ESTIMATOR(2).xhat;AGENT(iAgent).ESTIMATOR(2).xhat});
     
     obj = AGENT(iAgent).COMM.SendPackage(Z,obj);
 end
