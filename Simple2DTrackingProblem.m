@@ -8,7 +8,7 @@ hold on;
 
 %% MONTE-CARLO SETTING %%%%
 
-nSim = 100;
+nSim = 1;
 
 CentralUtil = nan(1,nSim);
 DistribUtil = nan(1,nSim);
@@ -24,12 +24,12 @@ for iSim = 1 : nSim
     nAgent = 4;
     nSeed = iSim;
     
-    bPlot = 0;
+    bPlot = 1;
     bCentral = 1;
     bComm = 1;
     
-    % mode = 'SDFC';
-    mode = 'MDFC';
+    mode = 'SDFC';
+    % mode = 'MDFC';
     
     if strcmp(mode,'SDFC')
         iDFC = 3;
@@ -45,7 +45,7 @@ for iSim = 1 : nSim
     CLOCK = Clock(t0,nt,SIM);
     
     %--- Environment Classes Setting ----
-    ENVIRONMENT = Environment(CLOCK,[-10,10,-10,10],5);
+    ENVIRONMENT = Environment(CLOCK,[-10,10,-10,10],2.5);
     
     %--- Agent Classes Setting ----
     for iAgent = 1 : SIM.nAgent
@@ -99,11 +99,7 @@ for iSim = 1 : nSim
         
         %--- plot ----
         if SIM.bPlot == 1
-            SIM.Plot(AGENT,CLOCK);
-            
-            axis([ENVIRONMENT.xlength(1) ENVIRONMENT.xlength(2)...
-                ENVIRONMENT.ylength(1) ENVIRONMENT.ylength(2)]);
-            axis equal;
+            SIM.Plot(AGENT,ENVIRONMENT,CLOCK);
         end
         
         %--- check the procedure ----
@@ -111,6 +107,17 @@ for iSim = 1 : nSim
         if SIM.bSim == 0
            break; 
         end
+        
+        % Create GIF
+        frametime = 0.25;
+        [imind, cm] = rgb2ind(frame2im(getframe(1)), 256);
+        
+        if(CLOCK.ct == 1)
+            imwrite(imind, cm, 'consensus_iteration.gif', 'LoopCount', inf, 'DelayTime', frametime);
+        else
+            imwrite(imind, cm, 'consensus_iteration.gif', 'WriteMode', 'append', 'DelayTime', frametime);
+        end
+        
         
     end
 
@@ -128,6 +135,7 @@ for iSim = 1 : nSim
         end
     end
     
+
     %--- algorithm performance data storing ----
     if nSim > 1
         if bCentral == 1

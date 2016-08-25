@@ -17,4 +17,17 @@ function o = Default (o, CLOCK, size, delta)
     axis([o.xlength,o.ylength]);
     axis equal;
     
+    boundary = [o.xlength(1),o.ylength(1);
+            o.xlength(1),o.ylength(2);
+            o.xlength(2),o.ylength(2);
+            o.xlength(2),o.ylength(1);
+            o.xlength(1),o.ylength(1)];
+        
+        % environment boundary plot
+        o.plot.h.field = patch(boundary(:,1),boundary(:,2),'c');
+        alpha(0.1);
+        
+        % detection point plot
+        o.plot.h.field = plot(o.x,o.y,'k*');
+    
 end
