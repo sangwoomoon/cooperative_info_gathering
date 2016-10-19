@@ -8,7 +8,7 @@ hold on;
 %% INITIAL SETTING %%%%
 
 %--- Simulation Class Setting ----
-nSim = 100;
+nSim = 1;
 nAgent = 3;
 nTarget = 3;
 nLandMark = 1;
