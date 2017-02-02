@@ -1,9 +1,16 @@
-function obj = SetParameters( obj, SensedObject, MeasCovMatrix )
+function obj = SetParameters( obj, SensedObject, bTrackingTarget, bias, MeasCovMatrix )
 %SETPARAMETERS set parameters in measurement class
 %   meausrement covariance matirx is defined by users, and it could also
 %   be adjustable before/during simulation
 
 if nargin > 1 % overload process (should be modified in a better way)
+    
+    % sensor bias :: set as zero, and it is referred to the estimator which
+    % considers sensor as "RelCartBias"
+    obj.bias = bias;
+    
+    % set binary array for tracking target index
+    obj.bTrack = bTrackingTarget;
     
     % set measurement noise covariance
     obj.R = MeasCovMatrix;

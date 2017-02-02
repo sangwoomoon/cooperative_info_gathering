@@ -4,6 +4,7 @@ classdef RelCartSensor < Sensor
     
     properties
         
+        bias  % zero bias
         
     end
     

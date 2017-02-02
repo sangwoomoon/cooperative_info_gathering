@@ -46,9 +46,11 @@ for iClock = 1 : length(histPhat)
                                         [histxhat(4*(iTarget-1)+7,iClock);histxhat(4*(iTarget-1)+9,iClock)]))^(1/2);
                                     
                                     % Norm of posiiton error fusion estimation storage : bias
-                                    obj.cost.mse(iAgent,iSim,4,iCost) = ((AGENT(iAgent).SENSOR.bias-...
-                                        [histxhat(2*(iAgent-1)+1,iClock);histxhat(2*iAgent,iClock)])'*(AGENT(iAgent).SENSOR.bias-...
-                                        [histxhat(2*(iAgent-1)+1,iClock);histxhat(2*iAgent,iClock)]))^(1/2);
+                                    if strcmp(AGENT(iAgent).ESTIMATOR(1).SENSOR{1}.spec,'RelCartBias') == 1 % if the sensor considered in the estimation class is RelCartBias
+                                        obj.cost.mse(iAgent,iSim,4,iCost) = ((AGENT(iAgent).SENSOR.bias-...
+                                            [histxhat(2*(iAgent-1)+1,iClock);histxhat(2*iAgent,iClock)])'*(AGENT(iAgent).SENSOR.bias-...
+                                            [histxhat(2*(iAgent-1)+1,iClock);histxhat(2*iAgent,iClock)]))^(1/2);
+                                    end
                                     
                                 otherwise
                                     
@@ -64,8 +66,10 @@ for iClock = 1 : length(histPhat)
                                         [histxhat(4*(iTrack-1)+3,iClock);histxhat(4*(iTrack-1)+5,iClock)]))^(1/2);
                                     
                                     % Norm of posiiton error fusion estimation storage : bias
-                                    obj.cost.mse(iAgent,iSim,4,iCost) = ((AGENT(iAgent).SENSOR.bias-histxhat(1:2,iClock))'*...
-                                        (AGENT(iAgent).SENSOR.bias-histxhat(1:2,iClock)))^(1/2);
+                                    if strcmp(AGENT(iAgent).ESTIMATOR(1).SENSOR{1}.spec,'RelCartBias') == 1 % if the sensor considered in the estimation class is RelCartBias
+                                        obj.cost.mse(iAgent,iSim,4,iCost) = ((AGENT(iAgent).SENSOR.bias-histxhat(1:2,iClock))'*...
+                                            (AGENT(iAgent).SENSOR.bias-histxhat(1:2,iClock)))^(1/2);
+                                    end
                                     
                             end
                             

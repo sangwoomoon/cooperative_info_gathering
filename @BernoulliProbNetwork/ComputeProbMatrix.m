@@ -7,11 +7,10 @@ function obj = ComputeProbMatrix( obj )
             if iSender == iReceiver
                 obj.prob(iSender,iReceiver) = 0; % not to communicate itself
             else
-                if distance(obj.Z(iSender).pos,obj.Z(iReceiver).pos) < obj.range
-                    obj.prob(iSender,iReceiver) = 1; % within range, they can communicate
-                else
-                    obj.prob(iSender,iReceiver) = 0; % out of range
-                end
+                % model given by the [Stachura and Frew(2017), Journal of
+                % Field Robotics]
+                X = (distance(obj.Z{iSender,iReceiver}.pos,obj.Z{iSender,iReceiver}.pos) - 461)/195;
+                obj.prob(iSender,iReceiver) = 0.5*erfc(X)-0.085;
             end
         end
     end

@@ -1,20 +1,20 @@
 ID      1
 Type    Static
-State   [1;1]
-Q       [1.2;1.2]	
+State   [1;1]	
+Q       [0;0]
 RelTol  1e-4
 AbsTol  1e-6
 
 ID      2
 Type    Static
 State   [-10.0;0.1]
-Q       [1.2;1.2]	
+Q       [0;0]
 RelTol  1e-4
 AbsTol  1e-6
 
 ID      3
 Type    Static
 State   [2.0;-10.0]
-Q       [0.8;0.2]	
+Q       [0;0]
 RelTol  1e-4
 AbsTol  1e-6

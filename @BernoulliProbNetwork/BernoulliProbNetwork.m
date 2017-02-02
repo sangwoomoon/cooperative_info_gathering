@@ -1,4 +1,4 @@
-classdef SigmoidModelNetwork < Network
+classdef BernoulliProbNetwork < Network
     %SIGMOIDMODELNETWORK is the sub-class of Network that considers sigmoid function model
     %for communication (prob: beta = sig(range,strength)
     
@@ -7,7 +7,7 @@ classdef SigmoidModelNetwork < Network
     end
     
     methods
-        function obj = SigmoidModelNetwork()
+        function obj = BernoulliProbNetwork()
             obj@Network();
         end
         

@@ -4,7 +4,11 @@ function obj = ComputeNetworkGraph( obj )
 
     for iSender = 1 : length(obj.graph(:,1))
         for iReceiver = 1 : length(obj.graph(1,:))
-            if obj.prob(iSender,iReceiver) == 1 % this one is from the disk model that determines binary prob(not for Bernoulli!)
+            
+            % take Bernoulli Distribution
+            R = binornd(1,obj.prob(iSender,iReceiver));
+            
+            if R == 1 % determined by binary prob
                 obj.graph(iSender,iReceiver) = 1; % they can communicate each other
             else
                 obj.graph(iSender,iReceiver) = 0; % cannot communicate

@@ -1,6 +1,6 @@
 
 close all;
-clear all;
+clear;
 clc;
 format compact;
 hold on;
@@ -12,7 +12,7 @@ nSim = 1;
 nAgent = 3;
 nTarget = 3;
 nLandMark = 1;
-SIM = Simulation(nSim,nAgent,nTarget,nLandMark,'KF','Disk');
+SIM = Simulation(nSim,nAgent,nTarget,nLandMark,'KF','Bernoulli');
 
 %--- Clock Class Setting ----
 t0 = 0.1;
