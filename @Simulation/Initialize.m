@@ -52,7 +52,8 @@ for iAgent = 1 : obj.nAgent
     AGENT(iAgent).SENSOR.Initialize(AGENT(iAgent).id);
     switch (agentParam{2}{length(agentParam{2})/obj.nAgent*(iAgent-1)+7})
         case ('InertCart')
-            
+            AGENT(iAgent).SENSOR.SetParameters(agentParam{2}{length(agentParam{2})/obj.nAgent*(iAgent-1)+8},bTrackingTarget,...
+                diag(str2double(strsplit(R,';')'))); % Track Object / bTrackingTarget / R            
         case ('RelCart')
             AGENT(iAgent).SENSOR.SetParameters(agentParam{2}{length(agentParam{2})/obj.nAgent*(iAgent-1)+8},bTrackingTarget,...
                 str2double(strsplit(bias,';')'),diag(str2double(strsplit(R,';')'))); % Track Object / bTrackingTarget / bias = 0 (since the estimator may consider bias) / R

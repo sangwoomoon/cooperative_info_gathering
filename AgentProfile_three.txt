@@ -7,7 +7,7 @@ AbsTol      1e-6
 MeasType    InertCart
 MeasObj     Target
 bTrack      [1;1;1]
-bias        nan
+bias        [0;0]
 R           [10.15;0.015]
 EstiType    KF
 FusType     CIWEP
@@ -21,7 +21,7 @@ AbsTol      1e-6
 MeasType    InertCart
 MeasObj     Target
 bTrack      [1;1;1]
-bias        nan
+bias        [0;0]
 R           [0.015;10.15]
 EstiType    KF
 FusType     CIWEP
@@ -35,21 +35,7 @@ AbsTol      1e-6
 MeasType    InertCart
 MeasObj     Target
 bTrack      [1;1;1]
-bias        nan
-R           [0.55;0.85]
-EstiType    KF
-FusType     CIWEP
-
-ID          4
-DynType     Dubins
-State       [40.5;35;0.0]
-Q           [0;0;0]
-RelTol      1e-4
-AbsTol      1e-6
-MeasType    InertCart
-MeasObj     Target
-bTrack      [1;1;1]
-bias        nan
+bias        [0;0]
 R           [0.55;0.85]
 EstiType    KF
 FusType     CIWEP

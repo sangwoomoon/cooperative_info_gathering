@@ -9,9 +9,9 @@ hold on;
 
 %--- Simulation Class Setting ----
 nSim = 1;
-nAgent = 3;
-nTarget = 3;
-nLandMark = 1;
+nAgent = 4;
+nTarget = 1;
+nLandMark = 0;
 SIM = Simulation(nSim,nAgent,nTarget,nLandMark,'KF','Bernoulli');
 
 %--- Clock Class Setting ----
@@ -38,7 +38,7 @@ AccInput(6,1:200) = 1; % rad/s
 for iSim = 1 : SIM.nSim
     
     % Initialize simulation
-    [ AGENT, TARGET, ENV] = SIM.Initialize(agentParam, targetParam, landmarkParam, centEstiParam, locEstiParam, networkParam );
+    [AGENT, TARGET, ENV] = SIM.Initialize(agentParam, targetParam, landmarkParam, centEstiParam, locEstiParam, networkParam );
     
     % random seed fixing (with respect to sim running number)
     rng(SIM.sRandom(iSim));

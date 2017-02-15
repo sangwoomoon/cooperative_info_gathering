@@ -54,6 +54,9 @@ function SENSOR = SetSensorClass(sensorSpec,bTrackingTarget,bias,R)
         case ('RelCartBias')
             SENSOR = RelCartBiasSensor();
             SENSOR.SetParameters([],bTrackingTarget,bias,R); % Track Object / bTrackingTarget / bias / R
+        case ('InertCart')
+            SENSOR = InertCartSensor();
+            SENSOR.SetParameters(
     end
 
 end
