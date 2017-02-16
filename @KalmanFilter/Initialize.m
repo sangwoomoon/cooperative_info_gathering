@@ -8,9 +8,8 @@ function obj = Initialize( obj, bTrackTarget, targetSpec, sensorSpec, xhat_0, Ph
     end
         
     nAgent = length(xhat_0) - length(targetSpec(1,:)); % positive when it has bias term for estimation
-    for iAgent = 1 : nAgent % skip when nAgent = 0 (no agent part (e.g. bias)
-        SENSOR{iAgent} = SetSensorClass(sensorSpec{iAgent},bTrackTarget(iAgent,:),xhat_0{iAgent},R{iAgent});
-        SENSOR{iAgent}.Q = Q{iAgent};
+    for iAgent = 1 : nAgent % skip when nAgent = 0 (no agent part (e.g. bias) )
+        SENSOR{iAgent} = SetSensorClass(sensorSpec{iAgent},bTrackTarget(iAgent,:),xhat_0{iAgent},Q{iAgent},R{iAgent});
     end
     
     obj.SENSOR = SENSOR;
@@ -48,15 +47,15 @@ function obj = Initialize( obj, bTrackTarget, targetSpec, sensorSpec, xhat_0, Ph
 end
 
 
-function SENSOR = SetSensorClass(sensorSpec,bTrackingTarget,bias,R)
+function SENSOR = SetSensorClass(sensorSpec,bTrackingTarget,bias,Q,R)
 
     switch (sensorSpec)
         case ('RelCartBias')
             SENSOR = RelCartBiasSensor();
-            SENSOR.SetParameters([],bTrackingTarget,bias,R); % Track Object / bTrackingTarget / bias / R
+            SENSOR.SetParameters([],bTrackingTarget,bias,Q,R); % Track Object / bTrackingTarget / bias / R
         case ('InertCart')
             SENSOR = InertCartSensor();
-            SENSOR.SetParameters(
+            SENSOR.SetParameters([],bTrackingTarget,R);
     end
 
 end

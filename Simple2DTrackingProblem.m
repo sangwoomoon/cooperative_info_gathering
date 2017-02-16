@@ -28,7 +28,7 @@ CLOCK.Initialize(t0,dt,nt,FDDFt);
 % for test.. should be removed.
 load('AccelerationInput.mat');
 %AccInput(5:6,:) = 0.5*AccInput(1:2,:);
-%AccInput(7:8,:) = 0.8*AccInput(3:4,:);
+AccInput(7:8,:) = 0.8*AccInput(3:4,:);
 AccInput(5,1:200) = 5; % m/s
 AccInput(6,1:200) = 1; % rad/s
 
@@ -111,21 +111,21 @@ for iSim = 1 : SIM.nSim
         
     end
     
-    for iAgent = 1 : SIM.nAgent
-        
-        % sim performance cost computation : central
-        SIM.ComputeCost( SIM.ESTIMATOR.hist.xhat, SIM.ESTIMATOR.hist.Phat, SIM.NETWORK.hist.graph, AGENT, TARGET, CLOCK.delt.FDDF,...
-            'central', iSim, iAgent, [AGENT(1).SENSOR.bTrack;AGENT(2).SENSOR.bTrack;AGENT(3).SENSOR.bTrack] );
-        
-        % sim performance cost computation : MMNB
-        SIM.ComputeCost( AGENT(iAgent).ESTIMATOR(1).hist.xhat, AGENT(iAgent).ESTIMATOR(1).hist.Phat,SIM.NETWORK.hist.graph, AGENT, TARGET, CLOCK.delt.FDDF,...
-            'MMNB', iSim, iAgent, [AGENT(1).SENSOR.bTrack;AGENT(2).SENSOR.bTrack;AGENT(3).SENSOR.bTrack] );
-        
-        % sim performance cost computation : diag
-        SIM.ComputeCost( AGENT(iAgent).ESTIMATOR(2).hist.xhat, AGENT(iAgent).ESTIMATOR(2).hist.Phat,SIM.NETWORK.hist.graph, AGENT, TARGET, CLOCK.delt.FDDF,...
-            'diag', iSim, iAgent, [AGENT(1).SENSOR.bTrack;AGENT(2).SENSOR.bTrack;AGENT(3).SENSOR.bTrack] );
-        
-    end
+%     for iAgent = 1 : SIM.nAgent
+%         
+%         % sim performance cost computation : central
+%         SIM.ComputeCost( SIM.ESTIMATOR.hist.xhat, SIM.ESTIMATOR.hist.Phat, SIM.NETWORK.hist.graph, AGENT, TARGET, CLOCK.delt.FDDF,...
+%             'central', iSim, iAgent, [AGENT(1).SENSOR.bTrack;AGENT(2).SENSOR.bTrack;AGENT(3).SENSOR.bTrack] );
+%         
+%         % sim performance cost computation : MMNB
+%         SIM.ComputeCost( AGENT(iAgent).ESTIMATOR(1).hist.xhat, AGENT(iAgent).ESTIMATOR(1).hist.Phat,SIM.NETWORK.hist.graph, AGENT, TARGET, CLOCK.delt.FDDF,...
+%             'MMNB', iSim, iAgent, [AGENT(1).SENSOR.bTrack;AGENT(2).SENSOR.bTrack;AGENT(3).SENSOR.bTrack] );
+%         
+%         % sim performance cost computation : diag
+%         SIM.ComputeCost( AGENT(iAgent).ESTIMATOR(2).hist.xhat, AGENT(iAgent).ESTIMATOR(2).hist.Phat,SIM.NETWORK.hist.graph, AGENT, TARGET, CLOCK.delt.FDDF,...
+%             'diag', iSim, iAgent, [AGENT(1).SENSOR.bTrack;AGENT(2).SENSOR.bTrack;AGENT(3).SENSOR.bTrack] );
+%         
+%     end
     
     
     fprintf('Sim # = %d\n',iSim);

@@ -80,11 +80,21 @@ for iAgent = 1 : obj.nAgent
     sensorSpec = [];
     
     % load and convert guessed bias info as double matrix/vector
-    xhat_0{1} = locEstiParam{2}{length(locEstiParam{2})/obj.nAgent*(iAgent-1)+3+obj.nTarget*3}; xhat_0{1}(regexp(xhat_0{1},'[[,]]')) = [];
-    xhat_0{1} = str2double(strsplit(xhat_0{1},';')');
+    xhat_0{1} = locEstiParam{2}{length(locEstiParam{2})/obj.nAgent*(iAgent-1)+3+obj.nTarget*3}; 
+    xhat_0{1}(regexp(xhat_0{1},'[[,]]')) = [];
     
-    Q{1} = locEstiParam{2}{length(locEstiParam{2})/obj.nAgent*(iAgent-1)+3+obj.nTarget*3+1}; Q{1}(regexp(Q{1},'[[,]]')) = [];
-    Q{1} = diag(str2double(strsplit(Q{1},';')'));
+    Q{1} = locEstiParam{2}{length(locEstiParam{2})/obj.nAgent*(iAgent-1)+3+obj.nTarget*3+1};
+    Q{1}(regexp(Q{1},'[[,]]')) = [];
+
+    if ~isempty(xhat_0{1}) % when the bias is not exist (without bias)
+        xhat_0{1} = str2double(strsplit(xhat_0{1},';')');
+        Q{1} = diag(str2double(strsplit(Q{1},';')'));
+        nState = length(xhat_0{1});
+    else
+        xhat_0{1} = []; % nullify all bias part
+        Q{1} = []; % nullify all bias part
+        nState = 0;
+    end
     
     % load guessed sensor info
     sensorSpec{1} = locEstiParam{2}{length(locEstiParam{2})/obj.nAgent*(iAgent-1)+obj.nTarget*3+2}; % cell type :: for centralized Estimation
@@ -92,7 +102,6 @@ for iAgent = 1 : obj.nAgent
     R = {diag(str2double(strsplit(R,';')'))}; % cell type :: for centralized Estimation
     
     % load and convert guessed target info as double matrix/vector
-    nState = length(xhat_0{1});
     for iTarget = 1 : obj.nTarget
         if (AGENT(iAgent).SENSOR.bTrack(iTarget) == 1)
             targetSpec{end+1} = locEstiParam{2}{length(locEstiParam{2})/obj.nAgent*(iAgent-1)+3*(iTarget-1)+2};
@@ -110,7 +119,7 @@ for iAgent = 1 : obj.nAgent
     iniVariance = str2double(locEstiParam{2}{length(locEstiParam{2})/obj.nAgent*(iAgent-1)+obj.nTarget*3+6});
     Phat_0 = iniVariance*eye(nState);
     
-    for iEsti = 1 : 2
+    for iEsti = 1 : 2 % local process vs. local process with fusion (for comparison)
         AGENT(iAgent).ESTIMATOR(iEsti).Initialize(AGENT(iAgent).SENSOR.bTrack,targetSpec,sensorSpec,xhat_0,Phat_0,Q,R);
         AGENT(iAgent).ESTIMATOR(iEsti).SetParameter('fusion',AGENT(iAgent).id);
     end
@@ -135,11 +144,16 @@ for iAgent = 1 : obj.nAgent
     bTrack = [bTrack;AGENT(iAgent).SENSOR.bTrack];
     
     xhat_0{iAgent} = centEstiParam{2}{obj.nTarget*3+2+4*(iAgent-1)}; xhat_0{iAgent}(regexp(xhat_0{iAgent},'[[,]]')) = [];
-    xhat_0{iAgent} = str2double(strsplit(xhat_0{iAgent},';')');
-    nState = nState + length(xhat_0{iAgent});
-    
     Q{iAgent} = centEstiParam{2}{obj.nTarget*3+3+4*(iAgent-1)}; Q{iAgent}(regexp(Q{iAgent},'[[,]]')) = [];
-    Q{iAgent} = diag(str2double(strsplit(Q{iAgent},';')'));
+    
+    if ~isempty(xhat_0{iAgent})
+        xhat_0{iAgent} = str2double(strsplit(xhat_0{iAgent},';')');
+        Q{iAgent} = diag(str2double(strsplit(Q{iAgent},';')'));
+        nState = nState + length(xhat_0{iAgent});
+    else % if no bias part
+        xhat_0{iAgent} = [];
+        Q{iAgent} = [];
+    end
     
     R{iAgent} = centEstiParam{2}{obj.nTarget*3+4+4*(iAgent-1)}; R{iAgent}(regexp(R{iAgent},'[[,]]')) = [];
     R{iAgent} = diag(str2double(strsplit(R{iAgent},';')'));

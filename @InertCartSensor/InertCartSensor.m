@@ -13,7 +13,7 @@ classdef InertCartSensor < Sensor
         end
         
         % Take measurement for other agents/targets
-        Measure(obj, s, x, current_time);
+        Measure(obj, s, x, landmark, current_time);
         
         % make measurement noise
         MakeNoise(obj, option);

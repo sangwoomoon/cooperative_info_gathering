@@ -46,7 +46,8 @@ switch (option)
         ptRow = 0; % index pointer with respect to row
         ptTgtCol = 0 ; % index pointer with respect to col (target part)
         ptBiasCol = 0; % index pointer with respect to col (bias part)
-
+        dBiasCol = 0;  % number of bias states
+        nTotalBiasState = 0; % number of total bias states
         
         for iSensor = 1 : length(obj.SENSOR)
             
@@ -107,10 +108,24 @@ switch (option)
                     
                 end
                
-            else
+            elseif strcmp(obj.SENSOR{iSensor}.spec,'InertCart') % for Inertial Cartesian sensor
                 
-                % TO DO :: other sensor types!
-                
+                % with respect to targets
+                for iTarget = 1 : sum(obj.SENSOR{iSensor}.bTrack) % for tracked targets only (same as centralized case)
+                    
+                    dRow = length(Y_k{iSensor}(iTarget).y); % measurement state for single target from single agent
+                    
+                    % target part
+                    dTgtCol = obj.TARGET(iTarget).DYNAMICS.nState;
+                    id = Y_k{iSensor}(iTarget).id;
+                    
+                    jacobian( ptRow+1 : ptRow+dRow , ptTgtCol(id)+1 : ptTgtCol(id)+dTgtCol ) = ...
+                        obj.SENSOR{iSensor}.TakeJacobian();
+                    
+                    ptRow = ptRow + dRow;
+                    
+                end
+                                
             end
             
             ptBiasCol = ptBiasCol + dBiasCol; 

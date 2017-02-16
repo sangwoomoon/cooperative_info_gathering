@@ -6,8 +6,8 @@ RelTol      1e-4
 AbsTol      1e-6
 MeasType    InertCart
 MeasObj     Target
-bTrack      [1;1;1]
-bias        nan
+bTrack      [1]
+bias        []
 R           [10.15;0.015]
 EstiType    KF
 FusType     CIWEP
@@ -20,8 +20,8 @@ RelTol      1e-4
 AbsTol      1e-6
 MeasType    InertCart
 MeasObj     Target
-bTrack      [1;1;1]
-bias        nan
+bTrack      [1]
+bias        []
 R           [0.015;10.15]
 EstiType    KF
 FusType     CIWEP
@@ -34,8 +34,8 @@ RelTol      1e-4
 AbsTol      1e-6
 MeasType    InertCart
 MeasObj     Target
-bTrack      [1;1;1]
-bias        nan
+bTrack      [1]
+bias        []
 R           [0.55;0.85]
 EstiType    KF
 FusType     CIWEP
@@ -48,8 +48,8 @@ RelTol      1e-4
 AbsTol      1e-6
 MeasType    InertCart
 MeasObj     Target
-bTrack      [1;1;1]
-bias        nan
+bTrack      [1]
+bias        []
 R           [0.55;0.85]
 EstiType    KF
 FusType     CIWEP
