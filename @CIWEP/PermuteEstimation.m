@@ -13,9 +13,9 @@ xhat_new = [];
 
 permutedIdx = [exclusiveStateIdx;commonStateIdx]; % re-arrange indices to make group
 
-for iTarget = 1 : length(permutedIdx) % with respect to raw
+for iTarget = 1 : length(permutedIdx(:,1)) % with respect to raw
     Phat_row = [];
-    for jTarget = 1 : length(permutedIdx) % with respect to col
+    for jTarget = 1 : length(permutedIdx(:,1)) % with respect to col
         Phat_row = [Phat_row,...
             Phat(permutedIdx(iTarget,1):permutedIdx(iTarget,2),permutedIdx(jTarget,1):permutedIdx(jTarget,2))];
     end

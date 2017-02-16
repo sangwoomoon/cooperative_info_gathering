@@ -1,0 +1,39 @@
+AgentID            1
+Target1DynType     Linear
+Target1State       [5.0;0.1;3.0;0.5]
+Target1Q           [1.5;0.5]
+SensorType         RelCartBias
+bias               [0.4;0.2]
+biasQ              [0.1;0.1]
+R                  [8.15;0.215]
+Phat               10
+
+AgentID            2
+Target1DynType     Linear
+Target1State       [5.0;0.1;3.0;0.5]
+Target1Q           [1.5;0.5]
+SensorType         RelCartBias
+bias               [0.4;0.2]
+biasQ              [0.1;0.1]
+R                  [0.15;8.0]
+Phat               10
+
+AgentID            3
+Target1DynType     Linear
+Target1State       [5.0;0.1;3.0;0.5]
+Target1Q           [1.5;0.5]
+SensorType         RelCartBias
+bias               [0.4;0.2]
+biasQ              [0.1;0.1]
+R                  [0.80;0.25]
+Phat               10
+
+AgentID            4
+Target1DynType     Linear
+Target1State       [5.0;0.1;3.0;0.5]
+Target1Q           [1.5;0.5]
+SensorType         RelCartBias
+bias               [0.4;0.2]
+biasQ              [0.1;0.1]
+R                  [0.80;0.25]
+Phat               10

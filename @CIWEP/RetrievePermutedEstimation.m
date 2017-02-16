@@ -10,12 +10,12 @@ xhat_new = nan(length(obj.xhatTemp),1);
 
 
 ptRow = 1; % pointer for indexing
-for iTarget = 1 : length(retrievedIdx) % with respect to row
+for iTarget = 1 : length(retrievedIdx(:,1)) % with respect to row
     
     dRow = retrievedIdx(iTarget,2)-retrievedIdx(iTarget,1);
     ptCol = 1; % pointer for indexing
     
-    for jTarget = 1 : length(retrievedIdx) % with respect to col
+    for jTarget = 1 : length(retrievedIdx(:,1)) % with respect to col
         
         dCol = retrievedIdx(jTarget,2)-retrievedIdx(jTarget,1);
         

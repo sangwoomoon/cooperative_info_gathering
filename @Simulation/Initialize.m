@@ -59,7 +59,7 @@ for iAgent = 1 : obj.nAgent
                 str2double(strsplit(bias,';')'),diag(str2double(strsplit(R,';')'))); % Track Object / bTrackingTarget / bias = 0 (since the estimator may consider bias) / R
         case ('RelCartBias')
             AGENT(iAgent).SENSOR.SetParameters(agentParam{2}{length(agentParam{2})/obj.nAgent*(iAgent-1)+8},bTrackingTarget,...
-                str2double(strsplit(bias,';')'),diag(str2double(strsplit(R,';')'))); % Track Object / bTrackingTarget / bias / R
+                str2double(strsplit(bias,';')'),diag(str2double(strsplit(Q,';')')),diag(str2double(strsplit(R,';')'))); % Track Object / bTrackingTarget / bias / Q / R
     end
 end
 

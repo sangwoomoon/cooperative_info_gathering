@@ -121,7 +121,11 @@ for iMerge = 1 : length(obj.hist.omega(:,1)) % number of agents
         % step 3 :: Make information matrix / vector from the data fusion with
         % omega (fusion parameter)
         % sequential process (like Batch Process)
-        nExclusiveState = nBiasState + nTargetState/sum(bTrack)*(length(exclusiveStateIdx(:,1))-1); % assume that all estimated targets are homogeneous (should be modified!!)
+        if isempty(exclusiveStateIdx)
+            nExclusiveState = nBiasState;
+        else
+            nExclusiveState = nBiasState + nTargetState/sum(bTrack)*(length(exclusiveStateIdx(:,1))-1); % assume that all estimated targets are homogeneous (should be modified!!)
+        end
         nCommonState = nTotalState - nExclusiveState;
         
         obj.M = [zeros(nExclusiveState,nTotalState);zeros(nCommonState,nExclusiveState),MtempDelta];
