@@ -1,7 +1,7 @@
 function obj = Declare( obj )
 %DECLARE declares the disk-modelled network class
 
-obj.spec = 'Bernoulli';
+obj.spec = 'Erasure';
 
 end
 

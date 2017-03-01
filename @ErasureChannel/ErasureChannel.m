@@ -1,5 +1,6 @@
-classdef BernoulliProbNetwork < Network
-    %SIGMOIDMODELNETWORK is the sub-class of Network that considers sigmoid function model
+classdef ErasureChannel < Network
+    %ERASURECHANNEL is the sub-class of Network that considers Packet
+    %Erasure Channel model
     %for communication (prob: beta = sig(range,strength)
     
     properties
@@ -7,7 +8,7 @@ classdef BernoulliProbNetwork < Network
     end
     
     methods
-        function obj = BernoulliProbNetwork()
+        function obj = ErasureChannel()
             obj@Network();
         end
         
