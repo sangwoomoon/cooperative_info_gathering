@@ -6,8 +6,11 @@ classdef Network < handle
         
         spec % characteristics of network model
         
-        graph % binary matix (sender - receiver, could be asymmetric/symmetric)
+        topology % graph from network topology
+        topograph % network graph defined by topology
         
+        graph % binary matix (sender - receiver, could be asymmetric/symmetric and determined by topograph)
+       
         prob % 100% - 0% of communication (could be usable for noise/binary)
         range % criteria of communication between agents (distance-based)
         
@@ -34,6 +37,9 @@ classdef Network < handle
         
         % send package to agent which ID is given by the input parameter
         SentPackage = SendPackage(obj,RcvAgentID);
+        
+        % basic togograph setting from topology input
+        SetTopology(obj, nAgent, topology, Node_agents); % node is for star (otherwise, Node_agents is inputted as [])
     end
     
 end

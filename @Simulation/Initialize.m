@@ -65,12 +65,28 @@ end
 
 
 %--- Network class initialization ----
-range = str2double(networkParam{2}{2});
+
+% initialize network (amorphous) class with respect to specified network process
+CommModel = networkParam{2}{3};
+switch (CommModel)
+    case ('Disk')
+        obj.NETWORK = DiskModelNetwork();
+    case ('Erasure')
+        obj.NETWORK = ErasureChannel();
+    otherwise
+        obj.NETWORK = Network();
+end
+
+topology = networkParam{2}{1};
+nodeIdx = networkParam{2}{2}; nodeIdx(regexp(nodeIdx,'[[,]]')) = []; nodeIdx = str2double(strsplit(nodeIdx,';')');
+range = str2double(networkParam{2}{4});
 obj.NETWORK.Initialize(obj.nAgent,range);
+obj.NETWORK.SetTopology(obj.nAgent,topology,nodeIdx);
 obj.NETWORK.SetParameter();
 
 
 %--- Individaul KF subclass initialization ----
+
 for iAgent = 1 : obj.nAgent
     
     Q = [];
@@ -128,6 +144,15 @@ end
 
 %--- Centralized KF subclass initialization ----
 
+% initialize estimator class with respect to specified estimation process
+EstimationOption = centEstiParam{2}{1};
+switch (EstimationOption)
+    case ('KF')
+        obj.ESTIMATOR = KalmanFilter();
+    otherwise
+        obj.ESTIMATOR = Estimator();
+end
+
 Q = [];
 R = [];
 xhat_0 = [];
@@ -140,11 +165,11 @@ bTrack = [];
 % gather guessed agant's sensor bias info (even if it is not assigned by users!) and its measurement cov matrix
 for iAgent = 1 : obj.nAgent
     
-    sensorSpec{iAgent} = centEstiParam{2}{obj.nTarget*3+1+4*(iAgent-1)};
+    sensorSpec{iAgent} = centEstiParam{2}{obj.nTarget*3+2+4*(iAgent-1)};
     bTrack = [bTrack;AGENT(iAgent).SENSOR.bTrack];
     
-    xhat_0{iAgent} = centEstiParam{2}{obj.nTarget*3+2+4*(iAgent-1)}; xhat_0{iAgent}(regexp(xhat_0{iAgent},'[[,]]')) = [];
-    Q{iAgent} = centEstiParam{2}{obj.nTarget*3+3+4*(iAgent-1)}; Q{iAgent}(regexp(Q{iAgent},'[[,]]')) = [];
+    xhat_0{iAgent} = centEstiParam{2}{obj.nTarget*3+3+4*(iAgent-1)}; xhat_0{iAgent}(regexp(xhat_0{iAgent},'[[,]]')) = [];
+    Q{iAgent} = centEstiParam{2}{obj.nTarget*3+4+4*(iAgent-1)}; Q{iAgent}(regexp(Q{iAgent},'[[,]]')) = [];
     
     if ~isempty(xhat_0{iAgent})
         xhat_0{iAgent} = str2double(strsplit(xhat_0{iAgent},';')');
@@ -155,19 +180,19 @@ for iAgent = 1 : obj.nAgent
         Q{iAgent} = [];
     end
     
-    R{iAgent} = centEstiParam{2}{obj.nTarget*3+4+4*(iAgent-1)}; R{iAgent}(regexp(R{iAgent},'[[,]]')) = [];
+    R{iAgent} = centEstiParam{2}{obj.nTarget*3+5+4*(iAgent-1)}; R{iAgent}(regexp(R{iAgent},'[[,]]')) = [];
     R{iAgent} = diag(str2double(strsplit(R{iAgent},';')'));
 end
 
 % gather guessed target info
 for iTarget = 1 : obj.nTarget
-    targetSpec{iTarget} = centEstiParam{2}{1+3*(iTarget-1)};
+    targetSpec{iTarget} = centEstiParam{2}{2+3*(iTarget-1)};
     
-    xhat_0{obj.nAgent+iTarget} = centEstiParam{2}{2+3*(iTarget-1)}; xhat_0{obj.nAgent+iTarget}(regexp(xhat_0{obj.nAgent+iTarget},'[[,]]')) = [];
+    xhat_0{obj.nAgent+iTarget} = centEstiParam{2}{3+3*(iTarget-1)}; xhat_0{obj.nAgent+iTarget}(regexp(xhat_0{obj.nAgent+iTarget},'[[,]]')) = [];
     xhat_0{obj.nAgent+iTarget} = str2double(strsplit(xhat_0{obj.nAgent+iTarget},';')');
     nState = nState + length(xhat_0{obj.nAgent+iTarget});
     
-    Q{obj.nAgent+iTarget} = centEstiParam{2}{3+3*(iTarget-1)}; Q{obj.nAgent+iTarget}(regexp(Q{obj.nAgent+iTarget},'[[,]]')) = [];
+    Q{obj.nAgent+iTarget} = centEstiParam{2}{4+3*(iTarget-1)}; Q{obj.nAgent+iTarget}(regexp(Q{obj.nAgent+iTarget},'[[,]]')) = [];
     Q{obj.nAgent+iTarget} = diag(str2double(strsplit(Q{obj.nAgent+iTarget},';')'));
 end
 

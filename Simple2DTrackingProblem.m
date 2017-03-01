@@ -12,7 +12,7 @@ nSim = 1;
 nAgent = 4;
 nTarget = 1;
 nLandMark = 0;
-SIM = Simulation(nSim,nAgent,nTarget,nLandMark,'KF','Erasure');
+SIM = Simulation(nSim,nAgent,nTarget,nLandMark);
 
 %--- Clock Class Setting ----
 t0 = 0.1;
@@ -35,7 +35,7 @@ AccInput(6,1:200) = 1; % rad/s
 
 %% MAIN PROCEDURE %%%%
 
-for iSim = 1 : SIM.nSim
+for iSim = 1 : SIM.nSim % for Monte-carlo
     
     % Initialize simulation
     [AGENT, TARGET, ENV] = SIM.Initialize(agentParam, targetParam, landmarkParam, centEstiParam, locEstiParam, networkParam );

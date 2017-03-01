@@ -1,2 +1,4 @@
-Model       Erasure
-Range       nan
+Topology    Star
+Node        [1;0;0;0]
+CommModel   Erasure
+Range       []

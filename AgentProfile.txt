@@ -10,6 +10,7 @@ bTrack      [1]
 bias        [1;1]
 R           [10.15;0.015]
 EstiType    KF
+bFusCenter  1
 FusType     CIWEP
 
 ID          2
@@ -24,6 +25,7 @@ bTrack      [1]
 bias        []
 R           [0.015;10.15]
 EstiType    KF
+bFusCenter  0
 FusType     CIWEP
 
 ID          3
@@ -38,6 +40,7 @@ bTrack      [1]
 bias        []
 R           [0.55;0.85]
 EstiType    KF
+bFusCenter  0
 FusType     CIWEP
 
 ID          4
@@ -52,4 +55,5 @@ bTrack      [1]
 bias        []
 R           [0.55;0.85]
 EstiType    KF
+bFusCenter  0
 FusType     CIWEP

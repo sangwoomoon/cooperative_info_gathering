@@ -25,8 +25,8 @@ classdef Simulation < handle
     
 
     methods
-        function obj = Simulation( nSim, nAgent, nTarget, nLandmark, EstimationOption, NetworkOption )
-            obj = Declare(obj, nSim, nAgent, nTarget, nLandmark, EstimationOption, NetworkOption );
+        function obj = Simulation( nSim, nAgent, nTarget, nLandmark )
+            obj = Declare(obj, nSim, nAgent, nTarget, nLandmark );
         end
         
     end

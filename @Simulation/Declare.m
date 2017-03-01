@@ -1,9 +1,9 @@
-function obj = Declare( obj, nSim, nAgent, nTarget, nLandmark, EstimationOption, NetworkOption )
+function obj = Declare( obj, nSim, nAgent, nTarget, nLandmark )
 
 % default setting for simulation
 % input : empty Simulation Class
 %
-% output : set Simulation Class
+% output : set Simulation Class with basic parameters
 
 obj.nSim = nSim;
 obj.nTarget = nTarget;
@@ -12,24 +12,6 @@ obj.nLandmark = nLandmark;
 
 for iSimSeed = 1 : nSim
     obj.sRandom(iSimSeed) = iSimSeed;
-end
-
-% initialize estimator class with respect to specified estimation process
-switch (EstimationOption)
-    case ('KF')
-        obj.ESTIMATOR = KalmanFilter();
-    otherwise
-        obj.ESTIMATOR = Estimator();
-end
-
-% initialize network (amorphous) class with respect to specified network process
-switch (NetworkOption)
-    case ('Disk')
-        obj.NETWORK = DiskModelNetwork();
-    case ('Erasure')
-        obj.NETWORK = ErasureChannel();
-    otherwise
-        obj.NETWORK = Network();
 end
 
 % initialize current figure
