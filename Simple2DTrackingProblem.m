@@ -12,7 +12,7 @@ nSim = 1;
 nAgent = 4;
 nTarget = 1;
 nLandMark = 0;
-SIM = Simulation(nSim,nAgent,nTarget,nLandMark,'KF','Bernoulli');
+SIM = Simulation(nSim,nAgent,nTarget,nLandMark,'KF','Erasure');
 
 %--- Clock Class Setting ----
 t0 = 0.1;

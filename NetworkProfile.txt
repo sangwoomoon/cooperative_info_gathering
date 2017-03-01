@@ -1,2 +1,2 @@
-Model       Bernoulli
+Model       Erasure
 Range       nan

@@ -26,8 +26,8 @@ end
 switch (NetworkOption)
     case ('Disk')
         obj.NETWORK = DiskModelNetwork();
-    case ('Bernoulli')
-        obj.NETWORK = BernoulliProbNetwork();
+    case ('Erasure')
+        obj.NETWORK = ErasureChannel();
     otherwise
         obj.NETWORK = Network();
 end
