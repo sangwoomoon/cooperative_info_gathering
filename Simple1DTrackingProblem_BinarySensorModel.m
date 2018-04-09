@@ -22,10 +22,10 @@ hold on;
 
 sim.nAgent = 1;
 sim.nTarget = 1;
-sim.flagDisp.before = 0;
+sim.flagDisp.before = 1;
 sim.flagDisp.after = 1;
 
-clock.nt = 10;
+clock.nt = 20;
 clock.dt = 1;
 clock.nT = 3; % planning horizon
 clock.hist.time = 0;
@@ -33,7 +33,7 @@ clock.hist.time = 0;
 target.pos = 0;
 target.hist.pos = target.pos;
 
-agent.pos = 5;
+agent.pos = 10;
 agent.vel = 0;
 agent.hist.pos = agent.pos;
 
@@ -137,18 +137,21 @@ for iClock = 1:clock.nt
         for iPt = 1:PF.nPt
             % particle state update
             PF.ptPlan(iPt) = PF.F*PF.ptPlan(iPt) + mvnrnd(0,PF.Q)';
-        end
-        
-        for iPt = 1:PF.nPt
+
             % particle measurement update
-            if PF.ptPlan(iPt) >= agent.pos-sensor.regionRadius && PF.ptPlan(iPt) <= agent.pos+sensor.regionRadius
-                PF.yptPlan(iPt) = binornd(1,sensor.DetectBeta);
+            if PF.yPlan(:,iPlan) == 1 % when sensor does detect
+                if PF.ptPlan(iPt) >= agent.pos-sensor.regionRadius && PF.ptPlan(iPt) <= agent.pos+sensor.regionRadius % when the particle is within detected region
+                    PF.wPlan(iPt) = sensor.DetectBeta;
+                else
+                    PF.wPlan(iPt) = 1-sensor.DetectBeta;
+                end
             else
-                PF.yptPlan(iPt) = 0;
+                if PF.ptPlan(iPt) >= agent.pos-sensor.regionRadius && PF.ptPlan(iPt) <= agent.pos+sensor.regionRadius % when the particle is within detected region
+                    PF.wPlan(iPt) = 0;
+                else
+                    PF.wPlan(iPt) = 1;
+                end
             end
-            
-            % sampled measurement comparison and weight priori
-            PF.wPlan(iPt) = PF.yptPlan(iPt)+PF.yPlan(:,iPlan)+(1e-5); % avoid all zeros
         end
         PF.wPlan = PF.wPlan./sum(PF.wPlan);
         
@@ -163,30 +166,30 @@ for iClock = 1:clock.nt
         %--------------
         
         
-        %--------------
-        % compute variance of resampled particles
-        PF.varPlan = var(PF.ptPlan,PF.wPlan);
-        
-        % Sum of prob. measurement correction P(X_k|Y_{k}):
-        onePtTargetProb = nan(1,length(param.RefPt));
+        %--------------        
+        % Sum of prob. measurement correction P(X_k|Y_k):
+        oneMeasUpdateProb = nan(1,length(param.RefPt));
         for iPt = 1:PF.nPt
             for iRefpt = 1:length(param.RefPt)
-                onePtTargetProb(iRefpt) = (1/sqrt(2*pi*PF.varPlan))*exp(-(param.RefPt(iRefpt)-PF.ptPlan(iPt))^2/(2*PF.varPlan));
+                
+                if abs(param.RefPt(iRefpt)-PF.ptPlan(iPt)) < param.dRefPt
+                    oneMeasUpdateProb(iRefpt) = 1;
+                else
+                    oneMeasUpdateProb(iRefpt) = 0;
+                end
             end
             
             if iPt == 1
-                PF.targetProb = PF.wPlan(iPt)*onePtTargetProb;
+                PF.measUpdateProb = PF.wPlan(iPt)*oneMeasUpdateProb;
             else
-                PF.targetProb = PF.targetProb+PF.wPlan(iPt)*onePtTargetProb;
+                PF.measUpdateProb = PF.measUpdateProb+PF.wPlan(iPt)*oneMeasUpdateProb;
             end
         end        
         
         % Entropy computation: H(X_k|Y_k):
-        PF.Hafter(iPlan) = 0.5*log((2*pi*exp(1))*det(PF.varPlan)); % Gaussian Distribution Approximation
-
-        % PF.targetProbNorm = PF.targetProb./sum(PF.targetProb);
-        % NonZeroIndex = PF.targetProbNorm > 0; % to prevent from log(0)
-        % PF.Hafter(iPlan) = -sum(PF.targetProbNorm(NonZeroIndex).*log(PF.targetProbNorm(NonZeroIndex)));
+        PF.measUpdateProbNorm = PF.measUpdateProb./sum(PF.measUpdateProb);
+        NonZeroIndex = PF.measUpdateProbNorm > 0; % to prevent from log(0)
+        PF.Hafter(iPlan) = -sum(PF.measUpdateProbNorm(NonZeroIndex).*log(PF.measUpdateProbNorm(NonZeroIndex)));
         
         % Mutual Information computation and accumulation for getting cost
         PF.I = PF.I + (PF.Hbefore(iPlan) - PF.Hafter(iPlan));
@@ -197,7 +200,7 @@ for iClock = 1:clock.nt
         if sim.flagDisp.after == 1
             % fprintf('PF-Hafter  @ iClock: %2.0d, iPlan: %2.0d = %2.6f\n',iClock, iPlan,PF.Hafter(iPlan));
             figure(10),subplot(param.planPlot.row,param.planPlot.col,iClock),
-            plot(param.RefPt,PF.targetProb,'-','LineWidth',2,'color',[param.regressPlot*(iPlan-1),param.regressPlot*(iPlan-1),1]); hold on;
+            plot(param.RefPt,PF.measUpdateProbNorm,'-','LineWidth',1,'color',[param.regressPlot*(iPlan-1),param.regressPlot*(iPlan-1),1]); hold on;
             if iPlan == clock.nT
                 title(['Time Step = ',num2str(iClock)]);
             end
@@ -216,14 +219,20 @@ for iClock = 1:clock.nt
         PF.pt(iPt) = PF.F*PF.pt(iPt) + mvnrnd(0,PF.Q)';
         
         % particle measurement update
-        if PF.pt(iPt) >= agent.pos-sensor.regionRadius && PF.pt(iPt) <= agent.pos+sensor.regionRadius
-            PF.ypt(iPt) = binornd(1,sensor.DetectBeta);
+        if sensor.y == 1 % when sensor does detect
+            if PF.pt(iPt) >= agent.pos-sensor.regionRadius && PF.pt(iPt) <= agent.pos+sensor.regionRadius % when the particle is within detected region
+                PF.w(iPt) = sensor.DetectBeta;
+            else
+                PF.w(iPt) = 1-sensor.DetectBeta;
+            end
         else
-            PF.ypt(iPt) = 0;
+            if PF.pt(iPt) >= agent.pos-sensor.regionRadius && PF.pt(iPt) <= agent.pos+sensor.regionRadius % when the particle is within detected region
+                PF.w(iPt) = 0;
+            else
+                PF.w(iPt) = 1;
+            end
         end
         
-        % sampled measurement comparison and weight priori
-        PF.w(iPt) = PF.ypt(iPt)+sensor.y+(1e-5); % avoid all zeros;
     end
     PF.w = PF.w./sum(PF.w);
     
@@ -260,7 +269,7 @@ xlabel('time [sec]'); ylabel('Target Pos [m]');
 
 figure(2)
 plot(clock.hist.time,PF.hist.I,'b--','LineWidth',3);
-xlabel('time [sec]'); ylabel('Cost [sum of M.I.]');
+xlabel('time [sec]'); ylabel('Utility [sum of M.I.]');
 
 figure(3)
 for iPlan = 1 : clock.nT

@@ -22,8 +22,8 @@ hold on;
 
 sim.nAgent = 1;
 sim.nTarget = 1;
-sim.flagDisp.before = 0;
-sim.flagDisp.after = 0;
+sim.flagDisp.before = 1;
+sim.flagDisp.after = 1;
 
 clock.nt = 5;
 clock.dt = 1;
@@ -62,7 +62,7 @@ PF.H = 1;
 PF.Q = KF.Q;
 PF.R = KF.R;
 
-PF.nPt = 200;
+PF.nPt = 10000;
 PF.w = ones(1,PF.nPt)./PF.nPt;
 for iPt = 1 : PF.nPt
     PF.pt(iPt,1) = PF.xhat + mvnrnd(0,PF.Phat)';
@@ -79,6 +79,9 @@ PF.hist.Hafter = nan(clock.nT,1);
 param.regressPlot = 0.4;
 param.dRefPt = 1;
 param.RefPt = -100:param.dRefPt:100;
+
+param.planPlot.row = 4; 
+param.planPlot.col = floor(clock.nt/param.planPlot.row)+(mod(clock.nt,param.planPlot.row) ~= 0)*1;
 
 %-----------------------------------
 % Linear-Gaussian M.I. computation
@@ -101,7 +104,7 @@ for iClock = 1:clock.nt
         % sample measurement
         KF.yPlan(:,iPlan) = KF.H*KF.xhatPlan + mvnrnd(0,KF.R)';
         
-        % state update
+        % state update: P(x_k|x_{k-1})
         KF.xhatPlan = KF.F*KF.xhatPlan;
         KF.PhatPlan = KF.F*KF.PhatPlan*KF.F' + KF.Q;
         
@@ -109,38 +112,33 @@ for iClock = 1:clock.nt
 
         %-- Checking -----------
         if sim.flagDisp.before == 1
-            if iClock == 1
-                for iRefpt = 1:length(param.RefPt)
-                    TaEvolve(iRefpt) = (1/sqrt(2*pi*KF.PhatPlan))*exp(-(param.RefPt(iRefpt)-KF.xhatPlan)^2/(2*KF.PhatPlan));
-                end
-                figure(10),
-                plot(param.RefPt,TaEvolve,'--','LineWidth',2,'color',[1,param.regressPlot*(iPlan-1),param.regressPlot*(iPlan-1)]); hold on;
-                fprintf('KF-Hbefore @ iClock: %2.0d, iPlan: %2.0d = %2.6f\n',iClock, iPlan, KF.Hbefore(iPlan));
+            for iRefpt = 1:length(param.RefPt)
+                TaEvolve(iRefpt) = (1/sqrt(2*pi*KF.PhatPlan))*exp(-(param.RefPt(iRefpt)-KF.xhatPlan)^2/(2*KF.PhatPlan));
             end
+            figure(10),subplot(param.planPlot.row,param.planPlot.col,iClock),
+            plot(param.RefPt,TaEvolve,'--','LineWidth',2,'color',[1,param.regressPlot*(iPlan-1),param.regressPlot*(iPlan-1)]); hold on;
+%             fprintf('KF-Hbefore @ iClock: %2.0d, iPlan: %2.0d = %2.6f\n',iClock, iPlan, KF.Hbefore(iPlan));
         end
         %----------------------
         
         
-        % measurement update
+      % measurement update: FOR KALMAN FILTER PART
         KF.K = KF.PhatPlan*KF.H'*(KF.R+KF.H*KF.PhatPlan*KF.H')^(-1);
         KF.xhatPlan = KF.xhatPlan + KF.K*(KF.yPlan(:,iPlan) - KF.H*KF.xhat);
         KF.PhatPlan = (eye(1)-KF.K*KF.H)*KF.PhatPlan*(eye(1)-KF.K*KF.H)' + KF.K*KF.R*KF.K';
-        
+
         KF.Hafter(iPlan) = 0.5*log((2*pi*exp(1))*det(KF.PhatPlan));
         KF.I = KF.I + (KF.Hbefore(iPlan) - KF.Hafter(iPlan));
 
         %-- Checking -----------
         if sim.flagDisp.after == 1
-            if iClock == 1
-                fprintf('KF-Hafter  @ iClock: %2.0d, iPlan: %2.0d = %2.6f\n',iClock, iPlan, KF.Hafter(iPlan));
-                
-                for iRefpt = 1:length(param.RefPt)
-                    MeasUpdate(iRefpt) = (1/sqrt(2*pi*KF.PhatPlan))*exp(-(param.RefPt(iRefpt)-KF.xhatPlan)^2/(2*KF.PhatPlan));
-                end
-                figure(11),
-                plot(param.RefPt,MeasUpdate,'-','LineWidth',2,'color',[1,param.regressPlot*(iPlan-1),param.regressPlot*(iPlan-1)]); hold on;
-                
+%             fprintf('KF-Hafter  @ iClock: %2.0d, iPlan: %2.0d = %2.6f\n',iClock, iPlan, KF.Hafter(iPlan));
+            
+            for iRefpt = 1:length(param.RefPt)
+                MeasUpdate(iRefpt) = (1/sqrt(2*pi*KF.PhatPlan))*exp(-(param.RefPt(iRefpt)-KF.xhatPlan)^2/(2*KF.PhatPlan));
             end
+            figure(11),subplot(param.planPlot.row,param.planPlot.col,iClock),
+            plot(param.RefPt,MeasUpdate,'-','LineWidth',2,'color',[1,param.regressPlot*(iPlan-1),param.regressPlot*(iPlan-1)]); hold on;
         end
         %----------------------
 
@@ -203,98 +201,15 @@ for iClock = 1:clock.nt
         
         %-- Checking -----------
         if sim.flagDisp.before == 1
-            if iClock == 1
-                figure(10),
-                plot(param.RefPt,PF.targetProb,'--','LineWidth',2,'color',[param.regressPlot*(iPlan-1),param.regressPlot*(iPlan-1),1]);
-                fprintf('PF-Hbefore @ iClock: %2.0d, iPlan: %2.0d = %2.6f\n',iClock, iPlan,PF.Hbefore(iPlan));
-            end
+            figure(10),subplot(param.planPlot.row,param.planPlot.col,iClock),
+            plot(param.RefPt,PF.targetProb,'--','LineWidth',2,'color',[param.regressPlot*(iPlan-1),param.regressPlot*(iPlan-1),1]);
+%             fprintf('PF-Hbefore @ iClock: %2.0d, iPlan: %2.0d = %2.6f\n',iClock, iPlan,PF.Hbefore(iPlan));
+        end
+        
+        if iPlan == clock.nT
+            title(['Time Step = ',num2str(iClock)]);
         end
         %-----------------------
-        
-        
-%         %--------------
-%         % Sum of prob. target evolution P(X_k|Y_k)
-%         
-%         % 1) P(X_k|X_{k-1}) is already set: PF.targetProb
-%         
-%         % 2) P(Z_k|Z_{k-1}) = sum of w_k*P(Z_k|X_k)
-%         
-%         onePtMeasProb = nan(1,length(param.RefPt));
-%         for iPt = 1:PF.nPt            
-%             for iRefpt = 1:length(param.RefPt)
-%                 onePtMeasProb(iRefpt) = (1/sqrt(2*pi*PF.R))*exp(-(param.RefPt(iRefpt)-PF.ptPlan(iPt))^2/(2*PF.R));
-%             end
-%             
-%             if iPt == 1
-%                 PF.denMeasProb = PF.wPlan(iPt)*onePtMeasProb;
-%             else
-%                 PF.denMeasProb = PF.denMeasProb+PF.wPlan(iPt)*onePtMeasProb;
-%             end
-%         end
-%         PF.denMeasProbNorm = PF.denMeasProb./sum(PF.denMeasProb);
-%          
-%         % 3) P(Z_k|X_k)
-%         onePtMeasProb = nan(1,length(param.RefPt));
-%         for iPt = 1:PF.nPt            
-%             for iRefpt = 1:length(param.RefPt)
-%                 onePtMeasProb(iRefpt) = (1/sqrt(2*pi*PF.R))*exp(-(param.RefPt(iRefpt)-(PF.ptPlan(iPt)+mvnrnd(0,PF.Q)'))^2/(2*PF.R)); % beware particle update is in the line
-%             end
-%             
-%             if iPt == 1
-%                 PF.measProb = PF.wPlan(iPt)*onePtMeasProb;
-%             else
-%                 PF.measProb = PF.measProb+PF.wPlan(iPt)*onePtMeasProb;
-%             end
-%         end
-%         PF.measProbNorm = PF.measProb./sum(PF.measProb);
-%  
-%         % 4) P(Z_k|X_k)*P(X_k|X_{k-1})/P(Z_k|Z_{k-1}): HOW TO HANDLE
-%         RATIO OF TWO PDFs?
-%
-% 
-%         numProbTemp = conv(PF.measProbNorm,PF.targetProbNorm);
-%         RefIdx = 1:2:length(numProbTemp);
-%         PF.numProb = numProbTemp(RefIdx);
-%         PF.numProbNorm = PF.numProb./sum(PF.numProb);
-%         NonZeroIndex = PF.numProbNorm > 0; % to prevent from log(0)
-%         PF.Hafter(iPlan) = -sum(PF.numProbNorm(NonZeroIndex).*log(PF.numProbNorm(NonZeroIndex)));
-%
-%
-%         OTHER METHOD: BASED ON WIKIPEDIA REFERENCE 
-%
-%
-%         PF.numProb = zeros(1,length(param.RefPt));
-%         idx = 1;
-%         for iRefpt = param.RefPt(1):param.dRefPt:param.RefPt(end)
-%             for ix = param.RefPt(1):param.dRefPt:param.RefPt(end)
-%                 if ix ~= 0
-%                     PF.numProb(idx) = PF.numProb(idx) + PF.measProbNorm(ix+abs(param.RefPt(1))+1)*PF.targetProbNorm(floor(iRefpt/ix+abs(param.RefPt(1))+1))/abs(ix)*param.dRefPt;
-%                 end
-%             end
-%             idx = idx + 1;
-%         end
-% 
-% %         PF.numProb = PF.measProbNorm.*PF.targetProbNorm;
-% %         PF.numProb = PF.numProb./sum(PF.numProb);
-% %         PF.measUpdateProb = min(PF.numProb./PF.denMeasProb,0.1); %1/length(param.RefPt));
-%         
-%         PF.measUpdateProb = zeros(1,length(param.RefPt));
-%         idx = 1;        
-%         for iRefpt = param.RefPt(1):param.dRefPt:param.RefPt(end)
-%             for iy = param.RefPt(1):param.dRefPt:param.RefPt(end)
-%                 if iy ~= 0 && iRefpt ~= 0
-%                     PF.numProb(idx) = PF.numProb(idx) + abs(iy)*PF.numProb(floor(iRefpt*ix+101))*PF.denMeasProbNorm(iRefpt+101);
-%                 end
-%             end
-%             idx = idx + 1;
-%         end
-%         
-%         
-%         figure(5),
-%         plot(param.RefPt,PF.targetProbNorm,'r-','LineWidth',2); hold on;
-%         plot(param.RefPt,PF.measProbNorm,'g-','LineWidth',2);
-%         plot(param.RefPt,PF.denMeasProb,'b-','LineWidth',2);
-%         plot(param.RefPt,PF.measUpdateProb,'m-','LineWidth',2);
         
         
         for iPt = 1:PF.nPt
@@ -317,62 +232,49 @@ for iClock = 1:clock.nt
             PF.ptPlan(iPt) = PF.ptPlan(find(rand <= cumsum(PF.wPlan),1));
         end
         
+        %--------------
+        % Sum of prob. measurement correction P(X_k|Y_k)
+        oneMeasUpdateProb = nan(1,length(param.RefPt));
+        for iPt = 1:PF.nPt
+            for iRefpt = 1:length(param.RefPt)
+                
+                if abs(param.RefPt(iRefpt)-PF.ptPlan(iPt)) < param.dRefPt
+                    oneMeasUpdateProb(iRefpt) = 1;
+                else
+                    oneMeasUpdateProb(iRefpt) = 0;
+                end
+                
+            end
+            
+            if iPt == 1
+                PF.measUpdateProb = PF.wPlan(iPt)*oneMeasUpdateProb;
+            else
+                PF.measUpdateProb = PF.measUpdateProb+PF.wPlan(iPt)*oneMeasUpdateProb;
+            end
+        end
         
-        % Entropy computation: H(X_k|Y_k): based on Gaussian Approximation
-        % (SHOULD BE DISCUSSED)
-        
-        % 1) compute variance
-        PF.varPlan = var(PF.ptPlan,PF.wPlan);
-        % 2) compute entropy using mean/variance
-        PF.Hafter(iPlan) = 0.5*log((2*pi*exp(1))*det(PF.varPlan));
-        
+        % Entropy computation: H(X_k|Y_k):
+        PF.measUpdateProbNorm = PF.measUpdateProb./sum(PF.measUpdateProb);
+        NonZeroIndex = PF.measUpdateProbNorm > 0; % to prevent from log(0)
+        PF.Hafter(iPlan) = -sum(PF.measUpdateProbNorm(NonZeroIndex).*log(PF.measUpdateProbNorm(NonZeroIndex)));
         %--------------
         
         PF.xhatPlan = sum(PF.wPlan.*PF.ptPlan')/sum(PF.wPlan);
         PF.I = PF.I + (PF.Hbefore(iPlan) - PF.Hafter(iPlan));
-        
-        
-        
-        % FORMER METHOD: Gaussian Mixture (not useful because cannot know
-        % variance)
-        %         oneMeasUpdateProb = nan(1,length(param.RefPt));
-        %         for iPt = 1:PF.nPt
-        %             for iRefpt = 1:length(param.RefPt)
-        %                 oneMeasUpdateProb(iRefpt) = (1/sqrt(2*pi*PF.Q))*exp(-(param.RefPt(iRefpt)-PF.ptPlan(iPt))^2/(2*PF.Q));
-        %
-        % %                 if abs(param.RefPt(iRefpt)-PF.ptPlan(iPt)) < param.dRefPt
-        % %                     oneMeasUpdateProb(iRefPt) = 1;
-        % %                 else
-        % %                     oneMeasUpdateProb(iRefPt) = 0;
-        % %                 end
-        %
-        %             end
-        %
-        %             if iPt == 1
-        %                 PF.measUpdateProb = PF.wPlan(iPt)*oneMeasUpdateProb;
-        %             else
-        %                 PF.measUpdateProb = PF.targetProb+PF.wPlan(iPt)*oneMeasUpdateProb;
-        %             end
-        %         end
-        %
-        %         PF.measUpdateProbNorm = PF.measUpdateProb./sum(PF.measUpdateProb);
-        %         NonZeroIndex = PF.measUpdateProbNorm > 0; % to prevent from log(0)
-        %         PF.Hafter(iPlan) = -sum(PF.measUpdateProbNorm(NonZeroIndex).*log(PF.measUpdateProbNorm(NonZeroIndex)));
-
-        
+    
         
         %-- Checking -----------
         if sim.flagDisp.after == 1
-            if iClock == 1
-                fprintf('PF-Hafter  @ iClock: %2.0d, iPlan: %2.0d = %2.6f\n',iClock, iPlan,PF.Hafter(iPlan));
-                figure(11),
-                plot(param.RefPt,PF.targetProb,'-','LineWidth',2,'color',[param.regressPlot*(iPlan-1),param.regressPlot*(iPlan-1),1]);
-                
-            end
+%             fprintf('PF-Hafter  @ iClock: %2.0d, iPlan: %2.0d = %2.6f\n',iClock, iPlan,PF.Hafter(iPlan));
+            figure(11),subplot(param.planPlot.row,param.planPlot.col,iClock),
+            plot(param.RefPt,PF.measUpdateProbNorm,'-','LineWidth',2,'color',[param.regressPlot*(iPlan-1),param.regressPlot*(iPlan-1),1]);
+        end
+        
+        if iPlan == clock.nT
+            title(['Time Step = ',num2str(iClock)]);
         end
         %----------------------
 
-        
     end
     
     %-----------------------------------
@@ -400,7 +302,7 @@ for iClock = 1:clock.nt
     PF.ptPlan = PF.pt;
     
     PF.hist.pt(:,iClock+1) = PF.pt;  
-    PF.hist.xhat(:,iClock+1) = mean(PF.pt);
+    PF.hist.xhat(:,iClock+1) = sum(PF.w.*PF.pt')/sum(PF.w);
     PF.hist.I(:,iClock+1) = PF.I;
     PF.hist.Hafter(:,iClock+1) = PF.Hafter';
     PF.hist.Hbefore(:,iClock+1) = PF.Hbefore';
