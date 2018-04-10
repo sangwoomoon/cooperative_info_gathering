@@ -27,7 +27,7 @@ sim.flagDisp.after = 1;
 
 clock.nt = 5;
 clock.dt = 1;
-clock.nT = 3; % planning horizon
+clock.nT = 5; % planning horizon
 clock.hist.time = 0;
 
 target.pos = 0;
@@ -62,7 +62,7 @@ PF.H = 1;
 PF.Q = KF.Q;
 PF.R = KF.R;
 
-PF.nPt = 10000;
+PF.nPt = 200;
 PF.w = ones(1,PF.nPt)./PF.nPt;
 for iPt = 1 : PF.nPt
     PF.pt(iPt,1) = PF.xhat + mvnrnd(0,PF.Phat)';
@@ -76,7 +76,7 @@ PF.hist.I = PF.I;
 PF.hist.Hbefore = nan(clock.nT,1);
 PF.hist.Hafter = nan(clock.nT,1);
 
-param.regressPlot = 0.4;
+param.regressPlot = 1/clock.nT;
 param.dRefPt = 1;
 param.RefPt = -100:param.dRefPt:100;
 
@@ -203,11 +203,10 @@ for iClock = 1:clock.nt
         if sim.flagDisp.before == 1
             figure(10),subplot(param.planPlot.row,param.planPlot.col,iClock),
             plot(param.RefPt,PF.targetProb,'--','LineWidth',2,'color',[param.regressPlot*(iPlan-1),param.regressPlot*(iPlan-1),1]);
-%             fprintf('PF-Hbefore @ iClock: %2.0d, iPlan: %2.0d = %2.6f\n',iClock, iPlan,PF.Hbefore(iPlan));
         end
         
         if iPlan == clock.nT
-            title(['Time Step = ',num2str(iClock)]);
+            title(['Time Step = ',num2str(iClock)],'fontsize',10);
         end
         %-----------------------
         
@@ -265,13 +264,12 @@ for iClock = 1:clock.nt
         
         %-- Checking -----------
         if sim.flagDisp.after == 1
-%             fprintf('PF-Hafter  @ iClock: %2.0d, iPlan: %2.0d = %2.6f\n',iClock, iPlan,PF.Hafter(iPlan));
             figure(11),subplot(param.planPlot.row,param.planPlot.col,iClock),
             plot(param.RefPt,PF.measUpdateProbNorm,'-','LineWidth',2,'color',[param.regressPlot*(iPlan-1),param.regressPlot*(iPlan-1),1]);
         end
         
         if iPlan == clock.nT
-            title(['Time Step = ',num2str(iClock)]);
+            title(['Time Step = ',num2str(iClock)],'fontsize',10);
         end
         %----------------------
 
@@ -335,10 +333,19 @@ xlabel('time [sec]'); ylabel('cost [sum of M.I.]');
 
 
 figure(3)
-for iPlan = 1 : clock.nT
-    plot(clock.hist.time,KF.hist.Hbefore(iPlan,:),'--','LineWidth',2,'color',[1, param.regressPlot*(iPlan-1),param.regressPlot*(iPlan-1)]); hold on;
-    plot(clock.hist.time,KF.hist.Hafter(iPlan,:),'-','LineWidth',2,'color',[1, param.regressPlot*(iPlan-1),param.regressPlot*(iPlan-1)]);
-    plot(clock.hist.time,PF.hist.Hbefore(iPlan,:),'--','LineWidth',2,'color',[param.regressPlot*(iPlan-1),param.regressPlot*(iPlan-1),1]); hold on;
-    plot(clock.hist.time,PF.hist.Hafter(iPlan,:),'-','LineWidth',2,'color',[param.regressPlot*(iPlan-1),param.regressPlot*(iPlan-1),1]);
-    xlabel('time [sec]'); ylabel('entropy');
-end
+[timePlanProfile,timeProfile] = meshgrid(1:clock.nT,clock.hist.time);
+surface(timePlanProfile,timeProfile,KF.hist.Hbefore'); hold on; grid on;
+surface(timePlanProfile,timeProfile,KF.hist.Hafter');
+surface(timePlanProfile,timeProfile,PF.hist.Hbefore');
+surface(timePlanProfile,timeProfile,PF.hist.Hafter');
+xlabel('planned time [sec]'); ylabel('actual time [sec]'); zlabel('entropy');
+legend('KF-H_{t-1}','KF-H_{t}','PF-H_{t-1}','PF-H_{t}');
+view(3);
+
+
+% for iPlan = 1 : clock.nT
+%     plot(clock.hist.time,KF.hist.Hbefore(iPlan,:),'--','LineWidth',2,'color',[1, param.regressPlot*(iPlan-1),param.regressPlot*(iPlan-1)]); hold on;
+%     plot(clock.hist.time,KF.hist.Hafter(iPlan,:),'-','LineWidth',2,'color',[1, param.regressPlot*(iPlan-1),param.regressPlot*(iPlan-1)]);
+%     plot(clock.hist.time,PF.hist.Hbefore(iPlan,:),'--','LineWidth',2,'color',[param.regressPlot*(iPlan-1),param.regressPlot*(iPlan-1),1]); hold on;
+%     plot(clock.hist.time,PF.hist.Hafter(iPlan,:),'-','LineWidth',2,'color',[param.regressPlot*(iPlan-1),param.regressPlot*(iPlan-1),1]);
+% end
