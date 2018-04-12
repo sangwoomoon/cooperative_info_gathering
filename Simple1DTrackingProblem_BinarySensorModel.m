@@ -30,10 +30,19 @@ sim.flagDisp.after = 1;
 
 %----------------------
 % clock structure
-clock.nt = 20;
+clock.nt = 10;
 clock.dt = 1;
-clock.nT = 3; % planning horizon
+clock.nT = 5; % planning horizon
 clock.hist.time = 0;
+%----------------------
+
+%----------------------
+% field structure
+field.boundary = [-100 100];
+field.length = field.boundary(2) - field.boundary(1);
+field.buffer = 20; % for particle initalization
+field.bufferZone = [field.boundary(1)+field.buffer field.boundary(2)-field.buffer];
+field.zoneLength = field.bufferZone(2) - field.bufferZone(1);
 %----------------------
 
 %----------------------
@@ -45,7 +54,7 @@ target.hist.pos = target.pos;
 
 %----------------------
 % agent structure
-agent.pos = 5;
+agent.pos = 8;
 agent.vel = 0;
 agent.hist.pos = agent.pos;
 agent.hist.vel = agent.vel;
@@ -62,16 +71,15 @@ sensor.hist.y(:,1) = sensor.y;
 %----------------------
 % filter structure (Particle Filter)
 PF.xhat = 40;
-PF.Phat = 10^2;
 PF.hist.xhat = PF.xhat;
 
 PF.F = 1;
 PF.Q = 7^2;
 
-PF.nPt = 200;
+PF.nPt = 500;
 PF.w = ones(1,PF.nPt)./PF.nPt;
 for iPt = 1 : PF.nPt
-    PF.pt(iPt,1) = PF.xhat + mvnrnd(0,PF.Phat)';
+    PF.pt(iPt,1) = field.bufferZone(1)+rand()*field.zoneLength;
 end
 PF.hist.pt = PF.pt;
 %----------------------
@@ -91,11 +99,17 @@ for iAct = 1 : clock.nT
         end
     end
 end
+planner.actionSetNum = 1;
 
 planner.xhat = PF.xhat;
 planner.nPt = PF.nPt;
 planner.pt = PF.pt;
 planner.w = PF.w;
+
+planner.input = nan(clock.nT,1);
+planner.actIdx = nan;
+planner.hist.input = planner.input;
+planner.hist.actIdx = planner.actIdx;
 
 planner.I = nan;
 planner.hist.I = planner.I;
@@ -103,11 +117,10 @@ planner.hist.Hbefore = nan(clock.nT,1);
 planner.hist.Hafter = nan(clock.nT,1);
 
 planner.param.dRefPt = 1;
-planner.param.RefPt = -100:planner.param.dRefPt:100;
+planner.param.RefPt = field.boundary(1):planner.param.dRefPt:field.boundary(2);
 
-planner.param.plot.regress = 1/clock.nT;
-planner.param.plot.row = 4; 
-planner.param.plot.col = floor(clock.nt/planner.param.plot.row)+(mod(clock.nt,planner.param.plot.row) ~= 0)*1;
+planner.param.plot.row = clock.nT; 
+planner.param.plot.col = 2;
 %----------------------
 
 
@@ -135,126 +148,25 @@ for iClock = 1:clock.nt
     
     
     %-----------------------------------
-    % PF-based Mutual information Computation
+    % PF-based Mutual information Computation and decision-making
     %-----------------------------------
-    
-    planner.I = 0;
 
-    for iPlan = 1:clock.nT
-        
-        % sample measurement
-        if planner.xhat >= agent.pos-sensor.regionRadius && planner.xhat <= agent.pos+sensor.regionRadius
-            planner.y(:,iPlan) = binornd(1,sensor.DetectBeta);
-        else
-            planner.y(:,iPlan) = 0;
-        end
-                
-        %--------------
-        % Sum of prob. target evolution P(X_k|Y_{k-1})
-        onePtTargetProb = nan(1,length(planner.param.RefPt));
-        for iPt = 1:planner.nPt
-            for iRefpt = 1:length(planner.param.RefPt)
-                onePtTargetProb(iRefpt) = (1/sqrt(2*pi*PF.Q))*exp(-(planner.param.RefPt(iRefpt)-planner.pt(iPt))^2/(2*PF.Q));
-            end
-            
-            if iPt == 1
-                targetProb = planner.w(iPt)*onePtTargetProb;
-            else
-                targetProb = targetProb+planner.w(iPt)*onePtTargetProb;
-            end
-        end
-        
-        % Entropy computation: H(X_k|Y_{k-1})
-        targetProbNorm = targetProb./sum(targetProb);
-        NonZeroIndex = targetProbNorm > 0; % to prevent from log(0)
-        planner.Hbefore(iPlan) = -sum(targetProbNorm(NonZeroIndex).*log(targetProbNorm(NonZeroIndex)));
-        %--------------
-        
-        %-- Checking -----------
-        if sim.flagDisp.before == 1
-            figure(10),subplot(planner.param.plot.row,planner.param.plot.col,iClock),
-            plot(planner.param.RefPt,targetProb,'-','LineWidth',2,'color',[planner.param.plot.regress*(iPlan-1),1,planner.param.plot.regress*(iPlan-1)]); hold on;
-        end
-        %-----------------------
-        
-        
-        for iPt = 1:planner.nPt
-            % particle state update
-            planner.pt(iPt) = PF.F*planner.pt(iPt) + mvnrnd(0,PF.Q)';
-
-            % particle measurement update
-            if planner.y(:,iPlan) == 1 % when simulated sensor does detect
-                if planner.pt(iPt) >= agent.pos-sensor.regionRadius && planner.pt(iPt) <= agent.pos+sensor.regionRadius % when the particle is within detected region
-                    planner.w(iPt) = sensor.DetectBeta;
-                else
-                    planner.w(iPt) = 1-sensor.DetectBeta;
-                end
-            else
-                if planner.pt(iPt) >= agent.pos-sensor.regionRadius && planner.pt(iPt) <= agent.pos+sensor.regionRadius % when the particle is within detected region
-                    planner.w(iPt) = 0;
-                else
-                    planner.w(iPt) = 1;
-                end
-            end
-        end
-        planner.w = planner.w./sum(planner.w);
-        
-        
-        % resample particle
-        for iPt = 1:planner.nPt
-            planner.pt(iPt) = planner.pt(find(rand <= cumsum(planner.w),1));
-        end
-        
-        planner.xhat = sum(planner.w.*planner.pt')/sum(planner.w);                
-        
-        %--------------
-        
-        
-        %--------------        
-        % Sum of prob. measurement correction P(X_k|Y_k):
-        oneMeasUpdateProb = nan(1,length(planner.param.RefPt));
-        for iPt = 1:PF.nPt
-            for iRefpt = 1:length(planner.param.RefPt)
-                
-                if abs(planner.param.RefPt(iRefpt)-planner.pt(iPt)) < planner.param.dRefPt
-                    oneMeasUpdateProb(iRefpt) = 1;
-                else
-                    oneMeasUpdateProb(iRefpt) = 0;
-                end
-                
-            end
-            
-            if iPt == 1
-                measUpdateProb = planner.w(iPt)*oneMeasUpdateProb;
-            else
-                measUpdateProb = measUpdateProb+planner.w(iPt)*oneMeasUpdateProb;
-            end
-        end        
-        
-        % Entropy computation: H(X_k|Y_k):
-        measUpdateProbNorm = measUpdateProb./sum(measUpdateProb);
-        NonZeroIndex = measUpdateProbNorm > 0; % to prevent from log(0)
-        planner.Hafter(iPlan) = -sum(measUpdateProbNorm(NonZeroIndex).*log(measUpdateProbNorm(NonZeroIndex)));
-        
-        % Mutual Information computation and accumulation for getting cost
-        planner.I = planner.I + (planner.Hbefore(iPlan) - planner.Hafter(iPlan));
-
-        %--------------
-
-        %-- Checking -----------
-        if sim.flagDisp.after == 1
-            % fprintf('PF-Hafter  @ iClock: %2.0d, iPlan: %2.0d = %2.6f\n',iClock, iPlan,PF.Hafter(iPlan));
-            figure(10),subplot(planner.param.plot.row,planner.param.plot.col,iClock),
-            plot(planner.param.RefPt,measUpdateProbNorm,'-','LineWidth',1,'color',[planner.param.plot.regress*(iPlan-1),planner.param.plot.regress*(iPlan-1),1]); hold on;
-            if iPlan == clock.nT
-                title(['Time Step = ',num2str(iClock)],'fontsize',10);
-            end
-        end
-        %----------------------
-
-        
+    % compute future information with respect to action profiles
+    for iActSet = 1 : planner.actionSetNum
+        [planner.candidate.Hbefore(:,iActSet),planner.candidate.Hafter(:,iActSet),planner.candidate.I(iActSet)] = ...
+            ComputeFutureInformation(planner,agent,sensor,clock,PF,sim,iActSet,iClock);
     end
     
+    % direct decision making: maximize mutual information
+    [~,planner.actIdx] = max(planner.candidate.I);
+    
+    % take optimized information data
+    planner.input = planner.actionSet(:,planner.actIdx);
+    planner.I = planner.candidate.I(planner.actIdx);
+    planner.Hbefore = planner.candidate.Hbefore(:,planner.actIdx);
+    planner.Hafter = planner.candidate.Hafter(:,planner.actIdx);
+    
+
     %-----------------------------------
     % Actual measurement and estimation: PF
     %-----------------------------------
@@ -286,19 +198,30 @@ for iClock = 1:clock.nt
         PF.pt(iPt) = PF.pt(find(rand <= cumsum(PF.w),1));
     end
     
-    planner.w = PF.w;
-    planner.pt = PF.pt;
-    
+    % particle filter info update/store
     PF.xhat = sum(PF.w.*PF.pt')/sum(PF.w);
     PF.hist.pt(:,iClock+1) = PF.pt;  
     PF.hist.xhat(:,iClock+1) = PF.xhat;
     
+    % update planner initial info from PF results
+    planner.xhat = PF.xhat;
+    planner.w = PF.w;
+    planner.pt = PF.pt;
+    
+    % store optimized infomation data
+    planner.hist.actIdx(iClock+1) = planner.actIdx;
+    planner.hist.input(:,iClock+1) = planner.input;
     planner.hist.I(:,iClock+1) = planner.I;
     planner.hist.Hafter(:,iClock+1) = planner.Hafter';
     planner.hist.Hbefore(:,iClock+1) = planner.Hbefore';
     
+    % take decision making for agent input
+    agent.vel = planner.input(1);
+    
     % clock update
     clock.hist.time(:,iClock+1) = iClock*clock.dt;
+    
+    fprintf('iClock = %d\n',iClock);
     
 end
 
@@ -306,35 +229,18 @@ end
 % Sim Result Plot
 %----------------------------
 
-figure(1)
-for iClock = 1 : clock.nt
-    plot(clock.hist.time(iClock)*ones(1,PF.nPt),PF.hist.pt(:,iClock),'m.','LineWidth',2);
-end
-plot(clock.hist.time,target.hist.pos,'c--','Linewidth',2);
-plot(clock.hist.time,PF.hist.xhat,'r-','Linewidth',2);
-xlabel('time [sec]'); ylabel('Target Pos [m]');
 
 figure(2)
 plot(clock.hist.time,planner.hist.I,'b--','LineWidth',3);
-xlabel('time [sec]'); ylabel('Utility [sum of M.I.]');
+xlabel('time [sec]'); ylabel('utility [sum of M.I.]');
+title('Utility Profile');
 
 figure(3)
 [timePlanProfile,timeProfile] = meshgrid(1:clock.nT,clock.hist.time);
-mesh(timePlanProfile,timeProfile,planner.hist.Hbefore'); hold on;
-mesh(timePlanProfile,timeProfile,planner.hist.Hafter');
+mesh(timePlanProfile,timeProfile,planner.hist.Hbefore');
+surface(timePlanProfile,timeProfile,planner.hist.Hafter');
 xlabel('planned time [sec]'); ylabel('actual time [sec]'); zlabel('entropy');
-legend('PF-H_{t-1}','PF-H_{t}');
+legend('particle-H[P(x_t|y_{k+1:t-1})]','particle-H[P(x_t|y_{k+1:t})]');
 view(3);
+title('Entropy Profile');
 
-figure(4)
-surface(timePlanProfile,timeProfile,planner.hist.Hbefore'-planner.hist.Hafter');
-colormap(pink); grid on;
-xlabel('planned time [sec]'); ylabel('actual time [sec]'); zlabel('mutual info');
-view(3);
-
-% figure(3)
-% for iPlan = 1 : clock.nT
-%     plot(clock.hist.time,PF.hist.Hbefore(iPlan,:),'--','LineWidth',2,'color',[1,param.regressPlot*(iPlan-1),param.regressPlot*(iPlan-1)]); hold on;
-%     plot(clock.hist.time,PF.hist.Hafter(iPlan,:),'-','LineWidth',2,'color',[param.regressPlot*(iPlan-1),param.regressPlot*(iPlan-1),1]);
-%     xlabel('time [sec]'); ylabel('entropy');
-% end
