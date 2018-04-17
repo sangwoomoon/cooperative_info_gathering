@@ -1,7 +1,7 @@
 %-----------------------------------
 % PF-based Mutual information Computation
 %-----------------------------------
-function [Hbefore,Hafter,I] = ComputeFutureInformation(planner,agent,sensor,clock,PF,sim,iAct,iClock)
+function [Hbefore,Hafter,I] = ComputeFutureInformation(planner,agent,sensor,field,clock,PF,sim,iAct,iClock)
 
 
 I = 0;
@@ -42,12 +42,12 @@ for iPlan = 1:clock.nT
         figure(iClock+10),subplot(planner.param.plot.row,planner.param.plot.col,2*(iPlan-1)+1),
         plot(planner.param.RefPt,targetUpdateProb,'b-','LineWidth',2); hold on;
         plot(planner.pt,zeros(1,planner.nPt),'m.','LineWidth',3);
+        
+        if iPlan == 1
+            title('P(x_t|y_{k+1:t-1})','fontsize',10);
+        end
+        ylabel(['t =',num2str(iPlan+iClock)],'fontsize',12);
     end
-    
-    if iPlan == 1
-        title('P(x_t|y_{k+1:t-1})','fontsize',10);
-    end
-    ylabel(['t =',num2str(iPlan+iClock)],'fontsize',12);
     %-----------------------
     
     %-----------------------
@@ -59,7 +59,12 @@ for iPlan = 1:clock.nT
         
         planner.w(iPt) = OneDimBinarySensorModel(planner.y(:,iPlan),sensor,agent.pos,planner.pt(iPt));
     end
-    planner.w = planner.w./sum(planner.w);
+    
+    if sum(planner.w) == 0 % if all weights are zero
+        planner.w = (1/planner.nPt)*ones(1,planner.nPt);
+    else
+        planner.w = planner.w./sum(planner.w);
+    end
     %-----------------------
     
     
@@ -89,11 +94,11 @@ for iPlan = 1:clock.nT
         plot(planner.param.RefPt,measUpdateProb,'b-','LineWidth',2); hold on;
         plot(planner.param.RefPt,likelihoodProb,'g--','LineWidth',2);
         plot(planner.pt,zeros(1,planner.nPt),'m.','LineWidth',3);
-    end
-    
-    if iPlan == 1
-        title('P(x_t|y_{k+1:t})','fontsize',10);
-        legend('Particle-PDF','Likelihood, P(y_t|x_t)','Particle');
+        
+        if iPlan == 1
+            title('P(x_t|y_{k+1:t})','fontsize',10);
+            legend('Particle-PDF','Likelihood, P(y_t|x_t)','Particle');
+        end
     end
     %----------------------
     
@@ -101,6 +106,9 @@ for iPlan = 1:clock.nT
     % resample particle
     for iPt = 1:planner.nPt
         planner.pt(iPt) = planner.pt(find(rand <= cumsum(planner.w),1));
+        if planner.pt(iPt) <= field.boundary(1) || planner.pt(iPt) >= field.boundary(2)
+            planner.pt(iPt) = field.bufferZone(1)+rand()*field.zoneLength;
+        end
     end
     planner.w = (1/planner.nPt)*ones(1,planner.nPt);
     planner.xhat = sum(planner.w.*planner.pt')/sum(planner.w);

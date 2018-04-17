@@ -24,15 +24,23 @@ hold on;
 % simulation structure
 sim.nAgent = 1;
 sim.nTarget = 1;
-sim.flagDisp.before = 1;
-sim.flagDisp.after = 1;
+
+sim.flagDM = 0; % 0: stationary agent | 1: optimization for agent motion control
+
+if sim.flagDM == 1
+    sim.flagDisp.before = 0;
+    sim.flagDisp.after = 0;
+else
+    sim.flagDisp.before = 1;
+    sim.flagDisp.after = 1;
+end
 %----------------------
 
 %----------------------
 % clock structure
 clock.nt = 10;
 clock.dt = 1;
-clock.nT = 5; % planning horizon
+clock.nT = 3; % planning horizon
 clock.hist.time = 0;
 %----------------------
 
@@ -47,7 +55,7 @@ field.zoneLength = field.bufferZone(2) - field.bufferZone(1);
 
 %----------------------
 % target structure
-target.pos = 0;
+target.pos = 30;
 target.vel = 0;
 target.hist.pos = target.pos;
 %----------------------
@@ -70,36 +78,42 @@ sensor.hist.y(:,1) = sensor.y;
 
 %----------------------
 % filter structure (Particle Filter)
-PF.xhat = 40;
-PF.hist.xhat = PF.xhat;
-
 PF.F = 1;
 PF.Q = 7^2;
 
-PF.nPt = 500;
+PF.nPt = 200;
 PF.w = ones(1,PF.nPt)./PF.nPt;
 for iPt = 1 : PF.nPt
     PF.pt(iPt,1) = field.bufferZone(1)+rand()*field.zoneLength;
 end
+PF.xhat = mean(PF.pt);
+
+PF.hist.xhat = PF.xhat;
 PF.hist.pt = PF.pt;
 %----------------------
 
 %----------------------
 % planner structure
-planner.action = [-1,0,1]; % with respect to velocity
-planner.actionNum = length(planner.action);
-planner.actionSetNum = planner.actionNum^clock.nT;
-for iAct = 1 : clock.nT
-    assignDen = planner.actionSetNum/planner.actionNum^iAct;
-    repeatNum = planner.actionSetNum/assignDen;
-    for jAct = 1 : repeatNum
-        actionElem = planner.action(rem(jAct,planner.actionNum)+1);
-        for kAct = 1 : assignDen
-            planner.actionSet(iAct,assignDen*(jAct-1)+kAct) = actionElem;
+if sim.flagDM == 0
+    planner.action = 0; % with respect to velocity
+    planner.actionSet = zeros(clock.nT,1);
+    planner.actionSetNum = 1;
+else
+    planner.action = [-4,-2,0,2,4]; % with respect to velocity
+    planner.actionNum = length(planner.action);
+    planner.actionSetNum = planner.actionNum^clock.nT;
+    for iAct = 1 : clock.nT
+        assignDen = planner.actionSetNum/planner.actionNum^iAct;
+        repeatNum = planner.actionSetNum/assignDen;
+        for jAct = 1 : repeatNum
+            actionElem = planner.action(rem(jAct,planner.actionNum)+1);
+            for kAct = 1 : assignDen
+                planner.actionSet(iAct,assignDen*(jAct-1)+kAct) = actionElem;
+            end
         end
     end
 end
-planner.actionSetNum = 1;
+
 
 planner.xhat = PF.xhat;
 planner.nPt = PF.nPt;
@@ -154,7 +168,7 @@ for iClock = 1:clock.nt
     % compute future information with respect to action profiles
     for iActSet = 1 : planner.actionSetNum
         [planner.candidate.Hbefore(:,iActSet),planner.candidate.Hafter(:,iActSet),planner.candidate.I(iActSet)] = ...
-            ComputeFutureInformation(planner,agent,sensor,clock,PF,sim,iActSet,iClock);
+            ComputeFutureInformation(planner,agent,sensor,field,clock,PF,sim,iActSet,iClock);
     end
     
     % direct decision making: maximize mutual information
@@ -176,27 +190,23 @@ for iClock = 1:clock.nt
         PF.pt(iPt) = PF.F*PF.pt(iPt) + mvnrnd(0,PF.Q)';
         
         % particle measurement update
-        if sensor.y == 1 % when sensor does detect
-            if PF.pt(iPt) >= agent.pos-sensor.regionRadius && PF.pt(iPt) <= agent.pos+sensor.regionRadius % when the particle is within detected region
-                PF.w(iPt) = sensor.DetectBeta;
-            else
-                PF.w(iPt) = 1-sensor.DetectBeta;
-            end
-        else
-            if PF.pt(iPt) >= agent.pos-sensor.regionRadius && PF.pt(iPt) <= agent.pos+sensor.regionRadius % when the particle is within detected region
-                PF.w(iPt) = 0;
-            else
-                PF.w(iPt) = 1;
-            end
-        end
-        
+        PF.w(iPt) = OneDimBinarySensorModel(sensor.y,sensor,agent.pos,PF.pt(iPt));        
     end
-    PF.w = PF.w./sum(PF.w);
     
+    if sum(PF.w) == 0 % if all weights are zero
+        PF.w = (1/PF.nPt)*ones(1,PF.nPt);
+    else
+        PF.w = PF.w./sum(PF.w);
+    end
+        
     % resample particle
     for iPt = 1:PF.nPt
         PF.pt(iPt) = PF.pt(find(rand <= cumsum(PF.w),1));
+        if PF.pt(iPt) <= field.boundary(1) || PF.pt(iPt) >= field.boundary(2)
+            PF.pt(iPt) = field.bufferZone(1)+rand()*field.zoneLength;
+        end
     end
+    PF.w = ones(1,PF.nPt)./PF.nPt;
     
     % particle filter info update/store
     PF.xhat = sum(PF.w.*PF.pt')/sum(PF.w);
@@ -229,6 +239,16 @@ end
 % Sim Result Plot
 %----------------------------
 
+figure(1)
+plot(clock.hist.time,PF.hist.xhat,'b-','LineWidth',3); hold on;
+plot(clock.hist.time,target.hist.pos,'c*-','LineWidth',2);
+plot(clock.hist.time,agent.hist.pos,'r*-','LineWidth',2);
+for iPlot = 1:clock.nt
+    plot(iPlot*ones(1,PF.nPt),PF.hist.pt(:,iPlot),'m.','LineWidth',3);
+end
+xlabel('time [sec]'); ylabel('position [m]');
+title('Actual Estimation (PF)');
+legend('PF-\mu','true pos','agent pos');
 
 figure(2)
 plot(clock.hist.time,planner.hist.I,'b--','LineWidth',3);
