@@ -25,7 +25,7 @@ sim.nTarget = 1;
 sim.flagDisp.before = 0;
 sim.flagDisp.after = 0;
 
-clock.nt = 20;
+clock.nt = 10;
 clock.dt = 1;
 clock.nT = 5; % planning horizon
 clock.hist.time = 0;
@@ -61,7 +61,7 @@ particle.H = 1;
 particle.Q = ref.Q;
 particle.R = ref.R;
 
-particle.nPt = 100;
+particle.nPt = 200;
 
 particle.pdf.I = nan;
 particle.hist.pdf.I = particle.pdf.I;
@@ -84,8 +84,8 @@ KF.Q = ref.Q;
 KF.R = ref.R;
 
 param.regressPlot = 1/clock.nT;
-param.dRefPt = 1;
-param.RefPt = -10*sqrt(ref.Phat):param.dRefPt:10*sqrt(ref.Phat);
+param.dRefPt = 10;
+param.refPt = -10*sqrt(ref.Phat):param.dRefPt:10*sqrt(ref.Phat);
 
 param.planPlot.row = clock.nT; 
 param.planPlot.col = 2;
@@ -119,7 +119,7 @@ for iClock = 1:clock.nt
         if sim.flagDisp.before == 1
             ref.targetUpdateProb = GenerateGaussianPDF(ref.xhat,ref.PhatMinus,param);
             figure(iClock+10),subplot(param.planPlot.row,param.planPlot.col,2*(iPlan-1)+1),
-            plot(param.RefPt,ref.targetUpdateProb,'r-','LineWidth',2); hold on;
+            plot(param.refPt,ref.targetUpdateProb,'r-','LineWidth',2); hold on;
         end
         %----------------------
         
@@ -137,7 +137,7 @@ for iClock = 1:clock.nt
         if sim.flagDisp.after == 1
             ref.measuUpdateProb = GenerateGaussianPDF(ref.xhat,ref.Phat,param);
             figure(iClock+10),subplot(param.planPlot.row,param.planPlot.col,2*iPlan),
-            plot(param.RefPt,ref.measuUpdateProb,'r-','LineWidth',2); hold on;
+            plot(param.refPt,ref.measuUpdateProb,'r-','LineWidth',2); hold on;
         end
         %----------------------
 
@@ -170,6 +170,11 @@ for iClock = 1:clock.nt
     
 
     for iPlan = 1:clock.nT
+        
+        
+        % store <x_{k-1},w_{k-1}>: For Ryan's approach
+        particle.ryan.ptBefore = particle.pt;
+        particle.ryan.wBefore = particle.w;
                 
         %-----------------------
         %  PDF-based Approach - probability of target evolution: P(X_k|y_{k-1})
@@ -186,19 +191,19 @@ for iClock = 1:clock.nt
             particle.pt(iPt) = particle.F*particle.pt(iPt) + mvnrnd(0,particle.Q);
         end
         
-        particle.pdf.targetUpdateProb = particle.pdf.targetUpdateProb./sum(particle.pdf.targetUpdateProb);
+        particle.pdf.targetUpdateProb = particle.pdf.targetUpdateProb./(sum(particle.pdf.targetUpdateProb)*param.dRefPt);
         %-----------------------
 
         %-----------------------
         % PDF approach - Entropy computation: H(X_k|y_{k-1})
         NonZeroIndex = particle.pdf.targetUpdateProb > 0; % to prevent from log(0)
-        particle.pdf.Hbefore(iPlan) = -sum(particle.pdf.targetUpdateProb(NonZeroIndex).*log(particle.pdf.targetUpdateProb(NonZeroIndex)));
+        particle.pdf.Hbefore(iPlan) = -sum(particle.pdf.targetUpdateProb(NonZeroIndex).*log(particle.pdf.targetUpdateProb(NonZeroIndex)).*param.dRefPt);
         %-----------------------
         
         %-- Checking -----------
         if sim.flagDisp.before == 1
             figure(iClock+10),subplot(param.planPlot.row,param.planPlot.col,2*(iPlan-1)+1),
-            plot(param.RefPt,particle.pdf.targetUpdateProb,'b-','LineWidth',2);
+            plot(param.refPt,particle.pdf.targetUpdateProb,'b-','LineWidth',2);
             plot(particle.pt,particle.w,'m.','LineWidth',3);
             
             if iPlan == 1
@@ -211,7 +216,10 @@ for iClock = 1:clock.nt
         %-----------------------
         % P(y_k|y_{k-1})
         for iPt = 1:particle.nPt
-            onePtMeasProb = GenerateGaussianPDF(particle.pt(iPt),particle.R,param);
+            % expected measurement setting
+            particle.ypt(iPt) = particle.H*particle.pt(iPt);
+            
+            onePtMeasProb = GenerateGaussianPDF(particle.ypt(iPt),particle.R,param);
             
             if iPt == 1
                 particle.pdf.measProb = particle.w(iPt)*onePtMeasProb;
@@ -220,27 +228,21 @@ for iClock = 1:clock.nt
             end
         end
         
-        particle.pdf.measProb = particle.pdf.measProb./sum(particle.pdf.measProb);
+        particle.pdf.measProb = particle.pdf.measProb./(sum(particle.pdf.measProb)*param.dRefPt);
         %-----------------------
         
-        % store <x_{k-1},w_{k-1}>
-        particle.ryan.ptBefore = particle.pt;
-        particle.ryan.wBefore = particle.w;
         
         % sample measurement: for weight update of PDF approach and
         % likelihood function of Ryan's approach
-        particle.yIdx(:,iPlan) = find(rand <= cumsum(particle.pdf.measProb),1);
+        particle.yIdx(:,iPlan) = find(rand/param.dRefPt <= cumsum(particle.pdf.measProb),1);
         particle.yProb(:,iPlan) = particle.pdf.measProb(particle.yIdx(:,iPlan));
-        particle.ySample(:,iPlan) = param.RefPt(particle.yIdx(:,iPlan));
+        particle.ySample(:,iPlan) = param.refPt(particle.yIdx(:,iPlan));
                 
         %-----------------------
         % weight update: w_{k-1} -> w_k
 
         numParticleUpdate = nan(1,particle.nPt);
         for iPt = 1:particle.nPt
-            % expected measurement setting
-            particle.ypt(iPt) = particle.H*particle.pt(iPt);
-            
             % sampled measurement comparison and weight update
             numParticleUpdate(iPt) = (1/sqrt(2*pi*particle.R)) * exp(-(particle.ySample(:,iPlan) - particle.ypt(iPt))^2/(2*particle.R));
         end
@@ -252,45 +254,67 @@ for iClock = 1:clock.nt
         % probability of measurement correction: P(X_k|y_k)        
         particle.pdf.likelihoodProb = GenerateGaussianPDF(particle.ySample(:,iPlan),particle.R,param);
         particle.pdf.measUpdateProb = particle.pdf.likelihoodProb.*particle.pdf.targetUpdateProb;
-        particle.pdf.measUpdateProb = particle.pdf.measUpdateProb./sum(particle.pdf.measUpdateProb);
+        particle.pdf.measUpdateProb = particle.pdf.measUpdateProb./(sum(particle.pdf.measUpdateProb)*param.dRefPt);
         %-----------------------
 
         %-----------------------
         % Entropy computation: H(X_k|Y_k):
         NonZeroIndex = particle.pdf.measUpdateProb > 0; % to prevent from log(0)
-        particle.pdf.Hafter(iPlan) = -sum(particle.pdf.measUpdateProb(NonZeroIndex).*log(particle.pdf.measUpdateProb(NonZeroIndex)));
+        particle.pdf.Hafter(iPlan) = -sum(particle.pdf.measUpdateProb(NonZeroIndex).*log(particle.pdf.measUpdateProb(NonZeroIndex)).*param.dRefPt);
         %--------------
-                
-        % resample particle
-        for iPt = 1:particle.nPt
-            particle.pt(iPt) = particle.pt(find(rand <= cumsum(particle.w),1));
-        end
-        particle.w = (1/particle.nPt)*ones(1,particle.nPt);
-        
+
         %-----------------------
         % Ryan's approach
         for iPt = 1:particle.nPt
-            % sum of w^j_{k-1}*P(x^i_k|x^j_{k-1})
+            % 1. sum of w^j_{k-1}*P(x^i_k|x^j_{k-1})
             for jPt = 1:particle.nPt
                 if jPt == 1
+                    % target evolution with respect to particle set
                     particle.ryan.plf.before(iPt) = particle.ryan.wBefore(jPt)*...
                         ((1/sqrt(2*pi*particle.Q))*exp(-(particle.ryan.ptBefore(jPt)-particle.pt(iPt))^2/(2*particle.Q)));
                 else
+                    % target evolution with respect to particle set
                     particle.ryan.plf.before(iPt) = particle.ryan.plf.before(iPt) + particle.ryan.wBefore(jPt)*...
                         ((1/sqrt(2*pi*particle.Q))*exp(-(particle.ryan.ptBefore(jPt)-particle.pt(iPt))^2/(2*particle.Q)));
                 end
             end
-            particle.ypt(iPt) = particle.H*particle.pt(iPt);
             % P(z_sample|x^i_k)*{sum of w^j_{k-1}*P(x^i_k|x^j_{k-1})}
             particle.ryan.plf.after(iPt) = particle.ryan.plf.before(iPt)*...
                 ((1/sqrt(2*pi*particle.R))*exp(-(particle.ySample(:,iPlan)-particle.ypt(iPt))^2/(2*particle.R)));
         end
+        
         % P(z_sample|x^i_k)*{sum of w^j_{k-1}*P(x^i_k|x^j_{k-1})} / P(z_sample|z_{k-1})
         particle.ryan.plf.after = particle.ryan.plf.after./particle.yProb(:,iPlan);
         %-----------------------
         
         %-----------------------
         % Ryan's approach - Entropy computation: H(X_k|y_{k-1})
+        particle.ryan.Hbefore(iPlan) = 0;
+        
+        % sorting <x_sample,P(x_sample)> in order to integrate
+        ryanParticleData = sortrows([particle.pt particle.ryan.plf.before']);
+        
+        for iPt = 2:particle.nPt
+            % to avoid particles at the same location
+            if (ryanParticleData(iPt-1,1) - ryanParticleData(iPt,1)) ~= 0
+                x1 = ryanParticleData(iPt-1,1);
+                x2 = ryanParticleData(iPt,1);
+                
+                p1 = ryanParticleData(iPt-1,2);
+                p2 = ryanParticleData(iPt,2);
+                
+                delta = (p2-p1)/(x2-x1);
+                
+                value1 = p1^2/2*log(p1)-p1^2/4;
+                value2 = p2^2/2*log(p2)-p2^2/4;
+                
+                particle.ryan.Hbefore(iPlan) = particle.ryan.Hbefore(iPlan) - 1/delta*(value2 - value1);
+            end
+        end        
+        %-----------------------
+        
+        %-----------------------
+        % Ryan's approach - Entropy computation: H(X_k|y_k)
         particle.ryan.Hafter(iPlan) = 0;
         
         % sorting <x_sample,P(x_sample)> in order to integrate
@@ -314,13 +338,14 @@ for iClock = 1:clock.nt
             end
         end
         %-----------------------
+   
 
         %-- Checking -----------
         if sim.flagDisp.after == 1
             figure(iClock+10),subplot(param.planPlot.row,param.planPlot.col,2*iPlan),
-            plot(param.RefPt,particle.pdf.measUpdateProb,'b-','LineWidth',2);
-            plot(param.RefPt,particle.pdf.likelihoodProb,'g--','LineWidth',2);
-            plot(param.RefPt,particle.pdf.measProb,'c--','LineWidth',2);
+            plot(param.refPt,particle.pdf.measUpdateProb,'b-','LineWidth',2);
+            plot(param.refPt,particle.pdf.likelihoodProb,'g--','LineWidth',2);
+            plot(param.refPt,particle.pdf.measProb,'c--','LineWidth',2);
             plot(particle.pt,particle.ryan.plf.after,'m.','LineWidth',5);
             
             if iPlan == 1
@@ -333,7 +358,13 @@ for iClock = 1:clock.nt
         
         % compute mutual information
         particle.pdf.I = particle.pdf.I + (particle.pdf.Hbefore(iPlan) - particle.pdf.Hafter(iPlan));
+        particle.ryan.I = particle.ryan.I + (particle.ryan.Hbefore(iPlan) - particle.ryan.Hafter(iPlan));
         
+        % resample particle
+        for iPt = 1:particle.nPt
+            particle.pt(iPt) = particle.pt(find(rand <= cumsum(particle.w),1));
+        end
+        particle.w = (1/particle.nPt)*ones(1,particle.nPt);
  
     end
     
@@ -343,6 +374,8 @@ for iClock = 1:clock.nt
     particle.hist.pdf.Hbefore(:,iClock+1) = particle.pdf.Hbefore';
     
     % store entropy and mutual info data: Ryan approach
+    particle.hist.ryan.I(:,iClock+1) = particle.ryan.I;
+    particle.hist.ryan.Hbefore(:,iClock+1) = particle.ryan.Hbefore';
     particle.hist.ryan.Hafter(:,iClock+1) = particle.ryan.Hafter';
     
         
@@ -390,9 +423,10 @@ legend('\mu error','+2\sigma','-2\sigma');
 figure(2)
 plot(clock.hist.time,ref.hist.I,'r--','LineWidth',3); hold on;
 plot(clock.hist.time,particle.hist.pdf.I,'b-','LineWidth',3);
+plot(clock.hist.time,particle.hist.ryan.I,'g-','LineWidth',3);
 xlabel('time [sec]'); ylabel('utility [sum of M.I.]');
 title('Utility Profile');
-legend('true','particle-Moon');
+legend('true','particle-Moon','particle-Ryan');
 
 figure(3)
 [timePlanProfile,timeProfile] = meshgrid(1:clock.nT,clock.hist.time);
@@ -400,16 +434,25 @@ mesh(timePlanProfile,timeProfile,ref.hist.Hbefore'); hold on; grid on;
 mesh(timePlanProfile,timeProfile,ref.hist.Hafter');
 surface(timePlanProfile,timeProfile,particle.hist.pdf.Hbefore');
 surface(timePlanProfile,timeProfile,particle.hist.pdf.Hafter');
+surface(timePlanProfile,timeProfile,particle.hist.ryan.Hbefore');
 surface(timePlanProfile,timeProfile,particle.hist.ryan.Hafter');
 xlabel('planned time [sec]'); ylabel('actual time [sec]'); zlabel('entropy');
-legend('true-H[P(x_t|y_{k+1:t-1})]','true-H[P(x_t|y_{k+1:t})]','Moon-H[P(x_t|y_{k+1:t-1})]','Moon-H[P(x_t|y_{k+1:t})]','Ryan-H[P(x_t|y_{k+1:t})]');
+legend('true-H[P(x_t|y_{k+1:t-1})]','true-H[P(x_t|y_{k+1:t})]','Moon-H[P(x_t|y_{k+1:t-1})]','Moon-H[P(x_t|y_{k+1:t})]','Ryan-H[P(x_t|y_{k+1:t-1})]','Ryan-H[P(x_t|y_{k+1:t})]');
 view(3);
 title('Entropy Profile');
 
 figure(4)
+plot(clock.hist.time,sum(ref.hist.Hbefore,1),'r--','LineWidth',3); hold on;
+plot(clock.hist.time,sum(particle.hist.pdf.Hbefore,1),'b-','LineWidth',3);
+plot(clock.hist.time,sum(particle.hist.ryan.Hbefore,1),'g-','LineWidth',3);
+xlabel('time [sec]'); ylabel('entropy');
+title('\Sigma_{k+1}^{k+T} H[P(x_t|y_{k+1:t-1})]');
+legend('true','particle-Moon','particle-Ryan');
+
+figure(5)
 plot(clock.hist.time,sum(ref.hist.Hafter,1),'r--','LineWidth',3); hold on;
 plot(clock.hist.time,sum(particle.hist.pdf.Hafter,1),'b-','LineWidth',3);
 plot(clock.hist.time,sum(particle.hist.ryan.Hafter,1),'g-','LineWidth',3);
 xlabel('time [sec]'); ylabel('entropy');
 title('\Sigma_{k+1}^{k+T} H[P(x_t|y_{k+1:t})]');
-legend('true','Moon','Ryan');
+legend('true','particle-Moon','particle-Ryan');
