@@ -1,7 +1,7 @@
 %-------------------------------------------------------
 % Binary Distribution-based likelihood PDF Generation: P(Y_k|X_k)
 %-------------------------------------------------------
-function pdf = ComputeLikelihoodPDF(meas,agentPos,paramSensor,paramPdf,nState)
+function pdf = ComputeLikelihoodPDF(meas,paramAgent,paramSensor,paramPdf,nState)
 
 nRefPt = size(paramPdf.refPt);
 
@@ -17,7 +17,7 @@ for iRefpt = 1:nRefPt(1)
             ptDomain = [paramPdf.refPt(iRefpt,jRefpt,1),paramPdf.refPt(iRefpt,jRefpt,2)]';
         end
         
-        pdf(iRefpt,jRefpt) = BinarySensorProb(meas,agentPos,ptDomain,paramSensor);
+        pdf(iRefpt,jRefpt) = BinarySensorProb(meas,paramAgent,ptDomain,paramSensor);
     end
 end
 

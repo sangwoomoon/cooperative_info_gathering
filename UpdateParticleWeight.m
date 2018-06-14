@@ -1,10 +1,10 @@
-function wNext = UpdateParticleWeight(measNow,ptNow,agentPos,paramSensor)
+function wNext = UpdateParticleWeight(measNow,ptNow,paramAgent,paramSensor)
 
 nPt = length(ptNow(1,:));
 wNext = zeros(1,nPt);
 
 for iPt = 1:nPt
-    wNext(iPt) = BinarySensorProb(measNow,agentPos,ptNow(:,iPt),paramSensor);
+    wNext(iPt) = BinarySensorProb(measNow,paramAgent,ptNow(:,iPt),paramSensor);
 end
 
 if sum(wNext) == 0 % if all weights are zero

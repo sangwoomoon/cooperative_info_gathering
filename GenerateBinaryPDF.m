@@ -1,29 +1,27 @@
 %-------------------------------------------------------
-% Binary Distribution generation
+% Binary Distribution generation with respect to sensor model
+%
+% IT IS GENERATED IN A CENTRALIZED MANNER
 %-------------------------------------------------------
-function pdf = GenerateBinaryPDF(pt,paramSensor,paramPdf)
+function pdf = GenerateBinaryPDF(pt,paramSensor,paramAgent)
 
-nState = length(pt);
-nRefPt = size(paramPdf.refPt);
+nAgent = length(paramAgent);
 
-pdf = nan(nRefPt(1),nRefPt(2));
-
-for iRefpt = 1:nRefPt(1)
-    for jRefpt = 1:nRefPt(2)
-        
-        % to address the index of discretized domain
-        if nState == 1
-            ptDomain = paramPdf.refPt(jRefpt);
-        elseif nState == 2
-            ptDomain = [paramPdf.refPt(iRefpt,jRefpt,1),paramPdf.refPt(iRefpt,jRefpt,2)]';
-        end
-        
-        if IsInCircleBasedRegion(pt,ptDomain,paramSensor.regionRadius)
-            pdf(iRefpt,jRefpt) = paramSensor.detectBeta;
-        else
-            pdf(iRefpt,jRefpt) = 1-paramSensor.detectBeta;
-        end
+% check whether particle is in the sensing region of any of agents
+bPtInside = 0;
+for iAgent = 1:nAgent
+    if IsInCircleBasedRegion(pt,paramAgent(iAgent).s,paramSensor.regionRadius)
+        bPtInside = 1;
     end
+end
+
+% when the particle is inside of sensing retion, it follows the beta
+% otherwise, the probability should be zero based on the detection
+% event
+if bPtInside
+    pdf = paramSensor.detectBeta;
+else
+    pdf = 0;
 end
 
 end

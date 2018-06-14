@@ -13,7 +13,7 @@ for iPt = 1:nPt
         case 'Gaussian'
             onePtPdf = GenerateGaussianPDF(pt(:,iPt),param.Q,param.pdf);
         case 'Binary'
-            onePtPdf = GenerateBinaryPDF(pt(:,iPt),param.sensor,param.pdf);
+            onePtPdf = GenerateBinaryPDF(pt(:,iPt),param.sensor,param.agent);
     end
     
     % weight sum to make PDF mixture
@@ -25,7 +25,10 @@ for iPt = 1:nPt
 
 end
 
-% normalize pdf
-mixedPdf = mixedPdf./(sum(mixedPdf)*(param.pdf.dRefPt^nState));
+% normalize pdf for Target GMM: not for binary sensor!
+switch option
+    case 'Gaussian'
+        mixedPdf = mixedPdf./(sum(mixedPdf)*(param.pdf.dRefPt^nState));
+end
 
 end

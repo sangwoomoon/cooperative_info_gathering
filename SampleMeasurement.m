@@ -8,7 +8,11 @@ pdf = reshape(pdf,nPt,1);
 cdf = cumsum(pdf);
 
 yIdx = find(rand/(dRefPt^nState) <= cdf,1);
-yProb = pdf(yIdx);
+if isempty(yIdx)
+    yProb = 0;
+else
+    yProb = pdf(yIdx);
+end
 ySample = binornd(1,yProb);
 
 end
