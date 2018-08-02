@@ -46,15 +46,15 @@ sim.param.plot.dClock = 15; % interval of snapshot
 %----------------------
 % clock structure
 clock.nt = 50;
-clock.dt = 0.3;
+clock.dt = 1;
 clock.hist.time = 0;
 %----------------------
 
 %----------------------
 % field structure
-field.boundary = [-100 100 -100 100];
+field.boundary = [-1000 1000 -1000 1000];
 field.length = [field.boundary(2)-field.boundary(1) field.boundary(4)-field.boundary(3)];
-field.buffer = 10; % for particle initalization
+field.buffer = 50; % for particle initalization
 field.bufferZone = [field.boundary(1)+field.buffer field.boundary(2)-field.buffer...
     field.boundary(3)+field.buffer field.boundary(4)-field.buffer];
 field.zoneLength = [field.bufferZone(2)-field.bufferZone(1) field.bufferZone(4)-field.bufferZone(3)];
@@ -62,7 +62,7 @@ field.zoneLength = [field.bufferZone(2)-field.bufferZone(1) field.bufferZone(4)-
 
 %----------------------
 % target structure
-target.x = [20 10]'; % x_pos, y_pos
+target.x = [200 100]'; % x_pos, y_pos
 target.hist.x = target.x;
 target.nState = length(target.x);
 target.param.F = eye(length(target.x));
@@ -74,14 +74,14 @@ target.param.Q = zeros(target.nState); % certainly ideal
 
 % specific setting
 if sim.nAgent == 1
-    agent(1).s = [-20 -20 rand()*2*pi 5]';
+    agent(1).s = [-200 -200 rand()*2*pi 15]';
     agent(1).hist.s = agent(1).s;
 else
-    agent(1).s = [-30 -30 rand()*2*pi 5]';
+    agent(1).s = [-300 -300 rand()*2*pi 15]';
     agent(1).hist.s = agent(1).s;
-    agent(2).s = [-30 30 rand()*2*pi 5]';
+    agent(2).s = [-300 300 rand()*2*pi 15]';
     agent(2).hist.s = agent(2).s; 
-    agent(3).s = [30 -30 rand()*2*pi 5]';
+    agent(3).s = [250 150 rand()*2*pi 15]';
     agent(3).hist.s = agent(3).s;
 end
 
@@ -96,14 +96,14 @@ end
 for iSensor = 1:sim.nAgent
     sensor(iSensor).y = nan;
     sensor(iSensor).hist.y(:,1) = sensor(iSensor).y;
-    sensor(iSensor).param.regionRadius = 10; % sensing region radius
+    sensor(iSensor).param.regionRadius = 100; % sensing region radius
     sensor(iSensor).param.detectBeta = 0.9; % bernoulli detection parameter
 end
 %----------------------
 
 %----------------------
 % filter structure (Particle Filter)
-PF.nPt = 50;
+PF.nPt = 100;
 PF.w = ones(1,PF.nPt)./PF.nPt;
 for iPt = 1 : PF.nPt
     PF.pt(:,iPt) = [field.bufferZone(1)+rand()*field.zoneLength(1) field.bufferZone(3)+rand()*field.zoneLength(2)]';
@@ -129,7 +129,7 @@ for iPlanner = 1:sim.nAgent
         planner(iPlanner).actionSetNum = 1;
     else
         planner(iPlanner).param.sA = 20; % sampled action
-        planner(iPlanner).action = [0 -60*D2R 60*D2R]; % with respect to angular velocity
+        planner(iPlanner).action = [0 -30*D2R 30*D2R]; % with respect to angular velocity
         
         planner(iPlanner).actionNum = length(planner(iPlanner).action);
         planner(iPlanner).actionSetNum = planner(iPlanner).actionNum^(planner(iPlanner).param.clock.nT);
@@ -162,7 +162,7 @@ for iPlanner = 1:sim.nAgent
     planner(iPlanner).hist.Hbefore = nan(planner(iPlanner).param.clock.nT,1);
     planner(iPlanner).hist.Hafter = nan(planner(iPlanner).param.clock.nT,1);
     
-    planner(iPlanner).param.pdf.dRefPt = 20;
+    planner(iPlanner).param.pdf.dRefPt = 50;
     [planner(iPlanner).param.pdf.refPt(:,:,1), planner(iPlanner).param.pdf.refPt(:,:,2)] = ...
         meshgrid(field.boundary(1):planner(iPlanner).param.pdf.dRefPt:field.boundary(2),field.boundary(3):planner(iPlanner).param.pdf.dRefPt:field.boundary(4));
     
@@ -347,9 +347,9 @@ axis equal; axis(field.boundary);
 % snapshots and particles
 figure(2)
 
-nSnapshot = floor(clock.nt/sim.param.plot.dClock);
+nSnapshot = floor(clock.nt/sim.param.plot.dClock)+2; % initial, during(dClock/each), final
 nCol = 3;
-nRow = floor(nSnapshot/nCol);
+nRow = ceil(nSnapshot/nCol);
 
 clr = [0 1 0; 0 0 1; 0 1 1];
 
@@ -357,16 +357,21 @@ for iSnapshot = 1:nSnapshot
     subplot(nRow,nCol,iSnapshot)
     if iSnapshot == 1
         SnapTime = 1;
+    elseif iSnapshot == nSnapshot
+        SnapTime = clock.nt+1;
     else
-        SnapTime = (iSnapshot-1)*sim.param.plot.dClock;
+        SnapTime = (iSnapshot-1)*sim.param.plot.dClock+1;
     end
     
-    plot(target.hist.x(1,1:SnapTime),target.hist.x(2,1:SnapTime),'r-','LineWidth',2); hold on;
-    plot(target.hist.x(1,1),target.hist.x(2,1),'ro','LineWidth',2); hold on;
-    plot(target.hist.x(1,SnapTime),target.hist.x(2,SnapTime),'rx','LineWidth',2); hold on;
+    % target position
+    for iTarget = 1:sim.nTarget
+        plot(target(iTarget).hist.x(1,1:SnapTime),target(iTarget).hist.x(2,1:SnapTime),'r-','LineWidth',2); hold on;
+        plot(target(iTarget).hist.x(1,1),target(iTarget).hist.x(2,1),'ro','LineWidth',2); hold on;
+        plot(target(iTarget).hist.x(1,SnapTime),target(iTarget).hist.x(2,SnapTime),'rx','LineWidth',2); hold on;
+    end
 
+    % agent position
     for iAgent = 1:sim.nAgent
-        
         plot(agent(iAgent).hist.s(1,1:SnapTime),agent(iAgent).hist.s(2,1:SnapTime),'-','LineWidth',2,'color',clr(iAgent,:)); hold on;
         plot(agent(iAgent).hist.s(1,1),agent(iAgent).hist.s(2,1),'o','LineWidth',2,'color',clr(iAgent,:)); hold on;
         plot(agent(iAgent).hist.s(1,SnapTime),agent(iAgent).hist.s(2,SnapTime),'x','LineWidth',2,'color',clr(iAgent,:)); hold on;
@@ -374,6 +379,7 @@ for iSnapshot = 1:nSnapshot
     
     plot(squeeze(PF.hist.pt(1,:,SnapTime)),squeeze(PF.hist.pt(2,:,SnapTime)),'m.','LineWidth',2); hold on;
     axis equal; axis(field.boundary); 
+    xlabel(['t =',num2str((SnapTime-1)*clock.dt),' sec'],'fontsize',12);
 end
 
 

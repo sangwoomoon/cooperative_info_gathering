@@ -11,6 +11,6 @@ for iAgent = 1: nAgent
 end
 
 measUpdatePdf = likelihoodPdf.*targetUpdatePdf;
-measUpdatePdf = measUpdatePdf./(sum(measUpdatePdf)*(pdfParam.dRefPt^nState));
+measUpdatePdf = measUpdatePdf./(sum(sum(measUpdatePdf))*(pdfParam.dRefPt^nState));
 
 end

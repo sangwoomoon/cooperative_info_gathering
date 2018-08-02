@@ -3,23 +3,15 @@
 %-------------------------------------------------------
 function pdf = GenerateGaussianPDF(mean,var,param)
 
-nState = length(mean);
-nRefPt = size(param.refPt);
+% 1. substract mean from domain
+ptDomainDiffX = param.refPt(:,:,1) - mean(1);
+ptDomainDiffY = param.refPt(:,:,2) - mean(2);
 
-pdf = nan(nRefPt(1),nRefPt(2));
+% 2. compute exponential part
+ptDomainExpSuper = -1/2.*(1/var(1,1).*ptDomainDiffX.^2 + 1/var(2,2).*ptDomainDiffY.^2);
 
-for iRefpt = 1:nRefPt(1)
-    for jRefpt = 1:nRefPt(2)
-        
-        % to address the index of discretized domain
-        if nState == 1
-            ptDomain = param.refPt(jRefpt);
-        elseif nState == 2
-            ptDomain = [param.refPt(iRefpt,jRefpt,1),param.refPt(iRefpt,jRefpt,2)]';
-        end
-        
-        pdf(iRefpt,jRefpt) = (1/sqrt(2*pi*det(var)))*exp(-1/2*(ptDomain-mean)'*var^(-1)*(ptDomain-mean));
-    end
-end
+% 3. compute remain parts. the results is pdf.
+pdf = (1/sqrt(2*pi*det(var))).*exp(ptDomainExpSuper);
+
 
 end
