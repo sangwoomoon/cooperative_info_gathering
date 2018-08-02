@@ -8,6 +8,7 @@
 % - coded by Sangwoo Moon
 % - Created: 4/3/2018
 % - 1st revision: 4/18/2018
+% - 2nd revision: 6/25/2018
 %   X(t+1) = X(t) + W                               : 2D-static Linear Gaussian
 %   Y(t) = {0,1} with respect to Sensing Region     : 2D on the ground, circle region for target detection
 %   s(t+1) = f(s(t),u(t))                           : u(t) = [0 -omega +omega]
@@ -27,10 +28,11 @@ D2R = pi/180;
 
 %----------------------
 % simulation structure
-sim.nAgent = 3;
+sim.nAgent = 1;
 sim.nTarget = 1;
 
 sim.flagDM = 1; % 0: stationary agent | 1: optimization for agent motion control
+sim.flagInfoCom = 1; % 0: Ryan's approach | 1: Our approach(consider all measurements)
 
 if sim.flagDM == 1
     sim.flagDisp.before = 0;
@@ -110,7 +112,7 @@ for iPt = 1 : PF.nPt
 end
 PF.hist.pt = PF.pt;
 PF.param.F = target.param.F; % assume target is stationary in PF
-PF.param.Q = diag([8^2,5^2]);
+PF.param.Q = diag([80^2,50^2]);
 PF.nState = target.nState;
 %----------------------
 
@@ -122,6 +124,7 @@ for iPlanner = 1:sim.nAgent
     planner(iPlanner).param.clock.dt = 3; % planning time-step horizon
     planner(iPlanner).param.clock.nT = 3; % planning horizon
     
+    % action profile setting
     if sim.flagDM == 0
         planner(iPlanner).param.sA = 1; % sampled action
         planner(iPlanner).action = 0; % with respect to velocity
@@ -146,6 +149,22 @@ for iPlanner = 1:sim.nAgent
         end
         
     end
+    
+    % measurement profile setting
+    planner(iPlanner).meas = [0 1]; % detect / no detect
+    planner(iPlanner).measNum = length(planner(iPlanner).meas);
+    planner(iPlanner).measSetNum = planner(iPlanner).measNum^(planner(iPlanner).param.clock.nT);
+    for iMeas = 1 : planner(iPlanner).param.clock.nT
+        assignDen = planner(iPlanner).measSetNum/planner(iPlanner).measNum^iMeas;
+        repeatNum = planner(iPlanner).measSetNum/assignDen;
+        for jMeas = 1 : repeatNum
+            measElem = planner(iPlanner).meas(rem(jMeas,planner(iPlanner).measNum)+1);
+            for kMeas = 1 : assignDen
+                planner(iPlanner).measSet(iMeas,assignDen*(jMeas-1)+kMeas) = measElem;
+            end
+        end
+    end
+    
     
     planner(iPlanner).nPt = PF.nPt;
     planner(iPlanner).pt = PF.pt;
@@ -221,8 +240,16 @@ for iClock = 1:clock.nt
         end
         sActNumSet(:,iSample) = sActNum;
         
-        [planner(1).candidate.Hbefore(:,iSample),planner(1).candidate.Hafter(:,iSample),planner(1).candidate.I(iSample)] = ...
-            ComputeInformation(planner(1),agent,field,planner(1).param.clock,sim,sActNum,iClock);
+        if sim.flagInfoCom == 0
+            % Ryan's approach-based Mutual Information computation: Measurement sampling-based
+            [planner(1).candidate.Hbefore(:,iSample),planner(1).candidate.Hafter(:,iSample),planner(1).candidate.I(iSample)] = ...
+                ComputeInformation(planner(1),agent,field,planner(1).param.clock,sim,sActNum,iClock);
+        elseif sim.flagInfoCom == 1
+            % Mutual Information computation: Consider all future measurements
+            [planner(1).candidate.Hbefore(:,iSample),planner(1).candidate.Hafter(:,iSample),planner(1).candidate.I(iSample)] = ...
+                ComputeInformationMeasConsider(planner(1),agent,field,planner(1).param.clock,sim,sActNum,iClock);
+        end
+        
     end
     
     % direct decision making: maximize mutual information
