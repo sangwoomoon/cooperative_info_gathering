@@ -31,7 +31,7 @@ D2R = pi/180;
 sim.nAgent = 1;
 sim.nTarget = 1;
 
-sim.flagDM = 1; % 0: stationary agent | 1: optimization for agent motion control
+sim.flagDM = 0; % 0: stationary agent | 1: optimization for agent motion control
 sim.flagInfoCom = 1; % 0: Ryan's approach | 1: Our approach(consider all measurements)
 
 if sim.flagDM == 1
@@ -47,7 +47,7 @@ sim.param.plot.dClock = 15; % interval of snapshot
 
 %----------------------
 % clock structure
-clock.nt = 50;
+clock.nt = 1;
 clock.dt = 1;
 clock.hist.time = 0;
 %----------------------
@@ -113,6 +113,7 @@ end
 PF.hist.pt = PF.pt;
 PF.param.F = target.param.F; % assume target is stationary in PF
 PF.param.Q = diag([80^2,50^2]);
+PF.param.field = field;
 PF.nState = target.nState;
 %----------------------
 
@@ -132,7 +133,7 @@ for iPlanner = 1:sim.nAgent
         planner(iPlanner).actionSetNum = 1;
     else
         planner(iPlanner).param.sA = 20; % sampled action
-        planner(iPlanner).action = [0 -30*D2R 30*D2R]; % with respect to angular velocity
+        planner(iPlanner).action = [0 -15*D2R 15*D2R]; % with respect to angular velocity
         
         planner(iPlanner).actionNum = length(planner(iPlanner).action);
         planner(iPlanner).actionSetNum = planner(iPlanner).actionNum^(planner(iPlanner).param.clock.nT);
@@ -192,6 +193,8 @@ for iPlanner = 1:sim.nAgent
     planner(iPlanner).param.Q = PF.param.Q;
     planner(iPlanner).param.sensor.regionRadius = sensor(iPlanner).param.regionRadius;
     planner(iPlanner).param.sensor.detectBeta = sensor(iPlanner).param.detectBeta;
+    
+    planner(iPlanner).param.field = field;
     
 end
 %----------------------

@@ -89,6 +89,7 @@ element = 'agent';
         if sim.flagDisp.after == 1
             figure(iClock+10+iMeas),subplot(planner.param.plot.row,planner.param.plot.col,2*iPlan),
             PlotPDF(measUpdatePdf,planner.pt,planner.param.pdf);
+            ylabel(['y_t =',num2str(planner.y)],'fontsize',12);
             if iPlan == 1
                 title('P(x_t|y_{k+1:t})','fontsize',10);
                 legend('PDF','Particle');
