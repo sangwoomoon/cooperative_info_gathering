@@ -76,7 +76,7 @@ target.param.Q = zeros(target.nState); % certainly ideal
 
 % specific setting
 if sim.nAgent == 1
-    agent(1).s = [-200 -200 rand()*2*pi 15]';
+    agent(1).s = [200 150 rand()*2*pi 15]';
     agent(1).hist.s = agent(1).s;
 else
     agent(1).s = [-300 -300 rand()*2*pi 15]';

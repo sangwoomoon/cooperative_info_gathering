@@ -9,8 +9,8 @@ function [Hbefore,Hafter,I] = ComputeInformationMeasConsider(planner,agent,field
 nMeasSet = length(planner.measSet(1,:));
 
 I = 0;
-Hbefore = nan(clock.nT,1);
-Hafter = nan(clock.nT,1);
+Hbefore = zeros(clock.nT,1);
+Hafter = zeros(clock.nT,1);
 
 for iMeas = 1:nMeasSet
     
