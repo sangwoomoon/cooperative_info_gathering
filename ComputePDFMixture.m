@@ -28,7 +28,7 @@ end
 % normalize pdf for Target GMM: not for binary sensor!
 switch option
     case 'Gaussian'
-        mixedPdf = mixedPdf./(sum(sum(mixedPdf))*(param.pdf.dRefPt^nState));
+       % mixedPdf = mixedPdf./(sum(sum(mixedPdf))*(param.pdf.dRefPt^nState));
 end
 
 end

@@ -2,6 +2,10 @@
 % Target Localization Problem Script
 % Particle Method based Mutual Information
 %
+% two agents in the problem: 1st - receiving info / 2nd - tracking and
+% measure information
+% 
+%
 % X(t+1) ~ P_ta(X(t+1)|X(t))
 % Y(t)   ~ P_se(Y(t)|X(t);s(t))
 % 
@@ -22,19 +26,22 @@ hold on;
 
 D2R = pi/180;
 
+
 %-------------------------------
 %   sim setting
 %-------------------------------
 
 %----------------------
 % simulation structure
-sim.nAgent = 1;
+sim.nAgent = 2;
 sim.nTarget = 1;
 
-sim.flagDM = 0; % 0: stationary agent | 1: optimization for agent motion control
+sim.flagScene = 0; % 0: stationary ground station | 1: moving ground station
 sim.flagInfoCom = 1; % 0: Ryan's approach | 1: Our approach(consider all measurements)
+sim.flagDM = 0; % 0: determined decisions | 1: DM enabled
+sim.flagPDF = 0; % 0: no PDF draw | 1: PDF draw
 
-if sim.flagDM == 1
+if sim.flagPDF == 0
     sim.flagDisp.before = 0;
     sim.flagDisp.after = 0;
 else
@@ -47,14 +54,14 @@ sim.param.plot.dClock = 15; % interval of snapshot
 
 %----------------------
 % clock structure
-clock.nt = 1;
+clock.nt = 50;
 clock.dt = 1;
 clock.hist.time = 0;
 %----------------------
 
 %----------------------
 % field structure
-field.boundary = [-1000 1000 -1000 1000];
+field.boundary = [-500 500 -500 500];
 field.length = [field.boundary(2)-field.boundary(1) field.boundary(4)-field.boundary(3)];
 field.buffer = 50; % for particle initalization
 field.bufferZone = [field.boundary(1)+field.buffer field.boundary(2)-field.buffer...
@@ -64,7 +71,8 @@ field.zoneLength = [field.bufferZone(2)-field.bufferZone(1) field.bufferZone(4)-
 
 %----------------------
 % target structure
-target.x = [200 100]'; % x_pos, y_pos
+target.id = 1;
+target.x = [250 250]'; % x_pos, y_pos
 target.hist.x = target.x;
 target.nState = length(target.x);
 target.param.F = eye(length(target.x));
@@ -75,46 +83,57 @@ target.param.Q = zeros(target.nState); % certainly ideal
 % agent structure
 
 % specific setting
-if sim.nAgent == 1
-    agent(1).s = [200 150 rand()*2*pi 15]';
+if sim.flagScene == 0
+    agent(1).id = 1;
+    agent(1).s = [-100 -100 rand()*2*pi 0]';
     agent(1).hist.s = agent(1).s;
 else
-    agent(1).s = [-300 -300 rand()*2*pi 15]';
-    agent(1).hist.s = agent(1).s;
-    agent(2).s = [-300 300 rand()*2*pi 15]';
-    agent(2).hist.s = agent(2).s; 
-    agent(3).s = [250 150 rand()*2*pi 15]';
-    agent(3).hist.s = agent(3).s;
+    agent(1).id = 1;
+    agent(1).s = [-100 -100 rand()*2*pi 15]';
+    agent(1).hist.s = agent(1).s;    
 end
-
-% for iAgent = 1:sim.nAgent
-%     agent(iAgent).s = [field.bufferZone(1)+rand()*field.zoneLength(1) field.bufferZone(3)+rand()*field.zoneLength(2) rand()*2*pi 10]'; % x_pos, y_pos, heading, airspeed
-%     agent(iAgent).hist.s = agent(iAgent).s;
-% end
+agent(2).id = 2;
+agent(2).s = [250 150 0*2*pi 15]'; % target tracking setting
+agent(2).hist.s = agent(2).s;
 %----------------------
 
 %----------------------
 % sensor structure
 for iSensor = 1:sim.nAgent
+    sensor(iSensor).id = iSensor;
     sensor(iSensor).y = nan;
     sensor(iSensor).hist.y(:,1) = sensor(iSensor).y;
-    sensor(iSensor).param.regionRadius = 100; % sensing region radius
+    sensor(iSensor).param.regionRadius = 300; % sensing region radius
     sensor(iSensor).param.detectBeta = 0.9; % bernoulli detection parameter
 end
 %----------------------
 
 %----------------------
-% filter structure (Particle Filter)
-PF.nPt = 100;
-PF.w = ones(1,PF.nPt)./PF.nPt;
-for iPt = 1 : PF.nPt
-    PF.pt(:,iPt) = [field.bufferZone(1)+rand()*field.zoneLength(1) field.bufferZone(3)+rand()*field.zoneLength(2)]';
+% communicaiton structure
+for iComm = 1:sim.nAgent
+    comm(iComm).id = iComm;
+    comm(iComm).beta = nan(sim.nAgent,1);
+    comm(iComm).bConnect = nan(sim.nAgent,1);
+    comm(iComm).hist.beta(:,1) = comm(iComm).beta; % for all agent and agent itself
+    comm(iComm).hist.bConnect(:,1) = comm(iComm).bConnect; % for all agent and agent itself
 end
-PF.hist.pt = PF.pt;
-PF.param.F = target.param.F; % assume target is stationary in PF
-PF.param.Q = diag([80^2,50^2]);
-PF.param.field = field;
-PF.nState = target.nState;
+%----------------------
+
+%----------------------
+% filter structure (Particle Filter)
+for iPF = 1:sim.nAgent
+    PF(iPF).id = iPF;
+    PF(iPF).nPt = 100;
+    PF(iPF).w = ones(1,PF.nPt)./PF(iPF).nPt;
+    for iPt = 1 : PF(iPF).nPt
+        PF(iPF).pt(:,iPt) = [field.bufferZone(1)+rand()*field.zoneLength(1) field.bufferZone(3)+rand()*field.zoneLength(2)]';
+    end
+    PF(iPF).hist.pt = PF(iPF).pt;
+    PF(iPF).param.F = target.param.F; % assume target is stationary in PF
+    PF(iPF).param.Q = diag([40^2,40^2]);
+    PF(iPF).param.field = field;
+    PF(iPF).nState = target.nState;
+end
 %----------------------
 
 %----------------------
@@ -122,49 +141,35 @@ PF.nState = target.nState;
 
 for iPlanner = 1:sim.nAgent
         
+    planner(iPlanner).id = iPlanner;
+    
     planner(iPlanner).param.clock.dt = 3; % planning time-step horizon
     planner(iPlanner).param.clock.nT = 3; % planning horizon
-    
+    planner(iPlanner).param.sA = 1; % sampled action
+        
     % action profile setting
-    if sim.flagDM == 0
-        planner(iPlanner).param.sA = 1; % sampled action
-        planner(iPlanner).action = 0; % with respect to velocity
-        planner(iPlanner).actionSet = zeros(planner(iPlanner).param.clock.nT,1);
-        planner(iPlanner).actionSetNum = 1;
-    else
-        planner(iPlanner).param.sA = 20; % sampled action
-        planner(iPlanner).action = [0 -15*D2R 15*D2R]; % with respect to angular velocity
-        
-        planner(iPlanner).actionNum = length(planner(iPlanner).action);
-        planner(iPlanner).actionSetNum = planner(iPlanner).actionNum^(planner(iPlanner).param.clock.nT);
-        
-        for iAct = 1 : planner(iPlanner).param.clock.nT
-            assignDen = planner(iPlanner).actionSetNum/planner(iPlanner).actionNum^iAct;
-            repeatNum = planner(iPlanner).actionSetNum/assignDen;
-            for jAct = 1 : repeatNum
-                actionElem = planner(iPlanner).action(rem(jAct,planner(iPlanner).actionNum)+1);
-                for kAct = 1 : assignDen
-                    planner(iPlanner).actionSet(iAct,assignDen*(jAct-1)+kAct) = actionElem;
-                end
-            end
+    % scenario #1: Agent 1 is statationary
+    if sim.flagScene == 0
+        if iPlanner == 1
+            [planner(iPlanner).action,planner(iPlanner).actionNum,planner(iPlanner).actionSetNum,planner(iPlanner).actionSet] = ...
+                GenerateOutcomeProfile(0,planner(iPlanner).param.clock.nT);
+        else
+            [planner(iPlanner).action,planner(iPlanner).actionNum,planner(iPlanner).actionSetNum,planner(iPlanner).actionSet] = ...
+                GenerateOutcomeProfile(8*D2R,planner(iPlanner).param.clock.nT);
         end
-        
+    % scenario #2: Agent 1 is mobile
+    else
+        [planner(iPlanner).action,planner(iPlanner).actionNum,planner(iPlanner).actionSetNum,planner(iPlanner).actionSet] = ...
+            GenerateOutcomeProfile(8*D2R,planner(iPlanner).param.clock.nT);
     end
     
     % measurement profile setting
-    planner(iPlanner).meas = [0 1]; % detect / no detect
-    planner(iPlanner).measNum = length(planner(iPlanner).meas);
-    planner(iPlanner).measSetNum = planner(iPlanner).measNum^(planner(iPlanner).param.clock.nT);
-    for iMeas = 1 : planner(iPlanner).param.clock.nT
-        assignDen = planner(iPlanner).measSetNum/planner(iPlanner).measNum^iMeas;
-        repeatNum = planner(iPlanner).measSetNum/assignDen;
-        for jMeas = 1 : repeatNum
-            measElem = planner(iPlanner).meas(rem(jMeas,planner(iPlanner).measNum)+1);
-            for kMeas = 1 : assignDen
-                planner(iPlanner).measSet(iMeas,assignDen*(jMeas-1)+kMeas) = measElem;
-            end
-        end
-    end
+    [planner(iPlanner).meas,planner(iPlanner).measNum,planner(iPlanner).measSetNum,planner(iPlanner).measSet] = ...
+        GenerateOutcomeProfile([0 1],planner(iPlanner).param.clock.nT);
+
+    % communication profile setting
+    [planner(iPlanner).comm,planner(iPlanner).commNum,planner(iPlanner).commSetNum,planner(iPlanner).commSet] = ...
+        GenerateOutcomeProfile([0 1],planner(iPlanner).param.clock.nT);    
     
     
     planner(iPlanner).nPt = PF.nPt;
@@ -190,18 +195,22 @@ for iPlanner = 1:sim.nAgent
     planner(iPlanner).param.plot.col = 2;
     
     planner(iPlanner).param.F = target.param.F;
-    planner(iPlanner).param.Q = PF.param.Q;
+    planner(iPlanner).param.Q = PF(iPlanner).param.Q;
     planner(iPlanner).param.sensor.regionRadius = sensor(iPlanner).param.regionRadius;
     planner(iPlanner).param.sensor.detectBeta = sensor(iPlanner).param.detectBeta;
     
     planner(iPlanner).param.field = field;
     
+    % agent state is used for communication awareness
+    for iAgent = 1:sim.nAgent
+        planner(iPlanner).agent(iAgent).s = agent(iAgent).s;
+    end
 end
 %----------------------
 
 
 %-----------------------------------
-% Linear-Gaussian M.I. computation
+% Sim Operation
 %-----------------------------------
 
 for iClock = 1:clock.nt    
@@ -215,59 +224,51 @@ for iClock = 1:clock.nt
     % 2. compute entropy/mutual information with respect to sampled action
     % profile
     %
-    % Here assume agent 1 only operates the planner as if it is under
-    % centralized scheme of which results are destributed to all agents
-    sActNumSet = nan(sim.nAgent,planner(1).param.sA);
-    for iSample = 1 : planner(1).param.sA
-        
-        % sample among action profile: depends on whether the simulation
-        % uses optimization
-        if sim.flagDM == 0
-            sActNum = ones(sim.nAgent,1);
-        else
-            bRealSample = 1;
-            bRealInput = ones(1,sim.nAgent);
-            while (bRealSample)
-                sActNum = 1+floor(rand(sim.nAgent,1)*planner(1).actionSetNum);
-                for iAgent = 1:sim.nAgent
+    % Here assume agent 2 only takes measurement
+    % distributed scheme to each agent:
+    % COMPUTED INFORMATION IS DIFFERENT WITH RESPECT TO AGENT
+    for iAgent = 1:sim.nAgent
+        sActNumSet = nan(1,planner(1).param.sA);
+        for iSample = 1 : planner(1).param.sA
+            
+            % sample among action profile: depends on whether the simulation
+            % uses optimization
+            if sim.flagDM == 0
+                sActNum = 1;
+            else
+                bRealInput = ones(1,sim.nAgent);
+                % check whether decision has feasibility in terms of
+                % geofence
+                while (bRealInput)
+                    sActNum = 1+floor(rand(1)*planner(iAgent).actionSetNum);
                     state = UpdateAgentState(agent(iAgent).s,planner(iAgent).actionSet(1,sActNum(iAgent,1)),clock.dt);
                     if (state(1) <= field.bufferZone(1) || state(1) >= field.bufferZone(2)) || (state(2) <= field.bufferZone(3) || state(2) >= field.bufferZone(4)) % out of geofence
                         bRealInput(iAgent) = 0;
                     end
                 end
-                
-                if sum(bRealInput) == sim.nAgent
-                    bRealSample = 0;
-                end
             end
+            sActNumSet(:,iSample) = sActNum;
+            
+            if sim.flagInfoCom == 0
+                % Ryan's approach-based Mutual Information computation: Measurement sampling-based
+                [planner(iAgent).candidate.Hbefore(:,iSample),planner(iAgent).candidate.Hafter(:,iSample),planner(iAgent).candidate.I(iSample)] = ...
+                    ComputeInformation(planner(iAgent),agent,field,planner(iAgent).param.clock,sim,sActNum,iClock);
+            elseif sim.flagInfoCom == 1
+                % Mutual Information computation: Consider all future measurements
+                % consider communicaiton awareness
+                [planner(iAgent).candidate.Hbefore(:,iSample),planner(iAgent).candidate.Hafter(:,iSample),planner(iAgent).candidate.I(iSample)] = ...
+                    ComputeInformationMeasConsider(planner(iAgent),agent,field,planner(iAgent).param.clock,sim,sActNum,iClock,agent(iAgent).id);
+            end
+            
         end
-        sActNumSet(:,iSample) = sActNum;
         
-        if sim.flagInfoCom == 0
-            % Ryan's approach-based Mutual Information computation: Measurement sampling-based
-            [planner(1).candidate.Hbefore(:,iSample),planner(1).candidate.Hafter(:,iSample),planner(1).candidate.I(iSample)] = ...
-                ComputeInformation(planner(1),agent,field,planner(1).param.clock,sim,sActNum,iClock);
-        elseif sim.flagInfoCom == 1
-            % Mutual Information computation: Consider all future measurements
-            [planner(1).candidate.Hbefore(:,iSample),planner(1).candidate.Hafter(:,iSample),planner(1).candidate.I(iSample)] = ...
-                ComputeInformationMeasConsider(planner(1),agent,field,planner(1).param.clock,sim,sActNum,iClock);
-        end
-        
-    end
-    
-    % direct decision making: maximize mutual information
-    [~,sActOptIdx] = max(planner(1).candidate.I);
-    
-    % distribute results from Agent 1's planner to all agents' planner: 
-    % STRUCTURE NOTATION SHOULD BE MODIFIED FOR NOT TO MAKE CONFUSION!
-    for iAgent = 1:sim.nAgent
-        % take optimized information data
-        planner(iAgent).actIdx = sActNumSet(iAgent,sActOptIdx);
+        % decision making: maximize mutual information
+        [~,planner(iAgent).actIdx] = max(planner(iAgent).candidate.I);
         planner(iAgent).input = planner(iAgent).actionSet(:,planner(iAgent).actIdx);
         
-        planner(iAgent).I = planner(1).candidate.I(sActOptIdx);
-        planner(iAgent).Hbefore = planner(1).candidate.Hbefore(:,sActOptIdx);
-        planner(iAgent).Hafter = planner(1).candidate.Hafter(:,sActOptIdx);
+        planner(iAgent).I = planner(iAgent).candidate.I(planner(iAgent).actIdx);
+        planner(iAgent).Hbefore = planner(iAgent).candidate.Hbefore(:,planner(iAgent).actIdx);
+        planner(iAgent).Hafter = planner(iAgent).candidate.Hafter(:,planner(iAgent).actIdx);
     end
     
     
@@ -286,54 +287,60 @@ for iClock = 1:clock.nt
     target.x = UpdateTargetState(target.x,target.param,clock.dt);
     target.hist.x(:,iClock+1) = target.x;
     
-    % take measurement
-    for iSensor = 1:sim.nAgent
+    % take measurement: ONLY AGENT 2 TAKES MEASUREMENT IN THIS SCENARIO
+    for iSensor = 2:sim.nAgent
         sensor(iSensor).y = TakeMeasurement(target.x,agent(iSensor).s,sensor(iSensor).param);
         sensor(iSensor).hist.y(:,iClock+1) = sensor(iSensor).y;
     end
     
+    % particle measurement and agent state sharing through communication
+    for iComm = 1:sim.nAgent
+        [comm(iComm).beta,comm(iComm).bConnect,planner(iComm).agent,comm(iComm).z] = ...
+            ShareInformation(agent,sensor,planner(iComm).agent,PF(iComm).id);
+        comm(iComm).hist.beta(:,iClock+1) = comm(iComm).beta;
+        comm(iComm).hist.bConnect(:,iClock+1) = comm(iComm).bConnect;
+        comm(iComm).hist.Z(:,iClock+1) = comm(iComm).z';
+    end
     
     %-----------------------------------
     % Actual measurement and estimation: PF
     %-----------------------------------
     
-    % particle state update
-    PF.pt = UpdateParticle(PF.pt,PF.param,clock.dt);
-
-    % particle measurement update
-    % ad-hoc: SHOULD BE MODIFIED!
-    yAug = nan(1,sim.nAgent);
-    for iSensor = 1:sim.nAgent
-        yAug(1,iSensor) = sensor(iSensor).y;
-        sAug(iSensor).s = agent(iSensor).s;
-    end
-    PF.w = UpdateParticleWeight(yAug,PF.pt,sAug,sensor(1).param);
-            
-    % resample particle
-    [PF.pt,PF.w] = ResampleParticle(PF.pt,PF.w,field);
-    
-    % particle filter info update/store
-    PF.xhat = (PF.w*PF.pt')';
-    PF.hist.pt(:,:,iClock+1) = PF.pt;  
-    PF.hist.xhat(:,iClock+1) = PF.xhat;
-    
-    % update planner initial info from PF results to all agents
-    planner(1).x = PF.xhat;
-    planner(1).w = PF.w;
-    planner(1).pt = PF.pt;
-    
-    % store optimized infomation data
-    for iPlanner = 1:sim.nAgent
-        planner(iPlanner).hist.actIdx(iClock+1) = planner(iPlanner).actIdx;
-        planner(iPlanner).hist.input(:,iClock+1) = planner(iPlanner).input;
-        planner(iPlanner).hist.I(:,iClock+1) = planner(iPlanner).I;
-        planner(iPlanner).hist.Hafter(:,iClock+1) = planner(iPlanner).Hafter';
-        planner(iPlanner).hist.Hbefore(:,iClock+1) = planner(iPlanner).Hbefore';
-    end
-    
-    % take decision making for agent input
-    for iAgent = 1:sim.nAgent
-        agent(iAgent).vel = planner(iAgent).input(1);
+    % PF is locally performend, and measurement information is delivered
+    % under the communication probability
+    for iPF = 1:sim.nAgent
+        % particle state update
+        PF(iPF).pt = UpdateParticle(PF(iPF).pt,PF(iPF).param,clock.dt);
+        
+        % particle weight update
+        PF(iPF).w = UpdateParticleWeight(comm(iPF).z,PF(iPF).pt,planner(iPF).agent,sensor(iPF).param);
+        
+        % resample particle
+        [PF(iPF).pt,PF(iPF).w] = ResampleParticle(PF(iPF).pt,PF(iPF).w,field);
+        
+        % particle filter info update/store
+        PF(iPF).xhat = (PF(iPF).w*PF(iPF).pt')';
+        PF(iPF).hist.pt(:,:,iClock+1) = PF(iPF).pt;
+        PF(iPF).hist.xhat(:,iClock+1) = PF(iPF).xhat;
+        
+        % update planner initial info
+        planner(iPF).x = PF(iPF).xhat;
+        planner(iPF).w = PF(iPF).w;
+        planner(iPF).pt = PF(iPF).pt;
+        
+        % store optimized infomation data
+        for iPlanner = 1:sim.nAgent
+            planner(iPlanner).hist.actIdx(iClock+1) = planner(iPlanner).actIdx;
+            planner(iPlanner).hist.input(:,iClock+1) = planner(iPlanner).input;
+            planner(iPlanner).hist.I(:,iClock+1) = planner(iPlanner).I;
+            planner(iPlanner).hist.Hafter(:,iClock+1) = planner(iPlanner).Hafter';
+            planner(iPlanner).hist.Hbefore(:,iClock+1) = planner(iPlanner).Hbefore';
+        end
+        
+        % take decision making for agent input
+        for iAgent = 1:sim.nAgent
+            agent(iAgent).vel = planner(iAgent).input(1);
+        end
     end
     
     % clock update
@@ -343,6 +350,7 @@ for iClock = 1:clock.nt
     
 end
 
+%%
 %----------------------------
 % Sim Result Plot
 %----------------------------
@@ -353,24 +361,27 @@ plot(target.hist.x(1,:),target.hist.x(2,:),'r-','LineWidth',2); hold on;
 plot(target.hist.x(1,1),target.hist.x(2,1),'ro','LineWidth',2); hold on;
 plot(target.hist.x(1,end),target.hist.x(2,end),'rx','LineWidth',2); hold on;
 
-clr = nan(sim.nAgent,3);
 for iAgent = 1:sim.nAgent
-    clr(iAgent,:) = rand(1,3);
-    plot(agent(iAgent).hist.s(1,:),agent(iAgent).hist.s(2,:),'-','LineWidth',2,'color',clr(iAgent,:)); hold on;
-    plot(agent(iAgent).hist.s(1,1),agent(iAgent).hist.s(2,1),'o','LineWidth',2,'color',clr(iAgent,:)); hold on;
-    plot(agent(iAgent).hist.s(1,end),agent(iAgent).hist.s(2,end),'x','LineWidth',2,'color',clr(iAgent,:)); hold on;
+    clr = rand(1,3);
+    plot(agent(iAgent).hist.s(1,:),agent(iAgent).hist.s(2,:),'-','LineWidth',2,'color',clr); hold on;
+    plot(agent(iAgent).hist.s(1,1),agent(iAgent).hist.s(2,1),'o','LineWidth',2,'color',clr); hold on;
+    plot(agent(iAgent).hist.s(1,end),agent(iAgent).hist.s(2,end),'x','LineWidth',2,'color',clr); hold on;
+    
+    clr = rand(1,3);
+    plot(PF(iAgent).hist.xhat(1,:),PF(iAgent).hist.xhat(2,:),'--','LineWidth',2,'color',clr); hold on;
+    plot(PF(iAgent).hist.xhat(1,1),PF(iAgent).hist.xhat(2,1),'o','LineWidth',2,'color',clr); hold on;
+    plot(PF(iAgent).hist.xhat(1,end),PF(iAgent).hist.xhat(2,end),'x','LineWidth',2,'color',clr); hold on;
 end
 
-plot(PF.hist.xhat(1,:),PF.hist.xhat(2,:),'m-','LineWidth',2); hold on;
-plot(PF.hist.xhat(1,1),PF.hist.xhat(2,1),'mo','LineWidth',2); hold on;
-plot(PF.hist.xhat(1,end),PF.hist.xhat(2,end),'mx','LineWidth',2); hold on;
 
 xlabel('time [sec]'); ylabel('position [m]');
 
 title('Target Tracking Trajectory and Estimates');
 legend('true pos','true pos (start)','true pos (end)',...
-    'agent 1 pos','agent 1 pos (start)','agent 1 pos (end)',...
-    'estimated pos','estimated pos (start)','estimated pos (end)');
+    'GS pos','GS pos (start)','GS pos (end)',...
+    'GS estimated pos','GS estimated pos (start)','GS estimated pos (end)',...
+    'Agent 2 pos','Agent 2 pos (start)','Agent 2 pos (end)',...
+    'Agent 2 estimated pos','Agent 2 estimated pos (start)','Agent 2 estimated pos (end)');
 
 axis equal; axis(field.boundary); 
 
@@ -382,6 +393,7 @@ nCol = 3;
 nRow = ceil(nSnapshot/nCol);
 
 clr = [0 1 0; 0 0 1; 0 1 1];
+ptClr = [0 0.5 0; 0 0 0.5];
 
 for iSnapshot = 1:nSnapshot
     subplot(nRow,nCol,iSnapshot)
@@ -405,9 +417,11 @@ for iSnapshot = 1:nSnapshot
         plot(agent(iAgent).hist.s(1,1:SnapTime),agent(iAgent).hist.s(2,1:SnapTime),'-','LineWidth',2,'color',clr(iAgent,:)); hold on;
         plot(agent(iAgent).hist.s(1,1),agent(iAgent).hist.s(2,1),'o','LineWidth',2,'color',clr(iAgent,:)); hold on;
         plot(agent(iAgent).hist.s(1,SnapTime),agent(iAgent).hist.s(2,SnapTime),'x','LineWidth',2,'color',clr(iAgent,:)); hold on;
+        
+        % particle plotting
+        plot(squeeze(PF(iAgent).hist.pt(1,:,SnapTime)),squeeze(PF(iAgent).hist.pt(2,:,SnapTime)),'.','LineWidth',2,'color',ptClr(iAgent,:)); hold on;
     end
     
-    plot(squeeze(PF.hist.pt(1,:,SnapTime)),squeeze(PF.hist.pt(2,:,SnapTime)),'m.','LineWidth',2); hold on;
     axis equal; axis(field.boundary); 
     xlabel(['t =',num2str((SnapTime-1)*clock.dt),' sec'],'fontsize',12);
 end
@@ -415,18 +429,30 @@ end
 
 % utility profile
 figure(3)
-plot(clock.hist.time,planner(1).hist.I,'b-','LineWidth',3);
+plot(clock.hist.time,planner(1).hist.I,'b-','LineWidth',3); hold on;
+plot(clock.hist.time,planner(2).hist.I,'r-','LineWidth',3);
 xlabel('time [sec]'); ylabel('utility [sum of M.I.]');
+legend('Ground Station','Agent 2');
 title('Utility Profile');
 
 
 % entropy profile
 figure(4)
 [timePlanProfile,timeProfile] = meshgrid(1:planner(1).param.clock.nT,clock.hist.time);
-mesh(timePlanProfile,timeProfile,planner(1).hist.Hbefore');
+mesh(timePlanProfile,timeProfile,planner(2).hist.Hbefore');
+surface(timePlanProfile,timeProfile,planner(1).hist.Hbefore');
+xlabel('planned time [sec]'); ylabel('actual time [sec]'); zlabel('entropy');
+legend('particle-H[P(x_t|y_{k+1:t-1})]','particle-H[P(x_t|z_{k+1:t-1})]');
+view(3);
+title('Entropy of Prior Probability');
+
+% entropy profile
+figure(5)
+[timePlanProfile,timeProfile] = meshgrid(1:planner(2).param.clock.nT,clock.hist.time);
+mesh(timePlanProfile,timeProfile,planner(2).hist.Hafter');
 surface(timePlanProfile,timeProfile,planner(1).hist.Hafter');
 xlabel('planned time [sec]'); ylabel('actual time [sec]'); zlabel('entropy');
-legend('particle-H[P(x_t|y_{k+1:t-1})]','particle-H[P(x_t|y_{k+1:t})]');
+legend('particle-H[P(x_t|y_{k+1:t})]','particle-H[P(x_t|z_{k+1:t})]');
 view(3);
-title('Entropy Profile');
+title('Entropy of Posterior Probability');
 
