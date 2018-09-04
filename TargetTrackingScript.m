@@ -57,7 +57,7 @@ for iSim = 1:nSim
     
     %----------------------
     % clock structure
-    clock.nt = 50;
+    clock.nt = 5;
     clock.dt = 1;
     clock.hist.time = 0;
     %----------------------
@@ -65,21 +65,21 @@ for iSim = 1:nSim
     %----------------------
     % field structure
     field.boundary = [-500 500 -500 500];
-    field.length = [sim(iSim).field.boundary(2)-sim(iSim).field.boundary(1) sim(iSim).field.boundary(4)-sim(iSim).field.boundary(3)];
+    field.length = [field.boundary(2)-field.boundary(1) field.boundary(4)-field.boundary(3)];
     field.buffer = 50; % for particle initalization
-    sim(iSim).field.bufferZone = [sim(iSim).field.boundary(1)+sim(iSim).field.buffer sim(iSim).field.boundary(2)-sim(iSim).field.buffer...
-        sim(iSim).field.boundary(3)+sim(iSim).field.buffer sim(iSim).field.boundary(4)-sim(iSim).field.buffer];
-    sim(iSim).field.zoneLength = [sim(iSim).field.bufferZone(2)-sim(iSim).field.bufferZone(1) sim(iSim).field.bufferZone(4)-sim(iSim).field.bufferZone(3)];
+    field.bufferZone = [field.boundary(1)+field.buffer field.boundary(2)-field.buffer...
+        field.boundary(3)+field.buffer field.boundary(4)-field.buffer];
+    field.zoneLength = [field.bufferZone(2)-field.bufferZone(1) field.bufferZone(4)-field.bufferZone(3)];
     %----------------------
     
     %----------------------
     % target structure
-    sim(iSim).target.id = 1;
-    sim(iSim).target.x = [250 250]'; % x_pos, y_pos
-    sim(iSim).target.hist.x = sim(iSim).target.x;
-    sim(iSim).target.nState = length(sim(iSim).target.x);
-    sim(iSim).target.param.F = eye(length(sim(iSim).target.x));
-    sim(iSim).target.param.Q = zeros(sim(iSim).target.nState); % certainly ideal
+    target.id = 1;
+    target.x = [250 250]'; % x_pos, y_pos
+    target.hist.x = target.x;
+    target.nState = length(target.x);
+    target.param.F = eye(length(target.x));
+    target.param.Q = zeros(target.nState); % certainly ideal
     %----------------------
     
     %----------------------
@@ -87,56 +87,56 @@ for iSim = 1:nSim
     
     % specific setting
     if sim(iSim).flagScene == 0
-        sim(iSim).agent(1).id = 1;
-        sim(iSim).agent(1).s = [-100 -100 rand()*2*pi 0]';
-        sim(iSim).agent(1).hist.s = sim(iSim).agent(1).s;
+        agent(1).id = 1;
+        agent(1).s = [-100 -100 rand()*2*pi 0]';
+        agent(1).hist.s = agent(1).s;
     else
-        sim(iSim).agent(1).id = 1;
-        sim(iSim).agent(1).s = [-100 -100 rand()*2*pi 15]';
-        sim(iSim).agent(1).hist.s = sim(iSim).agent(1).s;
+        agent(1).id = 1;
+        agent(1).s = [-100 -100 rand()*2*pi 15]';
+        agent(1).hist.s = agent(1).s;
     end
-    sim(iSim).agent(2).id = 2;
-    sim(iSim).agent(2).s = [250 150 0*2*pi 15]'; % target tracking setting
-    sim(iSim).agent(2).hist.s = sim(iSim).agent(2).s;
+    agent(2).id = 2;
+    agent(2).s = [250 150 0*2*pi 15]'; % target tracking setting
+    agent(2).hist.s = agent(2).s;
     %----------------------
     
     %----------------------
     % sensor structure
     for iSensor = 1:sim(iSim).nAgent
-        sim(iSim).sensor(iSensor).id = iSensor;
-        sim(iSim).sensor(iSensor).y = nan;
-        sim(iSim).sensor(iSensor).hist.y(:,1) = sim(iSim).sensor(iSensor).y;
-        sim(iSim).sensor(iSensor).param.regionRadius = 300; % sensing region radius
-        sim(iSim).sensor(iSensor).param.detectBeta = 0.9; % bernoulli detection parameter
+        sensor(iSensor).id = iSensor;
+        sensor(iSensor).y = nan;
+        sensor(iSensor).hist.y(:,1) = sensor(iSensor).y;
+        sensor(iSensor).param.regionRadius = 300; % sensing region radius
+        sensor(iSensor).param.detectBeta = 0.9; % bernoulli detection parameter
     end
     %----------------------
     
     %----------------------
     % communicaiton structure
     for iComm = 1:sim(iSim).nAgent
-        sim(iSim).comm(iComm).id = iComm;
-        sim(iSim).comm(iComm).beta = nan(sim(iSim).nAgent,1);
-        sim(iSim).comm(iComm).bConnect = nan(sim(iSim).nAgent,1);
-        sim(iSim).comm(iComm).hist.beta(:,1) = sim(iSim).comm(iComm).beta; % for all agent and agent itself
-        sim(iSim).comm(iComm).hist.bConnect(:,1) = sim(iSim).comm(iComm).bConnect; % for all agent and agent itself
+        comm(iComm).id = iComm;
+        comm(iComm).beta = nan(sim(iSim).nAgent,1);
+        comm(iComm).bConnect = nan(sim(iSim).nAgent,1);
+        comm(iComm).hist.beta(:,1) = comm(iComm).beta; % for all agent and agent itself
+        comm(iComm).hist.bConnect(:,1) = comm(iComm).bConnect; % for all agent and agent itself
     end
     %----------------------
     
     %----------------------
     % filter structure (Particle Filter)
     for iPF = 1:sim(iSim).nAgent
-        sim(iSim).PF(iPF).id = iPF;
-        sim(iSim).PF(iPF).nPt = 100;
-        sim(iSim).PF(iPF).w = ones(1,sim(iSim).PF(iPF).nPt)./sim(iSim).PF(iPF).nPt;
-        for iPt = 1 : sim(iSim).PF(iPF).nPt
-            sim(iSim).PF(iPF).pt(:,iPt) = ...
-                [sim(iSim).field.bufferZone(1)+rand()*sim(iSim).field.zoneLength(1) sim(iSim).field.bufferZone(3)+rand()*sim(iSim).field.zoneLength(2)]';
+        PF(iPF).id = iPF;
+        PF(iPF).nPt = 100;
+        PF(iPF).w = ones(1,PF(iPF).nPt)./PF(iPF).nPt;
+        for iPt = 1 : PF(iPF).nPt
+            PF(iPF).pt(:,iPt) = ...
+                [field.bufferZone(1)+rand()*field.zoneLength(1) field.bufferZone(3)+rand()*field.zoneLength(2)]';
         end
-        sim(iSim).PF(iPF).hist.pt = sim(iSim).PF(iPF).pt;
-        sim(iSim).PF(iPF).param.F = sim(iSim).target.param.F; % assume target is stationary in PF
-        sim(iSim).PF(iPF).param.Q = diag([40^2,40^2]);
-        sim(iSim).PF(iPF).param.field = sim(iSim).field;
-        sim(iSim).PF(iPF).nState = sim(iSim).target.nState;
+        PF(iPF).hist.pt = PF(iPF).pt;
+        PF(iPF).param.F = target.param.F; % assume target is stationary in PF
+        PF(iPF).param.Q = diag([40^2,40^2]);
+        PF(iPF).param.field = field;
+        PF(iPF).nState = target.nState;
     end
     %----------------------
     
@@ -145,70 +145,70 @@ for iSim = 1:nSim
     
     for iPlanner = 1:sim(iSim).nAgent
         
-        sim(iSim).planner(iPlanner).id = iPlanner;
+        planner(iPlanner).id = iPlanner;
         
-        sim(iSim).planner(iPlanner).param.clock.dt = 3; % planning time-step horizon
-        sim(iSim).planner(iPlanner).param.clock.nT = 3; % planning horizon
-        sim(iSim).planner(iPlanner).param.sA = 1; % sampled action
+        planner(iPlanner).param.clock.dt = 3; % planning time-step horizon
+        planner(iPlanner).param.clock.nT = 3; % planning horizon
+        planner(iPlanner).param.sA = 1; % sampled action
         
         % action profile setting
         % scenario #1: Agent 1 is statationary
         if sim(iSim).flagScene == 0
             if iPlanner == 1
-                [sim(iSim).planner(iPlanner).action,sim(iSim).planner(iPlanner).actionNum,sim(iSim).planner(iPlanner).actionSetNum,sim(iSim).planner(iPlanner).actionSet] = ...
-                    GenerateOutcomeProfile(0,sim(iSim).planner(iPlanner).param.clock.nT);
+                [planner(iPlanner).action,planner(iPlanner).actionNum,planner(iPlanner).actionSetNum,planner(iPlanner).actionSet] = ...
+                    GenerateOutcomeProfile(0,planner(iPlanner).param.clock.nT);
             else
-                [sim(iSim).planner(iPlanner).action,sim(iSim).planner(iPlanner).actionNum,sim(iSim).planner(iPlanner).actionSetNum,sim(iSim).planner(iPlanner).actionSet] = ...
-                    GenerateOutcomeProfile(8*D2R,sim(iSim).planner(iPlanner).param.clock.nT);
+                [planner(iPlanner).action,planner(iPlanner).actionNum,planner(iPlanner).actionSetNum,planner(iPlanner).actionSet] = ...
+                    GenerateOutcomeProfile(8*D2R,planner(iPlanner).param.clock.nT);
             end
             % scenario #2: Agent 1 is mobile
         else
-            [sim(iSim).planner(iPlanner).action,sim(iSim).planner(iPlanner).actionNum,sim(iSim).planner(iPlanner).actionSetNum,sim(iSim).planner(iPlanner).actionSet] = ...
-                GenerateOutcomeProfile(8*D2R,sim(iSim).planner(iPlanner).param.clock.nT);
+            [planner(iPlanner).action,planner(iPlanner).actionNum,planner(iPlanner).actionSetNum,planner(iPlanner).actionSet] = ...
+                GenerateOutcomeProfile(8*D2R,planner(iPlanner).param.clock.nT);
         end
         
         % measurement profile setting
-        [sim(iSim).planner(iPlanner).meas,sim(iSim).planner(iPlanner).measNum,sim(iSim).planner(iPlanner).measSetNum,sim(iSim).planner(iPlanner).measSet] = ...
-            GenerateOutcomeProfile([0 1],sim(iSim).planner(iPlanner).param.clock.nT);
+        [planner(iPlanner).meas,planner(iPlanner).measNum,planner(iPlanner).measSetNum,planner(iPlanner).measSet] = ...
+            GenerateOutcomeProfile([0 1],planner(iPlanner).param.clock.nT);
         
         % communication profile setting
-        [sim(iSim).planner(iPlanner).comm,sim(iSim).planner(iPlanner).commNum,sim(iSim).planner(iPlanner).commSetNum,sim(iSim).planner(iPlanner).commSet] = ...
-            GenerateOutcomeProfile([0 1],sim(iSim).planner(iPlanner).param.clock.nT);
+        [planner(iPlanner).comm,planner(iPlanner).commNum,planner(iPlanner).commSetNum,planner(iPlanner).commSet] = ...
+            GenerateOutcomeProfile([0 1],planner(iPlanner).param.clock.nT);
         
         
-        sim(iSim).planner(iPlanner).nPt = sim(iSim).PF(iPlanner).nPt;
-        sim(iSim).planner(iPlanner).pt = sim(iSim).PF(iPlanner).pt;
-        sim(iSim).planner(iPlanner).w = sim(iSim).PF(iPlanner).w;
-        sim(iSim).planner(iPlanner).nState = sim(iSim).PF(iPlanner).nState;
+        planner(iPlanner).nPt = PF(iPlanner).nPt;
+        planner(iPlanner).pt = PF(iPlanner).pt;
+        planner(iPlanner).w = PF(iPlanner).w;
+        planner(iPlanner).nState = PF(iPlanner).nState;
         
-        sim(iSim).planner(iPlanner).input = nan(sim(iSim).planner(iPlanner).param.clock.nT,1);
-        sim(iSim).planner(iPlanner).actIdx = nan;
-        sim(iSim).planner(iPlanner).hist.input = sim(iSim).planner(iPlanner).input;
-        sim(iSim).planner(iPlanner).hist.actIdx = sim(iSim).planner(iPlanner).actIdx;
+        planner(iPlanner).input = nan(planner(iPlanner).param.clock.nT,1);
+        planner(iPlanner).actIdx = nan;
+        planner(iPlanner).hist.input = planner(iPlanner).input;
+        planner(iPlanner).hist.actIdx = planner(iPlanner).actIdx;
         
-        sim(iSim).planner(iPlanner).I = nan;
-        sim(iSim).planner(iPlanner).hist.I = sim(iSim).planner(iPlanner).I;
-        sim(iSim).planner(iPlanner).hist.Hbefore = nan(sim(iSim).planner(iPlanner).param.clock.nT,1);
-        sim(iSim).planner(iPlanner).hist.Hafter = nan(sim(iSim).planner(iPlanner).param.clock.nT,1);
+        planner(iPlanner).I = nan;
+        planner(iPlanner).hist.I = planner(iPlanner).I;
+        planner(iPlanner).hist.Hbefore = nan(planner(iPlanner).param.clock.nT,1);
+        planner(iPlanner).hist.Hafter = nan(planner(iPlanner).param.clock.nT,1);
         
-        sim(iSim).planner(iPlanner).param.pdf.dRefPt = 50;
-        [sim(iSim).planner(iPlanner).param.pdf.refPt(:,:,1), sim(iSim).planner(iPlanner).param.pdf.refPt(:,:,2)] = ...
-            meshgrid(sim(iSim).field.boundary(1):sim(iSim).planner(iPlanner).param.pdf.dRefPt:sim(iSim).field.boundary(2),...
-                     sim(iSim).field.boundary(3):sim(iSim).planner(iPlanner).param.pdf.dRefPt:sim(iSim).field.boundary(4));
+        planner(iPlanner).param.pdf.dRefPt = 50;
+        [planner(iPlanner).param.pdf.refPt(:,:,1), planner(iPlanner).param.pdf.refPt(:,:,2)] = ...
+            meshgrid(field.boundary(1):planner(iPlanner).param.pdf.dRefPt:field.boundary(2),...
+                     field.boundary(3):planner(iPlanner).param.pdf.dRefPt:field.boundary(4));
         
-        sim(iSim).planner(iPlanner).param.plot.row = sim(iSim).planner(iPlanner).param.clock.nT;
-        sim(iSim).planner(iPlanner).param.plot.col = 2;
+        planner(iPlanner).param.plot.row = planner(iPlanner).param.clock.nT;
+        planner(iPlanner).param.plot.col = 2;
         
-        sim(iSim).planner(iPlanner).param.F = sim(iSim).target.param.F;
-        sim(iSim).planner(iPlanner).param.Q = sim(iSim).target.param.Q;
-        sim(iSim).planner(iPlanner).param.sensor.regionRadius = sim(iSim).sensor(iPlanner).param.regionRadius;
-        sim(iSim).planner(iPlanner).param.sensor.detectBeta = sim(iSim).sensor(iPlanner).param.detectBeta;
+        planner(iPlanner).param.F = target.param.F;
+        planner(iPlanner).param.Q = PF(iPlanner).param.Q;
+        planner(iPlanner).param.sensor.regionRadius = sensor(iPlanner).param.regionRadius;
+        planner(iPlanner).param.sensor.detectBeta = sensor(iPlanner).param.detectBeta;
         
-        sim(iSim).planner(iPlanner).param.field = sim(iSim).field;
+        planner(iPlanner).param.field = field;
         
         % agent state is used for communication awareness
-        for iAgent = 1:sim.nAgent
-            sim(iSim).planner(iPlanner).agent(iAgent).s = sim(iSim).agent(iAgent).s;
+        for iAgent = 1:sim(iSim).nAgent
+            planner(iPlanner).agent(iAgent).s = agent(iAgent).s;
         end
     end
     %----------------------
@@ -233,21 +233,21 @@ for iSim = 1:nSim
         % distributed scheme to each agent:
         % COMPUTED INFORMATION IS DIFFERENT WITH RESPECT TO AGENT
         for iAgent = 1:sim(iSim).nAgent
-            sActNumSet = nan(1,sim(iSim).planner(1).param.sA);
-            for iSample = 1 : sim(iSim).planner(1).param.sA
+            sActNumSet = nan(1,planner(1).param.sA);
+            for iSample = 1 : planner(1).param.sA
                 
                 % sample among action profile: depends on whether the simulation
                 % uses optimization
                 if sim(iSim).flagDM == 0
                     sActNum = 1;
                 else
-                    bRealInput = ones(1,sim(iSim).nAgent);
+                    bRealInput = ones(1,nAgent);
                     % check whether decision has feasibility in terms of
                     % geofence
                     while (bRealInput)
-                        sActNum = 1+floor(rand(1)*sim(iSim).planner(iAgent).actionSetNum);
-                        state = UpdateAgentState(sim(iSim).agent(iAgent).s,sim(iSim).planner(iAgent).actionSet(1,sActNum(iAgent,1)),clock.dt);
-                        if (state(1) <= sim(iSim).field.bufferZone(1) || state(1) >= sim(iSim).field.bufferZone(2)) ...
+                        sActNum = 1+floor(rand(1)*planner(iAgent).actionSetNum);
+                        state = UpdateAgentState(agent(iAgent).s,planner(iAgent).actionSet(1,sActNum(iAgent,1)),clock.dt);
+                        if (state(1) <= field.bufferZone(1) || state(1) >= field.bufferZone(2)) ...
                                 || (state(2) <= field.bufferZone(3) || state(2) >= field.bufferZone(4)) % out of geofence
                             bRealInput(iAgent) = 0;
                         end
