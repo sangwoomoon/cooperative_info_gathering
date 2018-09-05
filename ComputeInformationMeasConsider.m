@@ -6,7 +6,7 @@
 % the code is only applicable in 2 agents scenario, where agent 1 receives
 % information from agent 2 which is dependent to the communication status
 %-----------------------------------
-function [Hbefore,Hafter,I] = ComputeInformationMeasConsider(planner,agent,field,clock,sim,sActNum,iClock,id)
+function [Hbefore,Hafter,I] = ComputeInformationMeasConsider(planner,agent,field,clock,bPdfDisp,sActNum,iClock,id)
 
 nMeasSet = length(planner.measSet(1,:));
 nCommSet = length(planner.commSet(1,:));
@@ -21,7 +21,7 @@ for iMeas = 1:nMeasSet
     for iComm = 1:nCommSet
         
         [HbeforeElement,HafterElement,Ielement] = ...
-            ComputeInformationSinleMeasCommSet(planner,agent,field,clock,sim,sActNum,iClock,iMeas,iComm,id);
+            ComputeInformationSinleMeasCommSet(planner,agent,field,clock,bPdfDisp,sActNum,iClock,iMeas,iComm,id);
         
         I = I + Ielement;
         Hbefore = Hbefore + HbeforeElement;
@@ -40,7 +40,7 @@ Hafter = Hafter/nPossibleEvents;
 end
 
 
-function [Hbefore,Hafter,I] = ComputeInformationSinleMeasCommSet(planner,agent,field,clock,sim,sActNum,iClock,iMeas,iComm,id)
+function [Hbefore,Hafter,I] = ComputeInformationSinleMeasCommSet(planner,agent,field,clock,bPdfDisp,sActNum,iClock,iMeas,iComm,id)
 
 nAgent = length(agent);
 
@@ -83,7 +83,7 @@ for iPlan = 1:clock.nT
     % HERE IS THE MAJOR DIFFERENCE BY CONSIDERING COMMUNICATION
     % AWARENESS
     % IF SEQUENCE IS ONLY USEFUL FOR ACC2019!
-    [likelihoodPdf,measUpdatePdf] = ...
+    [~,measUpdatePdf] = ...
         ComputeCommAwareMeasUpdatePDF(targetUpdatePdf,agent,planner.y,planner.z,planner.param.agent,planner.param.sensor,planner.param.pdf,planner.nState,id);
     
     % Entropy computation: H(X_k|Z_k):
@@ -92,7 +92,7 @@ for iPlan = 1:clock.nT
     
     %-- Plot:: before resampling -----------
     % Plot P(X_k|y_{k-1}) if needed
-    if sim.flagDisp.before == 1
+    if bPdfDisp.before == 1
         figure(iClock+10+iMeas),subplot(planner.param.plot.row,planner.param.plot.col,2*(iPlan-1)+1),
         PlotPDF(targetUpdatePdf,planner.pt,planner.param.pdf);
         if iPlan == 1
@@ -102,7 +102,7 @@ for iPlan = 1:clock.nT
     end
     
     % Plot P(X_k|y_k) if needed
-    if sim.flagDisp.after == 1
+    if bPdfDisp.after == 1
         figure(iClock+10+iMeas),subplot(planner.param.plot.row,planner.param.plot.col,2*iPlan),
         PlotPDF(measUpdatePdf,planner.pt,planner.param.pdf);
         ylabel(['y_t =',num2str(planner.y)],'fontsize',12);

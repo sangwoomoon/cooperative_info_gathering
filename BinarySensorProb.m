@@ -12,7 +12,7 @@ nAgent = length(y);
 
 prob = 1;
 
-for iAgent = 1:nAgent
+for iAgent = 2:nAgent % FOR ACC 2019
     
     if y(iAgent) == 1 % when sensor does detect
         if IsInCircleBasedRegion(targetPos,paramAgent(iAgent).s,paramSensor.regionRadius)
