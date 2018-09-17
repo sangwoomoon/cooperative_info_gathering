@@ -10,9 +10,11 @@
 % Y(t)   ~ P_se(Y(t)|X(t);s(t))
 %
 % - coded by Sangwoo Moon
-% - Created: 4/3/2018
+% - Created:      4/ 3/2018
 % - 1st revision: 4/18/2018
 % - 2nd revision: 6/25/2018
+% - 3rd revision: 9/ 5/2018
+%
 %   X(t+1) = X(t) + W                               : 2D-static Linear Gaussian
 %   Y(t) = {0,1} with respect to Sensing Region     : 2D on the ground, circle region for target detection
 %   s(t+1) = f(s(t),u(t))                           : u(t) = [0 -omega +omega]
@@ -25,7 +27,7 @@ format compact;
 hold on;
 
 D2R = pi/180;
-nSim = 100; % for Monte-Carlo approach
+nSim = 1; % for Monte-Carlo approach
 
 
 for iSim = 1:nSim
@@ -39,7 +41,7 @@ for iSim = 1:nSim
     sim(iSim).nAgent = 2;
     sim(iSim).nTarget = 1;
     
-    sim(iSim).flagScene = 1; % 0: stationary ground station | 1: moving ground station
+    sim(iSim).flagScene = 0; % 0: stationary ground station | 1: moving ground station
     sim(iSim).flagInfoCom = 1; % 0: Ryan's approach | 1: Our approach(consider all measurements)
     sim(iSim).flagDM = 0; % 0: determined decisions | 1: DM enabled
     sim(iSim).flagPDF = 0; % 0: no PDF draw | 1: PDF draw
@@ -52,7 +54,7 @@ for iSim = 1:nSim
         sim(iSim).flagDisp.after = 1;
     end
     
-    sim(iSim).param.plot.dClock = 15; % interval of snapshot
+    sim(iSim).param.plot.dClock = 10; % interval of snapshot of particle evolution plotting
     %----------------------
     
     %----------------------
@@ -64,7 +66,7 @@ for iSim = 1:nSim
     
     %----------------------
     % field structure
-    sim(iSim).field.boundary = [-500 500 -500 500];
+    sim(iSim).field.boundary = [-300 300 -300 300];
     sim(iSim).field.length = [sim(iSim).field.boundary(2)-sim(iSim).field.boundary(1) sim(iSim).field.boundary(4)-sim(iSim).field.boundary(3)];
     sim(iSim).field.buffer = 50; % for particle initalization
     sim(iSim).field.bufferZone = [sim(iSim).field.boundary(1)+sim(iSim).field.buffer sim(iSim).field.boundary(2)-sim(iSim).field.buffer...
@@ -75,7 +77,7 @@ for iSim = 1:nSim
     %----------------------
     % target structure
     sim(iSim).target.id = 1;
-    sim(iSim).target.x = [250 250]'; % x_pos, y_pos
+    sim(iSim).target.x = [150 150]'; % x_pos, y_pos
     sim(iSim).target.hist.x = sim(iSim).target.x;
     sim(iSim).target.nState = length(sim(iSim).target.x);
     sim(iSim).target.param.F = eye(length(sim(iSim).target.x));
@@ -88,15 +90,15 @@ for iSim = 1:nSim
     % specific setting
     if sim(iSim).flagScene == 0
         sim(iSim).agent(1).id = 1;
-        sim(iSim).agent(1).s = [-300 -300 rand()*D2R 0]';
+        sim(iSim).agent(1).s = [-150 -150 rand()*D2R 0]';
         sim(iSim).agent(1).hist.s = sim(iSim).agent(1).s;
     else
         sim(iSim).agent(1).id = 1;
-        sim(iSim).agent(1).s = [-300 -300 45*D2R 0]';
+        sim(iSim).agent(1).s = [-150 -150 45*D2R 20]';
         sim(iSim).agent(1).hist.s = sim(iSim).agent(1).s;
     end
     sim(iSim).agent(2).id = 2;
-    sim(iSim).agent(2).s = [250 150 0*2*pi 15]'; % target tracking setting
+    sim(iSim).agent(2).s = [150 100 0*2*pi 13]'; % target tracking setting
     sim(iSim).agent(2).hist.s = sim(iSim).agent(2).s;
     %----------------------
     
@@ -128,13 +130,17 @@ for iSim = 1:nSim
         sim(iSim).PF(iPF).id = iPF;
         sim(iSim).PF(iPF).nPt = 100;
         sim(iSim).PF(iPF).w = ones(1,sim(iSim).PF(iPF).nPt)./sim(iSim).PF(iPF).nPt;
-        for iPt = 1 : sim(iSim).PF(iPF).nPt
-            sim(iSim).PF(iPF).pt(:,iPt) = ...
-                [sim(iSim).field.bufferZone(1)+rand()*sim(iSim).field.zoneLength(1) sim(iSim).field.bufferZone(3)+rand()*sim(iSim).field.zoneLength(2)]';
+        if iPF == 1
+            for iPt = 1 : sim(iSim).PF(iPF).nPt
+                sim(iSim).PF(iPF).pt(:,iPt) = ...
+                    [sim(iSim).field.bufferZone(1)+rand()*sim(iSim).field.zoneLength(1) sim(iSim).field.bufferZone(3)+rand()*sim(iSim).field.zoneLength(2)]';
+            end
+        else
+            sim(iSim).PF(iPF).pt = sim(iSim).PF(1).pt; % in order to make the same initial condition
         end
         sim(iSim).PF(iPF).hist.pt = sim(iSim).PF(iPF).pt;
         sim(iSim).PF(iPF).param.F = sim(iSim).target.param.F; % assume target is stationary in PF
-        sim(iSim).PF(iPF).param.Q = diag([40^2,40^2]);
+        sim(iSim).PF(iPF).param.Q = diag([20^2,20^2]);
         sim(iSim).PF(iPF).param.field = sim(iSim).field;
         sim(iSim).PF(iPF).nState = sim(iSim).target.nState;
     end
@@ -157,7 +163,7 @@ for iSim = 1:nSim
                 GenerateOutcomeProfile(0,sim(iSim).planner(iPlanner).param.clock.nT);
         else
             [sim(iSim).planner(iPlanner).action,sim(iSim).planner(iPlanner).actionNum,sim(iSim).planner(iPlanner).actionSetNum,sim(iSim).planner(iPlanner).actionSet] = ...
-                GenerateOutcomeProfile(8*D2R,sim(iSim).planner(iPlanner).param.clock.nT);
+                GenerateOutcomeProfile(12*D2R,sim(iSim).planner(iPlanner).param.clock.nT);
         end
         
         % measurement profile setting
@@ -208,6 +214,12 @@ for iSim = 1:nSim
         for iAgent = 1:sim(iSim).nAgent
             sim(iSim).planner(iPlanner).agent(iAgent).s = sim(iSim).agent(iAgent).s;
         end
+        
+        % FOR PF PART: entropy computation since it uses planner parameters
+        % compute entropy at the initial time step
+        targetUpdatePdf = ComputePDFMixture(sim(iSim).PF(iPlanner).pt,sim(iSim).PF(iPlanner).w,sim(iSim).planner(iPlanner).param,'Gaussian');
+        sim(iSim).PF(iPlanner).H = ComputeEntropy(targetUpdatePdf,sim(iSim).planner(iPlanner).param.pdf.dRefPt,'moon');
+        sim(iSim).PF(iPlanner).hist.H(:,1) = sim(iSim).PF(iPlanner).H;
     end
     %----------------------
     
@@ -298,6 +310,7 @@ for iSim = 1:nSim
         sim(iSim).target.hist.x(:,iClock+1) = sim(iSim).target.x;
         
         % take measurement: ONLY AGENT 2 TAKES MEASUREMENT IN THIS SCENARIO
+        sim(iSim).sensor(1).hist.y = nan;
         for iSensor = 2:sim(iSim).nAgent
             sim(iSim).sensor(iSensor).y = TakeMeasurement(sim(iSim).target.x,sim(iSim).agent(iSensor).s,sim(iSim).sensor(iSensor).param);
             sim(iSim).sensor(iSensor).hist.y(:,iClock+1) = sim(iSim).sensor(iSensor).y;
@@ -331,6 +344,7 @@ for iSim = 1:nSim
             % particle filter info update/store
             sim(iSim).PF(iPF).xhat = (sim(iSim).PF(iPF).w*sim(iSim).PF(iPF).pt')';
             sim(iSim).PF(iPF).hist.pt(:,:,iClock+1) = sim(iSim).PF(iPF).pt;
+            sim(iSim).PF(iPF).hist.w(:,:,iClock+1) = sim(iSim).PF(iPF).w;
             sim(iSim).PF(iPF).hist.xhat(:,iClock+1) = sim(iSim).PF(iPF).xhat;
             
             % update planner initial info
@@ -351,6 +365,11 @@ for iSim = 1:nSim
             for iAgent = 1:sim(iSim).nAgent
                 sim(iSim).agent(iAgent).vel = sim(iSim).planner(iAgent).input(1);
             end
+            
+            % compute entropy for comparison
+            targetUpdatePdf = ComputePDFMixture(sim(iSim).PF(iPF).pt,sim(iSim).PF(iPF).w,sim(iSim).planner(iPF).param,'Gaussian');
+            sim(iSim).PF(iPF).H = ComputeEntropy(targetUpdatePdf,sim(iSim).planner(iPF).param.pdf.dRefPt,'moon');
+            sim(iSim).PF(iPF).hist.H(:,iClock+1) = sim(iSim).PF(iPF).H;
         end
         
         % clock update
@@ -411,12 +430,16 @@ axis equal; axis(sim(rSim).field.boundary);
 
 % snapshots and particles
 figure(2)
-nSnapshot = floor(sim(rSim).clock.nt/sim(rSim).param.plot.dClock)+2; % initial, during(dClock/each), final
+if rem(sim(rSim).clock.nt,sim(rSim).param.plot.dClock) == 0
+    nSnapshot = floor(sim(rSim).clock.nt/sim(rSim).param.plot.dClock)+1; % initial, during(dClock/each)-1, final
+else
+    nSnapshot = floor(sim(rSim).clock.nt/sim(rSim).param.plot.dClock)+2; % initial, during(dClock/each), final
+end
 nCol = 3;
 nRow = ceil(nSnapshot/nCol);
 
-clr = [0 1 0; 0 0 1; 0 1 1];
-ptClr = [0 0.5 0; 0 0 0.5];
+clr = [1 0 0; 0 0 1; 1 1 0];
+ptClr = [1 0 0; 0 0 1; 1 1 0];
 
 for iSnapshot = 1:nSnapshot
     subplot(nRow,nCol,iSnapshot)
@@ -429,34 +452,35 @@ for iSnapshot = 1:nSnapshot
     end
     
     % target position
-    for iTarget = 1:sim(iSim).nTarget
-        plot(sim(rSim).target(iTarget).hist.x(1,1:SnapTime),sim(rSim).target(iTarget).hist.x(2,1:SnapTime),'r-','LineWidth',2); hold on;
-        plot(sim(rSim).target(iTarget).hist.x(1,1),sim(rSim).target(iTarget).hist.x(2,1),'ro','LineWidth',2); hold on;
-        plot(sim(rSim).target(iTarget).hist.x(1,SnapTime),sim(rSim).target(iTarget).hist.x(2,SnapTime),'rx','LineWidth',2); hold on;
+    for iTarget = 1:sim(iSim).nTarget % marked as green
+        plot(sim(rSim).target(iTarget).hist.x(1,1:SnapTime),sim(rSim).target(iTarget).hist.x(2,1:SnapTime),'g-','LineWidth',2); hold on;
+        plot(sim(rSim).target(iTarget).hist.x(1,1),sim(rSim).target(iTarget).hist.x(2,1),'go','LineWidth',2); hold on;
+        plot(sim(rSim).target(iTarget).hist.x(1,SnapTime),sim(rSim).target(iTarget).hist.x(2,SnapTime),'gx','LineWidth',2); hold on;
     end
     
     % agent position
     for iAgent = 1:sim(iSim).nAgent
         plot(sim(rSim).agent(iAgent).hist.s(1,1:SnapTime),sim(rSim).agent(iAgent).hist.s(2,1:SnapTime),'-','LineWidth',2,'color',clr(iAgent,:)); hold on;
         plot(sim(rSim).agent(iAgent).hist.s(1,1),sim(rSim).agent(iAgent).hist.s(2,1),'o','LineWidth',2,'color',clr(iAgent,:)); hold on;
-        plot(sim(rSim).agent(iAgent).hist.s(1,SnapTime),sim(rSim).agent(iAgent).hist.s(2,SnapTime),'*','LineWidth',2,'color',clr(iAgent,:)); hold on;
+        plot(sim(rSim).agent(iAgent).hist.s(1,SnapTime),sim(rSim).agent(iAgent).hist.s(2,SnapTime),'x','LineWidth',2,'color',clr(iAgent,:)); hold on;
         
         % particle plotting
-        plot(squeeze(sim(rSim).PF(iAgent).hist.pt(1,:,SnapTime)),squeeze(sim(rSim).PF(iAgent).hist.pt(2,:,SnapTime)),'x','LineWidth',2,'color',ptClr(iAgent,:)); hold on;
+        plot(squeeze(sim(rSim).PF(iAgent).hist.pt(1,:,SnapTime)),squeeze(sim(rSim).PF(iAgent).hist.pt(2,:,SnapTime)),'.','LineWidth',2,'color',ptClr(iAgent,:)); hold on;
     end
     
     axis equal; axis(sim(rSim).field.boundary);
-    xlabel(['t =',num2str((SnapTime-1)*sim(rSim).clock.dt),' sec'],'fontsize',12);
+    xlabel(['k = ',num2str((SnapTime-1)*sim(rSim).clock.dt),' sec'],'fontsize',12);
 end
 
 
 % utility profile
 figure(3)
-plot(sim(rSim).clock.hist.time,sim(rSim).planner(1).hist.I,'b-','LineWidth',3); hold on;
-plot(sim(rSim).clock.hist.time,sim(rSim).planner(2).hist.I,'r-','LineWidth',3);
-xlabel('time [sec]'); ylabel('utility [sum of M.I.]');
-legend('Ground Station','Agent 2');
-title('Utility Profile');
+for iAgent = 1:sim(iSim).nAgent
+    plot(sim(rSim).clock.hist.time,sim(rSim).planner(iAgent).hist.I,'color',clr(iAgent,:),'LineWidth',3); hold on;
+end
+xlabel('time [sec]'); ylabel('\Sigma_{t=k+1}^{k+T} I(X_t;{^iZ_t}|{^iZ_{k+1:t}})');
+legend('Imperfect communication','Perfect communication');
+% title('Utility Profile');
 
 
 % utility profile: with respect to single M.I.
@@ -465,7 +489,7 @@ figure(4)
 mesh(timePlanProfile,timeProfile,sim(rSim).planner(2).hist.Hbefore'-sim(rSim).planner(2).hist.Hafter');
 surface(timePlanProfile,timeProfile,sim(rSim).planner(1).hist.Hbefore'-sim(rSim).planner(1).hist.Hafter');
 xlabel('planned time [sec]'); ylabel('actual time [sec]'); zlabel('mutual information');
-legend('particle-I(x_t;y_t)','particle-I(x_t;z_t)]');
+legend('particle-I(x_t;y_t)','particle-I(x_t;z_t)');
 title('Mutual Information Profile');
 
 
@@ -475,7 +499,7 @@ figure(5)
 mesh(timePlanProfile,timeProfile,sim(rSim).planner(2).hist.Hbefore');
 surface(timePlanProfile,timeProfile,sim(rSim).planner(1).hist.Hbefore');
 xlabel('planned time [sec]'); ylabel('actual time [sec]'); zlabel('entropy');
-legend('particle-H[P(x_t|y_{k+1:t-1})]','particle-H[P(x_t|z_{k+1:t-1})]');
+legend('H[P(x_t|y_{k+1:t-1})]','H[P(x_t|z_{k+1:t-1})]');
 view(3);
 title('Entropy of Prior Probability');
 
@@ -486,9 +510,33 @@ figure(6)
 mesh(timePlanProfile,timeProfile,sim(rSim).planner(2).hist.Hafter');
 surface(timePlanProfile,timeProfile,sim(rSim).planner(1).hist.Hafter');
 xlabel('planned time [sec]'); ylabel('actual time [sec]'); zlabel('entropy');
-legend('particle-H[P(x_t|y_{k+1:t})]','particle-H[P(x_t|z_{k+1:t})]');
+legend('H[P(x_t|y_{k+1:t})]','H[P(x_t|z_{k+1:t})]');
 view(3);
 title('Entropy of Posterior Probability');
+
+
+% prior/posterior entropy variation w.r.t one actual time steps
+figure(7)
+[timePlanProfile,timeProfile] = meshgrid(reshape(repmat(1:sim(rSim).planner(2).param.clock.nT,2,1),1,[]),sim(rSim).clock.hist.time);
+for iClock = 1:sim(rSim).clock.nt+1
+    entropyProfileGS(iClock,1:2:2*numel(sim(rSim).planner(1).Hbefore)-1) = sim(rSim).planner(1).hist.Hbefore(:,iClock);
+    entropyProfileGS(iClock,2:2:2*numel(sim(rSim).planner(1).Hbefore)) = sim(rSim).planner(1).hist.Hafter(:,iClock);
+    
+    entropyProfilePerfectComm(iClock,1:2:2*numel(sim(rSim).planner(2).Hbefore)-1) = sim(rSim).planner(2).hist.Hbefore(:,iClock);
+    entropyProfilePerfectComm(iClock,2:2:2*numel(sim(rSim).planner(2).Hbefore)) = sim(rSim).planner(2).hist.Hafter(:,iClock);
+end
+mesh(timePlanProfile,timeProfile,entropyProfileGS);
+surface(timePlanProfile,timeProfile,entropyProfilePerfectComm);
+
+
+% entropy profile from real PF estimation
+figure(8)
+for iAgent = 1:sim(iSim).nAgent
+    plot(sim(rSim).clock.hist.time,sim(rSim).PF(iAgent).hist.H,'color',clr(iAgent,:),'LineWidth',3); hold on;
+end
+xlabel('time [sec]'); ylabel('Entropy [nats]');
+legend('Imperfect communication','Perfect communication');
+% title('Utility Profile');
 
 
 %%
@@ -496,15 +544,18 @@ title('Entropy of Posterior Probability');
 % Monte-Carlo based Information analysis
 %----------------------------
 
-Imc = nan(2,nSim);
-for iSim = 1:nSim
-    Imc(1,iSim) = sim(iSim).planner(1).Isum;
-    Imc(2,iSim) = sim(iSim).planner(2).Isum;
+if nSim > 1 % for multiple simulation results
+    Imc = nan(2,nSim);
+    for iSim = 1:nSim
+        Imc(1,iSim) = sim(iSim).planner(1).Isum;
+        Imc(2,iSim) = sim(iSim).planner(2).Isum;
+    end
+    
+    figure(101);
+    histogram(Imc(1,:)',40); hold on;
+    histogram(Imc(2,:)',40);
+    legend('GS: comm aware','Agent 2: perfect comm');
+    title('Information Distribution: 100 Sims');
+    xlabel('sum of M.I. w.r.t time steps','Fontsize',12);
+    ylabel('number of occurance','Fontsize',12);
 end
-
-figure(101);
-hist(Imc',30);
-legend('GS','Agent 2');
-title('Monte-Carlo Simulation Utility Distribution: 100 Sims');
-xlabel('Utility','Fontsize',12);
-ylabel('Number of Occurance','Fonesize',12);
