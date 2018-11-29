@@ -478,7 +478,7 @@ figure(3)
 for iAgent = 1:sim(iSim).nAgent
     plot(sim(rSim).clock.hist.time,sim(rSim).planner(iAgent).hist.I,'color',clr(iAgent,:),'LineWidth',3); hold on;
 end
-xlabel('time [sec]'); ylabel('\Sigma_{t=k+1}^{k+T} I(X_t;{^iZ_t}|{^iZ_{k+1:t}})');
+xlabel('time [sec]'); ylabel('\Sigma_{t=k+1}^{k+T} I(X_t;{^iZ_t}|{^iZ_{k+1:t}}), [nats]');
 legend('Imperfect communication','Perfect communication');
 % title('Utility Profile');
 
@@ -534,7 +534,7 @@ figure(8)
 for iAgent = 1:sim(iSim).nAgent
     plot(sim(rSim).clock.hist.time,sim(rSim).PF(iAgent).hist.H,'color',clr(iAgent,:),'LineWidth',3); hold on;
 end
-xlabel('time [sec]'); ylabel('Entropy [nats]');
+xlabel('time [sec]'); ylabel('entropy [nats]');
 legend('Imperfect communication','Perfect communication');
 % title('Utility Profile');
 
@@ -549,13 +549,20 @@ if nSim > 1 % for multiple simulation results
     for iSim = 1:nSim
         Imc(1,iSim) = sim(iSim).planner(1).Isum;
         Imc(2,iSim) = sim(iSim).planner(2).Isum;
+        ImcRatio(iSim) = Imc(1,iSim)/Imc(2,iSim);
     end
     
     figure(101);
-    histogram(Imc(1,:)',40); hold on;
-    histogram(Imc(2,:)',40);
-    legend('GS: comm aware','Agent 2: perfect comm');
-    title('Information Distribution: 100 Sims');
-    xlabel('sum of M.I. w.r.t time steps','Fontsize',12);
-    ylabel('number of occurance','Fontsize',12);
+    for iAgent=1:sim(1).nAgent
+    histogram(Imc(iAgent,:)',40,'FaceColor',clr(iAgent,:)); hold on;
+    end
+    legend('Imperfect communication','perfect communication');
+    % title('Information Distribution: 100 Sims');
+    xlabel('\Sigma_{k=1}^{20}\Sigma_{t=k+1}^{k+T} I(X_t;{^iZ_t}|{^iZ_{k+1:t-1}}), [nats]','Fontsize',12);
+    ylabel('frequency','Fontsize',12);
+    
+    figure(102);
+    histogram(ImcRatio,40);
+    xlabel('Mutual information ratio','Fontsize',12);
+    ylabel('frequency','Fontsize',12);
 end
