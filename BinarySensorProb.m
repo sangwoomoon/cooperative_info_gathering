@@ -18,11 +18,11 @@ for iAgent = 1:nAgent
         if IsInCircleBasedRegion(targetPos,paramAgent(iAgent).s,paramSensor.regionRadius)
             prob = prob*paramSensor.detectBeta;
         else
-            prob = prob*(1-paramSensor.detectBeta);
+            prob = prob*0;
         end
     else % when sensor does not detect
         if IsInCircleBasedRegion(targetPos,paramAgent(iAgent).s,paramSensor.regionRadius)
-            prob = prob*0;
+            prob = prob*(1-paramSensor.detectBeta);
         else
             prob = prob*1;
         end

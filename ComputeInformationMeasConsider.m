@@ -39,7 +39,7 @@ element = 'agent';
     for iPlan = 1:clock.nT
         
         % take measurement from measurement set
-        planner.y = planner.measSet(iPlan,iMeas);
+        planner.y = ones(nAgent,1)*planner.measSet(iPlan,iMeas);
         
         % take initialization with respect to agent
         if iPlan > 1
