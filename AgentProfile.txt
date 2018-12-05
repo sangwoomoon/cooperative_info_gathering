@@ -38,7 +38,7 @@ MeasType    InertCart
 MeasObj     Target
 bTrack      [1]
 bias        []
-R           [0.55;0.85]
+R           [5.55;8.85]
 EstiType    KF
 bFusCenter  0
 FusType     CIWEP
@@ -53,7 +53,7 @@ MeasType    InertCart
 MeasObj     Target
 bTrack      [1]
 bias        []
-R           [0.55;0.85]
+R           [8.55;5.85]
 EstiType    KF
 bFusCenter  0
 FusType     CIWEP
