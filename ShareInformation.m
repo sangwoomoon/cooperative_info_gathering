@@ -13,9 +13,10 @@ function [commBeta,bConnect,agentStateSet,Z] = ShareInformation(agent,sensor,pla
 
 % 0. initialization
 nAgent = length(agent);
+nTarget = length(sensor(1,:));
 commBeta = nan(nAgent,1);
 bConnect = nan(nAgent,1);
-Z = nan(1,nAgent);
+Z = nan(nAgent,nTarget);
 agentStateSet = plannerAgent;
 
 for iAgent = 1:nAgent
@@ -27,7 +28,7 @@ for iAgent = 1:nAgent
     
     % 3. update information based on the outcome
     if bConnect(iAgent,1) == 1
-       Z(iAgent) = sensor(iAgent).y;
+       Z(iAgent,:) = sensor(iAgent,:).y;
        agentStateSet(iAgent).s = agent(iAgent).s;
     end
     

@@ -1,11 +1,10 @@
 %-----------------------------------
 % PF-based Mutual information Computation
-%
-% agent 1 solver that uses all agents' information
 %-----------------------------------
-function [Hbefore,Hafter,I] = ComputeInformation(planner,agent,field,clock,sim,sActNum,iClock)
+function [Hbefore,Hafter,I] = ComputeInformation(planner,agent,field,clock,sim,iAction,iClock)
 
 nAgent = length(agent);
+AgentID = planner.id;
 
 I = 0;
 Hbefore = nan(clock.nT,1);
@@ -27,9 +26,7 @@ for iPlan = 1:clock.nT
     Hbefore(iPlan,1) = ComputeEntropy(targetUpdatePdf,planner.param.pdf.dRefPt,'moon');
     
     % agent moving along with planner action
-    for iAgent = 1:sim.nAgent
-        agent(iAgent).s = UpdateAgentState(agent(iAgent).s,planner.actionSet(iPlan,sActNum(iAgent)),clock.dt);
-    end
+    agent(AgentID).s = UpdateAgentState(agent(AgentID).s,planner.actionSet(iPlan,iAction),clock.dt);
     
     % particle evolution using target dynamics
     planner.pt = UpdateParticle(planner.pt,planner.param,clock.dt);
