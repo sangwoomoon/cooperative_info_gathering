@@ -8,15 +8,15 @@ nAgent = length(agentParam);
 % probability of communication-aware measurement correction P(z_k|X_k):
 
 % 0-1. PDF initialization
-measUpdatePdf = ones(size(targetUpdatePdf));
+measUpdatePdf = targetUpdatePdf;
 % 0-2. Comm-related variables initialization
 beta = nan(1,nAgent);
 commProb = nan(1,nAgent);
 
-for iAgent = 2:nAgent % ONLY FOR ACC2019
+for iAgent = 1:nAgent
     
     % 1. take likelihood PDF: NOW IT IS ONLY FOR AGENT i
-    likelihoodPdf = ComputeLikelihoodPDF(meas,agentParam(2),sensorParam,pdfParam,nState);
+    likelihoodPdf = ComputeLikelihoodPDF(meas,agentParam(iAgent),sensorParam,pdfParam,nState);
 
     % 2. compute probability of delivery for communication part
     beta(iAgent) = ComputeCommProb(agent(id).s,agent(iAgent).s);
@@ -27,8 +27,10 @@ for iAgent = 2:nAgent % ONLY FOR ACC2019
         commProb(iAgent) = 1-beta(iAgent);
     end
     
-    measUpdatePdf = measUpdatePdf.*commProb(iAgent).*likelihoodPdf.*targetUpdatePdf;
+    measUpdatePdf = measUpdatePdf.*commProb(iAgent).*likelihoodPdf;
 end
 
+% normalization
+measUpdatePdf = measUpdatePdf./(sum(sum(measUpdatePdf))*(pdfParam.dRefPt^nState));
 
 end
