@@ -32,7 +32,9 @@ for iAgent = 1:nAgent
     
     % 3. update information based on the outcome
     if bConnect(iAgent,1) == 1
-       Z(iAgent,:) = sensor(iAgent,:).y;
+       for iTarget = 1:nTarget
+           Z(iAgent,iTarget) = sensor(iAgent,iTarget).y;
+       end
        agentStateSet(iAgent).s = agent(iAgent).s;
     end
     

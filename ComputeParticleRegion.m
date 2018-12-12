@@ -34,7 +34,11 @@ switch option
     
             radius = sqrt(diffX.^2 + diffY.^2)/2;
             nonZeroIdx = radius > 0; % to prevent from log(0)
-            region(iPt) = min(radius(nonZeroIdx));
+            if sum(nonZeroIdx) == 0
+                region(iPt) = pi*0.01^2;
+            else
+                region(iPt) = pi*(min(radius(nonZeroIdx)))^2;
+            end
         end
         
 end
