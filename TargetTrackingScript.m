@@ -28,7 +28,7 @@ format compact;
 hold on;
 
 D2R = pi/180;
-nSim = 1; % for Monte-Carlo approach
+nSim = 1; % for Monte-Carlo approach or method comparison
 
 
 for iSim = 1:nSim
@@ -39,13 +39,15 @@ for iSim = 1:nSim
     
     %----------------------
     % simulation structure
-    sim(iSim).nAgent = 3;
+    sim(iSim).nAgent = 50;
     sim(iSim).nTarget = 3;
     
     sim(iSim).flagScene = 0; % 0: stationary ground station | 1: moving ground station
     sim(iSim).flagInfoCom = 1; % 0: Ryan's approach | 1: Our approach(consider all measurements)
     sim(iSim).flagDM = 0; % 0: determined decisions | 1: DM enabled
     sim(iSim).flagPDF = 0; % 0: no PDF draw | 1: PDF draw
+    sim(iSim).flagComm = 0; % 0: perfect communication | 1: imperfect communication and communication awareness
+    sim(iSim).flagPdfCompute = 'cylinder'; % 'uniform': uniformly discretized domain | 'cylinder': cylinder based computation w.r.t particle set
     
     if sim(iSim).flagPDF == 0
         sim(iSim).flagDisp.before = 0;
@@ -123,13 +125,25 @@ for iSim = 1:nSim
     % agent structure
     
     % parameters fleet of agent for initial positioning
-    radius = 50;
-    dAngle = 360*D2R/sim(iSim).nAgent;
-    
+    nSquad = ceil(sim(iSim).nAgent/4);
+    iSquad = 1;
     for iAgent = 1:sim(iSim).nAgent
         % basic state setting
         sim(iSim).agent(iAgent).id = iAgent;
-        sim(iSim).agent(iAgent).s = [radius*cos(iAgent*dAngle) radius*sin(iAgent*dAngle) iAgent*dAngle 10]'; % ring arrange
+        
+        % deploy agents as 4 groups: corner
+        switch iSquad
+            case 1
+                pos = [sim(iSim).field.bufferZone(2)-rand()*sim(iSim).field.zoneLength(1)/4 sim(iSim).field.bufferZone(4)-rand()*sim(iSim).field.zoneLength(2)/4];
+            case 2
+                pos = [sim(iSim).field.bufferZone(1)+rand()*sim(iSim).field.zoneLength(1)/4 sim(iSim).field.bufferZone(4)-rand()*sim(iSim).field.zoneLength(2)/4];
+            case 3
+                pos = [sim(iSim).field.bufferZone(1)+rand()*sim(iSim).field.zoneLength(1)/4 sim(iSim).field.bufferZone(3)+rand()*sim(iSim).field.zoneLength(2)/4];
+            case 4
+                pos = [sim(iSim).field.bufferZone(2)-rand()*sim(iSim).field.zoneLength(1)/4 sim(iSim).field.bufferZone(3)+rand()*sim(iSim).field.zoneLength(2)/4];
+        end
+        
+        sim(iSim).agent(iAgent).s = [pos rand()*2*pi 10]';
         sim(iSim).agent(iAgent).hist.s = sim(iSim).agent(iAgent).s;
         
         % plotting parameter setting: blue, circle color
@@ -143,6 +157,9 @@ for iSim = 1:nSim
         
         % agent trajectory plotting
         sim(iSim).agent(iAgent).plot.path = animatedline(sim(iSim).agent(iAgent).s(1),sim(iSim).agent(iAgent).s(2));
+        if mod(iAgent,nSquad) == 0
+            iSquad = iSquad + 1;
+        end
     end
     %----------------------
     
@@ -153,7 +170,7 @@ for iSim = 1:nSim
             sim(iSim).sensor(iSensor,iTarget).id = [iSensor,iTarget];
             sim(iSim).sensor(iSensor,iTarget).y = nan;
             sim(iSim).sensor(iSensor,iTarget).hist.y(:,1) = sim(iSim).sensor(iSensor,iTarget).y;
-            sim(iSim).sensor(iSensor,iTarget).param.regionRadius = 50; % sensing region radius
+            sim(iSim).sensor(iSensor,iTarget).param.regionRadius = 40; % sensing region radius
             sim(iSim).sensor(iSensor,iTarget).param.detectBeta = 0.9; % bernoulli detection parameter
         end
         
@@ -201,12 +218,12 @@ for iSim = 1:nSim
             end
             sim(iSim).PF(iAgent,iTarget).hist.pt = sim(iSim).PF(iAgent,iTarget).pt;
             sim(iSim).PF(iAgent,iTarget).param.F = sim(iSim).target(iTarget).param.F; % assume target is stationary in PF
-            sim(iSim).PF(iAgent,iTarget).param.Q = diag([20^2,20^2]);
+            sim(iSim).PF(iAgent,iTarget).param.Q = diag([10^2,10^2]);
             sim(iSim).PF(iAgent,iTarget).param.field = sim(iSim).field;
             sim(iSim).PF(iAgent,iTarget).nState = sim(iSim).target(iTarget).nState;
             
             % plotting parameter setting
-            sim(iSim).PF(iAgent,iTarget).plot.location.col = 3;
+            sim(iSim).PF(iAgent,iTarget).plot.location.col = 2;
             sim(iSim).PF(iAgent,iTarget).plot.location.row = ceil(sim(iSim).nTarget/sim(iSim).PF(iAgent,iTarget).plot.location.col);
             sim(iSim).PF(iAgent,iTarget).plot.location.num = iTarget;
             
@@ -232,10 +249,7 @@ for iSim = 1:nSim
                     plot(sim(iSim).target(iTarget).x(1),sim(iSim).target(iTarget).x(2),...
                     sim(iSim).target(iTarget).plot.marker,'LineWidth',2,'color',sim(iSim).target(iTarget).plot.clr);
                 sim(iSim).PF(iAgent,iTarget).plot.pt = ...
-                    plot(sim(iSim).PF(iAgent,iTarget).pt(1,:),sim(iSim).PF(iAgent,iTarget).pt(2,:),...
-                    sim(iSim).PF(iAgent,iTarget).plot.marker,...
-                    'lineWidth',sim(iSim).PF(iAgent,iTarget).plot.size,...
-                    'color',sim(iSim).PF(iAgent,iTarget).plot.clr);
+                    scatter(sim(iSim).PF(iAgent,iTarget).pt(1,:),sim(iSim).PF(iAgent,iTarget).pt(2,:),10,sim(iSim).PF(iAgent,iTarget).w,'filled');
             end
         end
         
@@ -255,15 +269,20 @@ for iSim = 1:nSim
         
         % action profile setting
         [sim(iSim).planner(iPlanner).action,sim(iSim).planner(iPlanner).actionNum,sim(iSim).planner(iPlanner).actionSetNum,sim(iSim).planner(iPlanner).actionSet] = ...
-            GenerateOutcomeProfile([-30,0,30]*D2R,sim(iSim).planner(iPlanner).param.clock.nT);
+            GenerateOutcomeProfile([-20,0,20]*D2R,sim(iSim).planner(iPlanner).param.clock.nT);
         
         % measurement profile setting
         [sim(iSim).planner(iPlanner).meas,sim(iSim).planner(iPlanner).measNum,sim(iSim).planner(iPlanner).measSetNum,sim(iSim).planner(iPlanner).measSet] = ...
             GenerateOutcomeProfile([0 1],sim(iSim).planner(iPlanner).param.clock.nT);
         
         % communication profile setting
-        [sim(iSim).planner(iPlanner).comm,sim(iSim).planner(iPlanner).commNum,sim(iSim).planner(iPlanner).commSetNum,sim(iSim).planner(iPlanner).commSet] = ...
-            GenerateOutcomeProfile([0 1],sim(iSim).planner(iPlanner).param.clock.nT);
+        if sim(iSim).flagComm == 1
+            [sim(iSim).planner(iPlanner).comm,sim(iSim).planner(iPlanner).commNum,sim(iSim).planner(iPlanner).commSetNum,sim(iSim).planner(iPlanner).commSet] = ...
+                GenerateOutcomeProfile([0 1],sim(iSim).planner(iPlanner).param.clock.nT);
+        else
+            [sim(iSim).planner(iPlanner).comm,sim(iSim).planner(iPlanner).commNum,sim(iSim).planner(iPlanner).commSetNum,sim(iSim).planner(iPlanner).commSet] = ...
+                GenerateOutcomeProfile(1,sim(iSim).planner(iPlanner).param.clock.nT);
+        end
         
         
         for iTarget = 1:sim(iSim).nTarget
@@ -284,7 +303,7 @@ for iSim = 1:nSim
         sim(iSim).planner(iPlanner).hist.Hafter = nan(sim(iSim).planner(iPlanner).param.clock.nT,1);
         
         sim(iSim).planner(iPlanner).param.pdf.dRefPt = 10;
-        [sim(iSim).planner(iPlanner).param.pdf.refPt(:,:,1), sim(iSim).planner(iPlanner).param.pdf.refPt(:,:,2)] = ...
+        [sim(iSim).planner(iPlanner).param.pdf.refPt(1,:,:), sim(iSim).planner(iPlanner).param.pdf.refPt(2,:,:)] = ...
             meshgrid(sim(iSim).field.boundary(1):sim(iSim).planner(iPlanner).param.pdf.dRefPt:sim(iSim).field.boundary(2),...
                      sim(iSim).field.boundary(3):sim(iSim).planner(iPlanner).param.pdf.dRefPt:sim(iSim).field.boundary(4));
         
@@ -312,10 +331,11 @@ for iSim = 1:nSim
         % compute entropy at the initial time step
         for iTarget = 1:sim(iSim).nTarget
             targetUpdatePdf = ...
-                ComputePDFMixture(sim(iSim).PF(iPlanner,iTarget).pt,sim(iSim).PF(iPlanner,iTarget).w,sim(iSim).planner(iPlanner).param,'Gaussian');
-            sim(iSim).PF(iPlanner,iTarget).H = ComputeEntropy(targetUpdatePdf,sim(iSim).planner(iPlanner).param.pdf.dRefPt,'moon');
+                ComputePDFMixture(sim(iSim).PF(iPlanner,iTarget).pt,sim(iSim).PF(iPlanner,iTarget).w,sim(iSim).planner(iPlanner).param,sim(iSim).flagPdfCompute);
+            sim(iSim).PF(iPlanner,iTarget).H = ComputeEntropy(targetUpdatePdf,sim(iSim).PF(iPlanner,iTarget).pt,sim(iSim).planner(iPlanner).param,sim(iSim).flagPdfCompute);
             sim(iSim).PF(iPlanner,iTarget).hist.H(:,1) = sim(iSim).PF(iPlanner,iTarget).H;
         end
+        
     end
     %----------------------
 
@@ -351,7 +371,9 @@ for iSim = 1:nSim
                         % Mutual Information computation: Consider all future measurements
                         % consider communicaiton awareness
                         [sim(iSim).planner(iAgent).candidate.Hbefore(:,iAction),sim(iSim).planner(iAgent).candidate.Hafter(:,iAction),sim(iSim).planner(iAgent).candidate.I(iAction)] = ...
-                            ComputeInformationMeasConsider(sim(iSim).planner(iAgent),sim(iSim).agent,sim(iSim).field,sim(iSim).planner(iAgent).param.clock,sim(iSim).flagDisp,iAction,iClock,sim(iSim).agent(iAgent).id);
+                            ComputeInformationMeasConsider(sim(iSim).planner(iAgent),sim(iSim).agent,sim(iSim).field,sim(iSim).planner(iAgent).param.clock,...
+                                sim(iSim).flagDisp,sim(iSim).flagComm,sim(iSim).flagPdfCompute,...
+                                iAction,iClock,sim(iSim).agent(iAgent).id);
                     end
                     
                 else % out of geofence
@@ -362,12 +384,20 @@ for iSim = 1:nSim
             end
             
             % decision making: maximize mutual information
-            [~,sim(iSim).planner(iAgent).actIdx] = max(sim(iSim).planner(iAgent).candidate.I);
+            
+            % AD-HOC: when the agent is close to the geofence so that all
+            % cost candidates are infinity, then go to the origin.
+            if min(sim(iSim).planner(iAgent).candidate.I) == inf
+                sim(iSim).planner(iAgent).actIdx = ReturnToHome(sim(iSim).agent(iAgent).s);
+            else
+                [~,sim(iSim).planner(iAgent).actIdx] = max(sim(iSim).planner(iAgent).candidate.I);
+            end
             sim(iSim).planner(iAgent).input = sim(iSim).planner(iAgent).actionSet(:,sim(iSim).planner(iAgent).actIdx);
             
             sim(iSim).planner(iAgent).I = sim(iSim).planner(iAgent).candidate.I(sim(iSim).planner(iAgent).actIdx);
             sim(iSim).planner(iAgent).Hbefore = sim(iSim).planner(iAgent).candidate.Hbefore(:,sim(iSim).planner(iAgent).actIdx);
             sim(iSim).planner(iAgent).Hafter = sim(iSim).planner(iAgent).candidate.Hafter(:,sim(iSim).planner(iAgent).actIdx);
+            
             
             % add computed information to analyze Monte-Carlo based
             % approach
@@ -393,6 +423,8 @@ for iSim = 1:nSim
             % update plot 
             set(sim(iSim).agent(iAgent).plot.pos,'Xdata',sim(iSim).agent(iAgent).s(1),'Ydata',sim(iSim).agent(iAgent).s(2));
             addpoints(sim(iSim).agent(iAgent).plot.path,sim(iSim).agent(iAgent).s(1),sim(iSim).agent(iAgent).s(2));
+            set(gca,'xlim',[sim(iSim).field.boundary(1),sim(iSim).field.boundary(2)],...
+                'ylim',[sim(iSim).field.boundary(3),sim(iSim).field.boundary(4)])
         end
         
         % target moving
@@ -435,7 +467,7 @@ for iSim = 1:nSim
         % particle measurement and agent state sharing through communication
         for iComm = 1:sim(iSim).nAgent
             [sim(iSim).comm(iComm).beta,sim(iSim).comm(iComm).bConnect,sim(iSim).planner(iComm).agent,sim(iSim).comm(iComm).z] = ...
-                ShareInformation(sim(iSim).agent,sim(iSim).sensor,sim(iSim).planner(iComm).agent,sim(iSim).PF(iComm).id(1));
+                ShareInformation(sim(iSim).agent,sim(iSim).sensor,sim(iSim).planner(iComm).agent,sim(iSim).PF(iComm).id(1), sim(iSim).flagComm);
             sim(iSim).comm(iComm).hist.beta(:,iClock+1) = sim(iSim).comm(iComm).beta;
             sim(iSim).comm(iComm).hist.bConnect(:,iClock+1) = sim(iSim).comm(iComm).bConnect;
             sim(iSim).comm(iComm).hist.Z(:,:,iClock+1) = sim(iSim).comm(iComm).z';
@@ -456,15 +488,6 @@ for iSim = 1:nSim
                 % particle weight update
                 sim(iSim).PF(iPF,iTarget).w = UpdateParticleWeight(sim(iSim).comm(iPF).z(:,iTarget),sim(iSim).PF(iPF,iTarget).pt,sim(iSim).planner(iPF).agent,sim(iSim).sensor(iPF).param);
                 
-                % resample particle
-                [sim(iSim).PF(iPF,iTarget).pt,sim(iSim).PF(iPF,iTarget).w] = ResampleParticle(sim(iSim).PF(iPF,iTarget).pt,sim(iSim).PF(iPF,iTarget).w,sim(iSim).field);
-                
-                % particle filter info update/store
-                sim(iSim).PF(iPF,iTarget).xhat = (sim(iSim).PF(iPF,iTarget).w*sim(iSim).PF(iPF,iTarget).pt')';
-                sim(iSim).PF(iPF,iTarget).hist.pt(:,:,iClock+1) = sim(iSim).PF(iPF,iTarget).pt;
-                sim(iSim).PF(iPF,iTarget).hist.w(:,:,iClock+1) = sim(iSim).PF(iPF,iTarget).w;
-                sim(iSim).PF(iPF,iTarget).hist.xhat(:,iClock+1) = sim(iSim).PF(iPF,iTarget).xhat;
-                
                 % update plot
                 % AGENT 1 ONLY VISUALIZES PARTICLE INFO BECAUSE OF HUGE
                 % PLOTTING SPACE!
@@ -474,9 +497,22 @@ for iSim = 1:nSim
                         sim(iSim).PF(iPF,iTarget).plot.location.row,...
                         sim(iSim).PF(iPF,iTarget).plot.location.num)
                     set(sim(iSim).PF(iPF,iTarget).plot.targetPos,'Xdata',sim(iSim).target(iTarget).x(1),'Ydata',sim(iSim).target(iTarget).x(2));
-                    set(sim(iSim).PF(iPF,iTarget).plot.pt,'Xdata',sim(iSim).PF(iPF,iTarget).pt(1,:),'Ydata',sim(iSim).PF(iPF,iTarget).pt(2,:));
+                    set(sim(iSim).PF(iPF,iTarget).plot.pt,'Xdata',sim(iSim).PF(iPF,iTarget).pt(1,:),'Ydata',sim(iSim).PF(iPF,iTarget).pt(2,:),...
+                        'Cdata',sim(iSim).PF(iPF,iTarget).w);
+                    set(gca,'xlim',[sim(iSim).field.boundary(1),sim(iSim).field.boundary(2)],...
+                        'ylim',[sim(iSim).field.boundary(3),sim(iSim).field.boundary(4)])
                 end
                 
+                
+                % resample particle
+                [sim(iSim).PF(iPF,iTarget).pt,sim(iSim).PF(iPF,iTarget).w] = ResampleParticle(sim(iSim).PF(iPF,iTarget).pt,sim(iSim).PF(iPF,iTarget).w,sim(iSim).field);
+                
+                % particle filter info update/store
+                sim(iSim).PF(iPF,iTarget).xhat = (sim(iSim).PF(iPF,iTarget).w*sim(iSim).PF(iPF,iTarget).pt')';
+                sim(iSim).PF(iPF,iTarget).hist.pt(:,:,iClock+1) = sim(iSim).PF(iPF,iTarget).pt;
+                sim(iSim).PF(iPF,iTarget).hist.w(:,:,iClock+1) = sim(iSim).PF(iPF,iTarget).w;
+                sim(iSim).PF(iPF,iTarget).hist.xhat(:,iClock+1) = sim(iSim).PF(iPF,iTarget).xhat;
+                                
                 % update planner initial info
                 sim(iSim).planner(iPF).x = sim(iSim).PF(iPF,iTarget).xhat;
                 sim(iSim).planner(iPF).w = sim(iSim).PF(iPF,iTarget).w;
@@ -497,8 +533,8 @@ for iSim = 1:nSim
                 end
                 
                 % compute entropy for comparison
-                targetUpdatePdf = ComputePDFMixture(sim(iSim).PF(iPF,iTarget).pt,sim(iSim).PF(iPF,iTarget).w,sim(iSim).planner(iPF).param,'Gaussian');
-                sim(iSim).PF(iPF,iTarget).H = ComputeEntropy(targetUpdatePdf,sim(iSim).planner(iPF).param.pdf.dRefPt,'moon');
+                targetUpdatePdf = ComputePDFMixture(sim(iSim).PF(iPF,iTarget).pt,sim(iSim).PF(iPF,iTarget).w,sim(iSim).planner(iPF).param,sim(iSim).flagPdfCompute);
+                sim(iSim).PF(iPF,iTarget).H = ComputeEntropy(targetUpdatePdf,sim(iSim).PF(iPF,iTarget).pt,sim(iSim).planner(iPF).param,sim(iSim).flagPdfCompute);
                 sim(iSim).PF(iPF,iTarget).hist.H(:,iClock+1) = sim(iSim).PF(iPF,iTarget).H;
                 
             end

@@ -2,7 +2,7 @@
 % PF-based Mutual information Computation when considering all possible
 % measurements
 %-----------------------------------
-function [Hbefore,Hafter,I] = ComputeInformationMeasConsider(planner,agent,field,clock,bPdfDisp,iAction,iClock,id)
+function [Hbefore,Hafter,I] = ComputeInformationMeasConsider(planner,agent,field,clock,bPdfDisp,flagComm,flagPdfCompute,iAction,iClock,id)
 
 nMeasSet = length(planner.measSet(1,:));
 nCommSet = length(planner.commSet(1,:));
@@ -17,7 +17,7 @@ for iMeas = 1:nMeasSet
     for iComm = 1:nCommSet
         
         [HbeforeElement,HafterElement,Ielement] = ...
-            ComputeInformationSinleMeasCommSet(planner,agent,field,clock,bPdfDisp,iAction,iClock,iMeas,iComm,id);
+            ComputeInformationSinleMeasCommSet(planner,agent,field,clock,bPdfDisp,flagComm,flagPdfCompute,iAction,iClock,iMeas,iComm,id);
         
         I = I + sum(Ielement);
         Hbefore = Hbefore + sum(HbeforeElement,1)';
@@ -36,7 +36,7 @@ Hafter = Hafter/nPossibleEvents;
 end
 
 
-function [Hbefore,Hafter,I] = ComputeInformationSinleMeasCommSet(planner,agent,field,clock,bPdfDisp,iAction,iClock,iMeas,iComm,id)
+function [Hbefore,Hafter,I] = ComputeInformationSinleMeasCommSet(planner,agent,field,clock,bPdfDisp,flagComm,flagPdfCompute,iAction,iClock,iMeas,iComm,id)
 
 nAgent = length(agent);
 nTarget = length(planner.PTset);
@@ -58,33 +58,37 @@ for iPlan = 1:clock.nT
         planner.z = planner.commSet(iPlan,iComm);
     
         % Sum of prob. target evolution P(X_k|Z_{k-1})
-        targetUpdatePdf = ComputePDFMixture(planner.PTset(iTarget).pt,planner.PTset(iTarget).w,planner.param,'Gaussian');
-    
+        % in order to improve the computation for computing entropy from
+        % the approximated PDF, cylinder approach is developed and can be
+        % compared with discretized domain
+        targetUpdatePdf = ComputePDFMixture(planner.PTset(iTarget).pt,planner.PTset(iTarget).w,planner.param,flagPdfCompute);
+        
         % Entropy computation: H(X_k|Z_{k-1})
-        Hbefore(iTarget,iPlan) = ComputeEntropy(targetUpdatePdf,planner.param.pdf.dRefPt,'moon');
+        Hbefore(iTarget,iPlan) = ComputeEntropy(targetUpdatePdf,planner.PTset(iTarget).pt,planner.param,flagPdfCompute);
     
         % agent moving along with planner action:
         % THE PLANNER ONLY MOVES ITS OWN AGENT ONLY
         agent(planner.id).s = UpdateAgentState(agent(planner.id).s,planner.actionSet(iPlan,iAction),clock.dt);
         
         % particle evolution using target dynamics
-        planner.pt = UpdateParticle(planner.PTset(iTarget).pt,planner.param,clock.dt);
+        planner.PTset(iTarget).pt = UpdateParticle(planner.PTset(iTarget).pt,planner.param,clock.dt);
     
         % weight update: w_{k-1} -> w_k
         % gather agent state info for overall weight computation
         for iAgent = 1:nAgent
             planner.param.agent(iAgent).s = agent(iAgent).s;
         end
-        planner.PTset(iTarget).w = UpdateParticleWeight(planner.y,planner.PTset(iTarget).pt,planner.param.agent,planner.param.sensor);
+        planner.PTset(iTarget).w = UpdateParticleWeight(planner.y,planner.PTset(iTarget).pt,...
+            planner.param.agent,planner.param.sensor);
     
         % probability of measurement update P(X_k|Z_k):
         % HERE IS THE MAJOR DIFFERENCE BY CONSIDERING COMMUNICATION
         % AWARENESS
         [~,measUpdatePdf] = ...
-            ComputeCommAwareMeasUpdatePDF(targetUpdatePdf,agent,planner.y,planner.z,planner.param.agent,planner.param.sensor,planner.param.pdf,planner.PTset(iTarget).nState,id);
+            ComputeCommAwareMeasUpdatePDF(targetUpdatePdf,planner.PTset(iTarget).pt,planner.agent,planner.y,planner.z,planner.param,id,flagComm,flagPdfCompute);
     
         % Entropy computation: H(X_k|Z_k):
-        Hafter(iTarget,iPlan) = ComputeEntropy(measUpdatePdf,planner.param.pdf.dRefPt,'moon');
+        Hafter(iTarget,iPlan) = ComputeEntropy(measUpdatePdf,planner.PTset(iTarget).pt,planner.param,flagPdfCompute);
     
     
         %-- Plot:: before resampling -----------

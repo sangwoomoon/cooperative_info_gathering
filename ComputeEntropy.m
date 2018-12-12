@@ -1,12 +1,12 @@
 %-----------------------
-% Entropy computation:
-function entropy = ComputeEntropy(pdf,dRefPt,param)
+% Entropy computation
+function entropy = ComputeEntropy(pdf,pt,param,option)
 
-switch param
-    case 'moon'
-        nonZeroIdx = pdf > 0; % to prevent from log(0)
-        entropy = -sum(pdf(nonZeroIdx).*log(pdf(nonZeroIdx)).*dRefPt);
-    case 'ryan'
-end
+% compute domain region(each area with respect to particle(cylinder)/discretized
+% domain element(uniform)
+region = ComputeParticleRegion(pt,param,option);
+
+nonZeroIdx = pdf > 0; % to prevent from log(0)
+entropy = -sum(pdf(nonZeroIdx).*log(pdf(nonZeroIdx)).*region(nonZeroIdx));
 
 end

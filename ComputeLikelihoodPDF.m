@@ -1,24 +1,15 @@
 %-------------------------------------------------------
 % Binary Distribution-based likelihood PDF Generation: P(Y_k|X_k)
 %-------------------------------------------------------
-function pdf = ComputeLikelihoodPDF(meas,paramAgent,paramSensor,paramPdf,nState)
+function pdf = ComputeLikelihoodPDF(meas,pt,paramAgent,paramSensor,paramPdf,option)
 
-nRefPt = size(paramPdf.refPt);
-
-pdf = nan(nRefPt(1),nRefPt(2));
-
-for iRefpt = 1:nRefPt(1)
-    for jRefpt = 1:nRefPt(2)
+switch option
+    case 'uniform'
+        pdf = BinarySensorProb(meas,paramAgent,paramPdf.refPt,paramSensor);
         
-        % to address the index of discretized domain
-        if nState == 1
-            ptDomain = paramPdf.refPt(jRefpt);
-        elseif nState == 2
-            ptDomain = [paramPdf.refPt(iRefpt,jRefpt,1),paramPdf.refPt(iRefpt,jRefpt,2)]';
-        end
+    case 'cylinder'
+        pdf = BinarySensorProb(meas,paramAgent,pt,paramSensor);
         
-        pdf(iRefpt,jRefpt) = BinarySensorProb(meas,paramAgent,ptDomain,paramSensor);
-    end
 end
 
 end

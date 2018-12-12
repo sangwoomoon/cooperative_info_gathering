@@ -1,9 +1,9 @@
 % ONLY AGENT 2 TAKES MEASUREMENT IN THE SCENARIO: FOR ACC2019 DRAFT
 % the code is only applicable in 2 agents scenario, where agent 1 receives
 % information from agent 2 which is dependent to the communication status
-function [likelihoodPdf,measUpdatePdf] = ComputeCommAwareMeasUpdatePDF(targetUpdatePdf,agent,meas,commStatus,agentParam,sensorParam,pdfParam,nState,id)
+function [likelihoodPdf,measUpdatePdf] = ComputeCommAwareMeasUpdatePDF(targetUpdatePdf,pt,agent,meas,commStatus,param,id,flagComm,flagPdfCompute)
 
-nAgent = length(agentParam);
+nAgent = length(param.agent);
 
 % probability of communication-aware measurement correction P(z_k|X_k):
 
@@ -15,11 +15,16 @@ commProb = nan(1,nAgent);
 
 for iAgent = 1:nAgent
     
-    % 1. take likelihood PDF: NOW IT IS ONLY FOR AGENT i
-    likelihoodPdf = ComputeLikelihoodPDF(meas,agentParam(iAgent),sensorParam,pdfParam,nState);
+    % 1. take likelihood PDF: should be further considered w.r.t
+    % measurements!
+    likelihoodPdf = ComputeLikelihoodPDF(meas,pt,param.agent(iAgent),param.sensor,param.pdf,flagPdfCompute);
 
     % 2. compute probability of delivery for communication part
-    beta(iAgent) = ComputeCommProb(agent(id).s,agent(iAgent).s);
+    if flagComm == 1
+        beta(iAgent) = ComputeCommProb(agent(id).s,agent(iAgent).s);
+    else
+        beta(iAgent) = 1;
+    end
     
     if commStatus == 1
         commProb(iAgent) = beta(iAgent);
@@ -31,6 +36,7 @@ for iAgent = 1:nAgent
 end
 
 % normalization
-measUpdatePdf = measUpdatePdf./(sum(sum(measUpdatePdf))*(pdfParam.dRefPt^nState));
+region = ComputeParticleRegion(pt,param,flagPdfCompute);
+measUpdatePdf = measUpdatePdf./(sum(sum(measUpdatePdf))*(sum(sum(region))/numel(measUpdatePdf)));
 
 end

@@ -2,24 +2,20 @@ function prob = BinarySensorProb(y,paramAgent,targetPos,paramSensor)
 
 nAgent = length(y);
 
-prob = 1;
+nRefPt = size(targetPos);
+prob = ones(1,nRefPt(2));
 
 for iAgent = 1:nAgent
     
     if y(iAgent) == 1 % when sensor does detect
-        if IsInCircleBasedRegion(targetPos,paramAgent(iAgent).s,paramSensor.regionRadius)
-            prob = prob*paramSensor.detectBeta;
-        else
-            prob = prob*0.01;
-        end
+        bLocate = IsInCircleBasedRegion(targetPos,paramAgent(iAgent).s,paramSensor.regionRadius);
+        prob = prob.*(bLocate*paramSensor.detectBeta + (1-bLocate)*(1-paramSensor.detectBeta));
     elseif y(iAgent) == 0 % when sensor does not detect
-        if IsInCircleBasedRegion(targetPos,paramAgent(iAgent).s,paramSensor.regionRadius)
-            prob = prob*(1-paramSensor.detectBeta);
-        else
-            prob = prob*0.99;
-        end
-    end 
+        bLocate = IsInCircleBasedRegion(targetPos,paramAgent(iAgent).s,paramSensor.regionRadius);
+        prob = prob.*(bLocate*0.001 + (1-bLocate)*0.999);
+    end
     
 end
+    
 
 end

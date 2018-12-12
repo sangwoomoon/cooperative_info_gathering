@@ -9,7 +9,7 @@
 %    - when the communication fails, the measurement is null and it will
 %    not be affected to the filtering process
 %-----------------------------------
-function [commBeta,bConnect,agentStateSet,Z] = ShareInformation(agent,sensor,plannerAgent,id)
+function [commBeta,bConnect,agentStateSet,Z] = ShareInformation(agent,sensor,plannerAgent,id,flagComm)
 
 % 0. initialization
 nAgent = length(agent);
@@ -21,7 +21,11 @@ agentStateSet = plannerAgent;
 
 for iAgent = 1:nAgent
     % 1. compute communication probability
-    commBeta(iAgent,1) = ComputeCommProb(agent(id).s,agent(iAgent).s);
+    if flagComm == 1
+        commBeta(iAgent,1) = ComputeCommProb(agent(id).s,agent(iAgent).s);
+    else
+        commBeta(iAgent,1) = 1;
+    end
     
     % 2. compute outcome of package delivery
     bConnect(iAgent,1) = binornd(1,commBeta(iAgent,1));

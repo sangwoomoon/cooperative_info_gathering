@@ -3,17 +3,17 @@
 function mixedPdf = ComputePDFMixture(pt,w,param,option)
     
 nPt = length(pt(1,:));
-nState = length(pt(:,1));
+% nState = length(pt(:,1));
 
 for iPt = 1:nPt
     
     % generate pdf which mean is a particle point
     % USER SHOULD MODIFY THE SWITCH WITH RESPECT TO PDF MODEL
     switch option
-        case 'Gaussian'
+        case 'uniform'
             onePtPdf = GenerateGaussianPDF(pt(:,iPt),param.Q,param.pdf);
-        case 'Binary'
-            onePtPdf = GenerateBinaryPDF(pt(:,iPt),param.sensor,param.agent);
+        case 'cylinder'
+            onePtPdf = GenerateGaussianParticlePDF(pt(:,iPt),param.Q,pt);
     end
     
     % weight sum to make PDF mixture
@@ -25,10 +25,8 @@ for iPt = 1:nPt
 
 end
 
-% normalize pdf for Target GMM: not for binary sensor!
-switch option
-    case 'Gaussian'
-       mixedPdf = mixedPdf./(sum(sum(mixedPdf))*(param.pdf.dRefPt^nState));
-end
+% normalize pdf for Target GMM
+region = ComputeParticleRegion(pt,param,option);
+mixedPdf = mixedPdf./(sum(sum(mixedPdf))*(sum(sum(region))/numel(mixedPdf)));
 
 end
