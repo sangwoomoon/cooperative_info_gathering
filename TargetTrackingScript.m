@@ -39,17 +39,18 @@ for iSim = 1:nSim
     
     %----------------------
     % simulation structure
-    sim(iSim).nAgent = 5;
-    sim(iSim).nTarget = 10;
+    sim(iSim).nAgent = 12;
+    sim(iSim).nTarget = 3;
     
     sim(iSim).flagScene = 0; % 0: stationary ground station | 1: moving ground station
     sim(iSim).flagInfoCom = 1; % 0: Ryan's approach | 1: Our approach(consider all measurements)
-    sim(iSim).flagDM = 0; % 0: determined decisions | 1: DM enabled
+    sim(iSim).flagDM = 'random'; % 0: 'random': random decision | 'MI': mutual information-based decision | 'mean': particle mean following
     sim(iSim).flagPDF = 0; % 0: no PDF draw | 1: PDF draw
     sim(iSim).flagComm = 0; % 0: perfect communication | 1: imperfect communication and communication awareness
     sim(iSim).flagPdfCompute = 'cylinder'; % 'uniform': uniformly discretized domain | 'cylinder': cylinder based computation w.r.t particle set
+    sim(iSim).flagLog = 0;
     
-    if sim(iSim).flagPDF == 0
+    if ~sim(iSim).flagPDF
         sim(iSim).flagDisp.before = 0;
         sim(iSim).flagDisp.after = 0;
     else
@@ -72,7 +73,7 @@ for iSim = 1:nSim
     
     %----------------------
     % clock structure
-    sim(iSim).clock.nt = 50;
+    sim(iSim).clock.nt = 200;
     sim(iSim).clock.dt = 1;
     sim(iSim).clock.hist.time = 0;
     %----------------------
@@ -215,7 +216,7 @@ for iSim = 1:nSim
         
         for iTarget = 1:sim(iSim).nTarget
             sim(iSim).PF(iAgent,iTarget).id = [iAgent, iTarget];
-            sim(iSim).PF(iAgent,iTarget).nPt = 50;
+            sim(iSim).PF(iAgent,iTarget).nPt = 100;
             sim(iSim).PF(iAgent,iTarget).w = ones(1,sim(iSim).PF(iAgent,iTarget).nPt)./sim(iSim).PF(iAgent,iTarget).nPt;
             if iAgent == 1
                 for iPt = 1 : sim(iSim).PF(iAgent,iTarget).nPt
@@ -228,7 +229,7 @@ for iSim = 1:nSim
             end
             sim(iSim).PF(iAgent,iTarget).hist.pt = sim(iSim).PF(iAgent,iTarget).pt;
             sim(iSim).PF(iAgent,iTarget).param.F = sim(iSim).target(iTarget).param.F; % assume target is stationary in PF
-            sim(iSim).PF(iAgent,iTarget).param.Q = diag([10^2,10^2]);
+            sim(iSim).PF(iAgent,iTarget).param.Q = diag([18^2,18^2]);
             sim(iSim).PF(iAgent,iTarget).param.field = sim(iSim).field;
             sim(iSim).PF(iAgent,iTarget).nState = sim(iSim).target(iTarget).nState;
             
@@ -292,7 +293,7 @@ for iSim = 1:nSim
             GenerateOutcomeProfile([0 1],sim(iSim).planner(iPlanner).param.clock.nT);
         
         % communication profile setting
-        if sim(iSim).flagComm == 1
+        if sim(iSim).flagComm
             [sim(iSim).planner(iPlanner).comm,sim(iSim).planner(iPlanner).commNum,sim(iSim).planner(iPlanner).commSetNum,sim(iSim).planner(iPlanner).commSet] = ...
                 GenerateOutcomeProfile([0 1],sim(iSim).planner(iPlanner).param.clock.nT);
         else
@@ -379,11 +380,11 @@ for iSim = 1:nSim
                 if (state(1) > sim(iSim).field.bufferZone(1) && state(1) < sim(iSim).field.bufferZone(2)) ...
                         && (state(2) > sim(iSim).field.bufferZone(3) && state(2) < sim(iSim).field.bufferZone(4)) % inside geofence
 
-                    if sim(iSim).flagInfoCom == 0
+                    if ~sim(iSim).flagInfoCom
                         % Ryan's approach-based Mutual Information computation: Measurement sampling-based
                         [sim(iSim).planner(iAgent).candidate.Hbefore(:,iAction),sim(iSim).planner(iAgent).candidate.Hafter(:,iAction),sim(iSim).planner(iAgent).candidate.I(iAction)] = ...
                             ComputeInformation(sim(iSim).planner(iAgent),agent,sim(iSim).field,sim(iSim).planner(iAgent).param.clock,sim(iSim),iAction,iClock);
-                    elseif sim(iSim).flagInfoCom == 1
+                    elseif sim(iSim).flagInfoCom
                         % Mutual Information computation: Consider all future measurements
                         % consider communicaiton awareness
                         [sim(iSim).planner(iAgent).candidate.Hbefore(:,iAction),sim(iSim).planner(iAgent).candidate.Hafter(:,iAction),sim(iSim).planner(iAgent).candidate.I(iAction)] = ...
@@ -582,6 +583,8 @@ for iSim = 1:nSim
     
 end
 
-close all;
-save(['a',num2str(sim(1).nAgent),'t',num2str(sim(1).nTarget),'.mat']);
+if sim(iSim).flagLog
+    close all;
+    save(['a',num2str(sim(1).nAgent),'t',num2str(sim(1).nTarget),'.mat']);
+end
 
