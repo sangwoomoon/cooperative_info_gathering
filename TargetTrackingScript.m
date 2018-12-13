@@ -39,12 +39,12 @@ for iSim = 1:nSim
     
     %----------------------
     % simulation structure
-    sim(iSim).nAgent = 12;
-    sim(iSim).nTarget = 3;
+    sim(iSim).nAgent = 3;
+    sim(iSim).nTarget = 1;
     
     sim(iSim).flagScene = 0; % 0: stationary ground station | 1: moving ground station
     sim(iSim).flagInfoCom = 1; % 0: Ryan's approach | 1: Our approach(consider all measurements)
-    sim(iSim).flagDM = 'random'; % 0: 'random': random decision | 'MI': mutual information-based decision | 'mean': particle mean following
+    sim(iSim).flagDM = 'MI'; % 0: 'random': random decision | 'MI': mutual information-based decision | 'mean': particle mean following
     sim(iSim).flagPDF = 0; % 0: no PDF draw | 1: PDF draw
     sim(iSim).flagComm = 0; % 0: perfect communication | 1: imperfect communication and communication awareness
     sim(iSim).flagPdfCompute = 'cylinder'; % 'uniform': uniformly discretized domain | 'cylinder': cylinder based computation w.r.t particle set
@@ -73,7 +73,7 @@ for iSim = 1:nSim
     
     %----------------------
     % clock structure
-    sim(iSim).clock.nt = 200;
+    sim(iSim).clock.nt = 500;
     sim(iSim).clock.dt = 1;
     sim(iSim).clock.hist.time = 0;
     %----------------------
@@ -93,6 +93,7 @@ for iSim = 1:nSim
         'ylim',[sim(iSim).field.boundary(3),sim(iSim).field.boundary(4)])
     set(sim(iSim).plot.fieldView,'color','w')
     xlabel('East [m]'); ylabel('North [m]'); axis equal;
+    title(sprintf('t = %.1f [sec]', 0))
     %----------------------
     
     %----------------------
@@ -105,12 +106,16 @@ for iSim = 1:nSim
             [sim(iSim).field.bufferZone(1)+rand()*sim(iSim).field.zoneLength(1) sim(iSim).field.bufferZone(3)+rand()*sim(iSim).field.zoneLength(2)]'; % x_pos, y_pos
         sim(iSim).target(iTarget).hist.x = sim(iSim).target(iTarget).x;
         sim(iSim).target(iTarget).nState = length(sim(iSim).target(iTarget).x);
+        %rotational moving
+        %theta = 1; % deg/s
+        %sim(iSim).target(iTarget).param.F = [cos(theta*D2R) -sin(theta*D2R); sin(theta*D2R) cos(theta*D2R)];
         sim(iSim).target(iTarget).param.F = eye(length(sim(iSim).target(iTarget).x));
         sim(iSim).target(iTarget).param.Q = zeros(sim(iSim).target(iTarget).nState); % certainly ideal
         
         % plotting parameters setting: red, square
         sim(iSim).target(iTarget).plot.clr = [1 rand() 0];
         sim(iSim).target(iTarget).plot.marker = 'square';
+        sim(iSim).target(iTarget).plot.opaque = 0.1;
         
         % position plot setting
         sim(iSim).target(iTarget).plot.pos = ...
@@ -121,7 +126,7 @@ for iSim = 1:nSim
                 targetID(iTarget));
         
         % trajectory plot setting
-        sim(iSim).target(iTarget).plot.path = animatedline(sim(iSim).target(iTarget).x(1),sim(iSim).target(iTarget).x(2));
+        sim(iSim).target(iTarget).plot.path = animatedline(sim(iSim).target(iTarget).x(1),sim(iSim).target(iTarget).x(2),'color',sim(iSim).target(iTarget).plot.clr);
     end
     %----------------------
     
@@ -138,13 +143,13 @@ for iSim = 1:nSim
         % deploy agents as 4 groups: corner
         switch iSquad
             case 1
-                pos = [sim(iSim).field.bufferZone(2)-rand()*sim(iSim).field.zoneLength(1)/4 sim(iSim).field.bufferZone(4)-rand()*sim(iSim).field.zoneLength(2)/4, 5/8*2*pi];
+                pos = [sim(iSim).field.bufferZone(2)-rand()*sim(iSim).field.zoneLength(1)/8 sim(iSim).field.bufferZone(4)-rand()*sim(iSim).field.zoneLength(2)/8, 5/8*2*pi];
             case 2
-                pos = [sim(iSim).field.bufferZone(1)+rand()*sim(iSim).field.zoneLength(1)/4 sim(iSim).field.bufferZone(4)-rand()*sim(iSim).field.zoneLength(2)/4, 7/8*2*pi];
+                pos = [sim(iSim).field.bufferZone(1)+rand()*sim(iSim).field.zoneLength(1)/8 sim(iSim).field.bufferZone(4)-rand()*sim(iSim).field.zoneLength(2)/8, 7/8*2*pi];
             case 3
-                pos = [sim(iSim).field.bufferZone(1)+rand()*sim(iSim).field.zoneLength(1)/4 sim(iSim).field.bufferZone(3)+rand()*sim(iSim).field.zoneLength(2)/4, 1/8*2*pi];
+                pos = [sim(iSim).field.bufferZone(1)+rand()*sim(iSim).field.zoneLength(1)/8 sim(iSim).field.bufferZone(3)+rand()*sim(iSim).field.zoneLength(2)/8, 1/8*2*pi];
             case 4
-                pos = [sim(iSim).field.bufferZone(2)-rand()*sim(iSim).field.zoneLength(1)/4 sim(iSim).field.bufferZone(3)+rand()*sim(iSim).field.zoneLength(2)/4, 3/8*2*pi];
+                pos = [sim(iSim).field.bufferZone(2)-rand()*sim(iSim).field.zoneLength(1)/8 sim(iSim).field.bufferZone(3)+rand()*sim(iSim).field.zoneLength(2)/8, 3/8*2*pi];
         end
         
         sim(iSim).agent(iAgent).s = [pos 10]';
@@ -153,6 +158,7 @@ for iSim = 1:nSim
         % plotting parameter setting: blue, circle color
         sim(iSim).agent(iAgent).plot.clr = [0 rand() 1];
         sim(iSim).agent(iAgent).plot.marker = 'o';
+        sim(iSim).agent(iAgent).plot.opaque = 0.1;
         
         % agent position plotting
         sim(iSim).agent(iAgent).plot.pos = ...
@@ -163,7 +169,8 @@ for iSim = 1:nSim
                 num2str(iAgent));
             
         % agent trajectory plotting
-        sim(iSim).agent(iAgent).plot.path = animatedline(sim(iSim).agent(iAgent).s(1),sim(iSim).agent(iAgent).s(2));
+        sim(iSim).agent(iAgent).plot.path = animatedline(sim(iSim).agent(iAgent).s(1),sim(iSim).agent(iAgent).s(2),'color',sim(iSim).agent(iAgent).plot.clr);
+        
         if mod(iAgent,nSquad) == 0
             iSquad = iSquad + 1;
         end
@@ -227,11 +234,17 @@ for iSim = 1:nSim
             else
                 sim(iSim).PF(iAgent,iTarget).pt = sim(iSim).PF(1,iTarget).pt; % in order to make the same initial condition
             end
-            sim(iSim).PF(iAgent,iTarget).hist.pt = sim(iSim).PF(iAgent,iTarget).pt;
+            
             sim(iSim).PF(iAgent,iTarget).param.F = sim(iSim).target(iTarget).param.F; % assume target is stationary in PF
             sim(iSim).PF(iAgent,iTarget).param.Q = diag([18^2,18^2]);
             sim(iSim).PF(iAgent,iTarget).param.field = sim(iSim).field;
             sim(iSim).PF(iAgent,iTarget).nState = sim(iSim).target(iTarget).nState;
+            
+            sim(iSim).PF(iAgent,iTarget).xhat = (sim(iSim).PF(iAgent,iTarget).w*sim(iSim).PF(iAgent,iTarget).pt')';
+            
+            sim(iSim).PF(iAgent,iTarget).hist.pt(:,:,1) = sim(iSim).PF(iAgent,iTarget).pt;
+            sim(iSim).PF(iAgent,iTarget).hist.w(:,:,1) = sim(iSim).PF(iAgent,iTarget).w;
+            sim(iSim).PF(iAgent,iTarget).hist.xhat(:,1) = sim(iSim).PF(iAgent,iTarget).xhat;
             
             % plotting parameter setting
             sim(iSim).PF(iAgent,iTarget).plot.location.col = 2;
@@ -306,6 +319,7 @@ for iSim = 1:nSim
             sim(iSim).planner(iPlanner).PTset(iTarget).nPt = sim(iSim).PF(iPlanner,iTarget).nPt;
             sim(iSim).planner(iPlanner).PTset(iTarget).pt = sim(iSim).PF(iPlanner,iTarget).pt;
             sim(iSim).planner(iPlanner).PTset(iTarget).w = sim(iSim).PF(iPlanner,iTarget).w;
+            sim(iSim).planner(iPlanner).PTset(iTarget).xhat = sim(iSim).PF(iAgent,iTarget).xhat;
             sim(iSim).planner(iPlanner).PTset(iTarget).nState = sim(iSim).PF(iPlanner,iTarget).nState;
         end
         
@@ -373,55 +387,97 @@ for iSim = 1:nSim
         % COMPUTED INFORMATION IS DIFFERENT WITH RESPECT TO AGENT
         for iAgent = 1:sim(iSim).nAgent
             
-            for iAction = 1 : sim(iSim).planner(1).actionSetNum
+            % decision making procedure
+            switch sim(iSim).flagDM
                 
-                % check whether decision has feasibility in terms of geofence
-                state = UpdateAgentState(sim(iSim).agent(iAgent).s,sim(iSim).planner(iAgent).actionSet(iAction),sim(iSim).clock.dt);
-                if (state(1) > sim(iSim).field.bufferZone(1) && state(1) < sim(iSim).field.bufferZone(2)) ...
-                        && (state(2) > sim(iSim).field.bufferZone(3) && state(2) < sim(iSim).field.bufferZone(4)) % inside geofence
-
-                    if ~sim(iSim).flagInfoCom
-                        % Ryan's approach-based Mutual Information computation: Measurement sampling-based
-                        [sim(iSim).planner(iAgent).candidate.Hbefore(:,iAction),sim(iSim).planner(iAgent).candidate.Hafter(:,iAction),sim(iSim).planner(iAgent).candidate.I(iAction)] = ...
-                            ComputeInformation(sim(iSim).planner(iAgent),agent,sim(iSim).field,sim(iSim).planner(iAgent).param.clock,sim(iSim),iAction,iClock);
-                    elseif sim(iSim).flagInfoCom
-                        % Mutual Information computation: Consider all future measurements
-                        % consider communicaiton awareness
-                        [sim(iSim).planner(iAgent).candidate.Hbefore(:,iAction),sim(iSim).planner(iAgent).candidate.Hafter(:,iAction),sim(iSim).planner(iAgent).candidate.I(iAction)] = ...
-                            ComputeInformationMeasConsider(sim(iSim).planner(iAgent),sim(iSim).agent,sim(iSim).field,sim(iSim).planner(iAgent).param.clock,...
-                                sim(iSim).flagDisp,sim(iSim).flagComm,sim(iSim).flagPdfCompute,...
-                                iAction,iClock,sim(iSim).agent(iAgent).id);
+                % random decision
+                case 'random'
+                    
+                    % check the possible action command using geofence
+                    bAction = nan(1,sim(iSim).planner(iAgent).actionNum);
+                    for iAction = 1:sim(iSim).planner(iAgent).actionNum
+                       
+                        state = UpdateAgentState(sim(iSim).agent(iAgent).s,sim(iSim).planner(iAgent).actionSet(iAction),sim(iSim).clock.dt);
+                        if (state(1) > sim(iSim).field.bufferZone(1) && state(1) < sim(iSim).field.bufferZone(2)) ...
+                                && (state(2) > sim(iSim).field.bufferZone(3) && state(2) < sim(iSim).field.bufferZone(4)) % inside geofence
+                            bAction(iAction) = 1;
+                        else
+                            bAction(iAction) = 0;
+                        end
+                        
                     end
                     
-                else % out of geofence
-                    sim(iSim).planner(iAgent).candidate.Hbefore(:,iAction) = inf;
-                    sim(iSim).planner(iAgent).candidate.Hafter(:,iAction) = inf;
-                    sim(iSim).planner(iAgent).candidate.I(iAction) = inf;
-                end
+                    % AD-HOC: when the agent is close to the geofence so that all
+                    % cost candidates are infinity, then go to the origin.
+                    if sum(bAction) == 0 
+                        sim(iSim).planner(iAgent).actIdx = MoveToPoint([0 0], sim(iSim).agent(iAgent).s);
+                    else
+                        sim(iSim).planner(iAgent).actIdx = ceil(rand()*sim(iSim).planner(iAgent).actionNum);
+                    end
+                    sim(iSim).planner(iAgent).input = sim(iSim).planner(iAgent).actionSet(:,sim(iSim).planner(iAgent).actIdx);
+                    
+                % follow mean of a single target
+                case 'mean'
+                    
+                    iTarget = 1;
+                    sim(iSim).planner(iAgent).actIdx = MoveToPoint(sim(iSim).planner(iAgent).PTset(iTarget).xhat, sim(iSim).agent(iAgent).s);
+                    sim(iSim).planner(iAgent).input = sim(iSim).planner(iAgent).actionSet(:,sim(iSim).planner(iAgent).actIdx);
+                    
+                    
+                % mutual information-based optimization
+                case 'MI'
+                    
+                    for iAction = 1 : sim(iSim).planner(iAgent).actionSetNum
+                        
+                        % check whether decision has feasibility in terms of geofence
+                        state = UpdateAgentState(sim(iSim).agent(iAgent).s,sim(iSim).planner(iAgent).actionSet(iAction),sim(iSim).clock.dt);
+                        if (state(1) > sim(iSim).field.bufferZone(1) && state(1) < sim(iSim).field.bufferZone(2)) ...
+                                && (state(2) > sim(iSim).field.bufferZone(3) && state(2) < sim(iSim).field.bufferZone(4)) % inside geofence
+                            
+                            if ~sim(iSim).flagInfoCom
+                                % Ryan's approach-based Mutual Information computation: Measurement sampling-based
+                                [sim(iSim).planner(iAgent).candidate.Hbefore(:,iAction),sim(iSim).planner(iAgent).candidate.Hafter(:,iAction),sim(iSim).planner(iAgent).candidate.I(iAction)] = ...
+                                    ComputeInformation(sim(iSim).planner(iAgent),agent,sim(iSim).field,sim(iSim).planner(iAgent).param.clock,sim(iSim),iAction,iClock);
+                            elseif sim(iSim).flagInfoCom
+                                % Mutual Information computation: Consider all future measurements
+                                % consider communicaiton awareness
+                                [sim(iSim).planner(iAgent).candidate.Hbefore(:,iAction),sim(iSim).planner(iAgent).candidate.Hafter(:,iAction),sim(iSim).planner(iAgent).candidate.I(iAction)] = ...
+                                    ComputeInformationMeasConsider(sim(iSim).planner(iAgent),sim(iSim).agent,sim(iSim).field,sim(iSim).planner(iAgent).param.clock,...
+                                    sim(iSim).flagDisp,sim(iSim).flagComm,sim(iSim).flagPdfCompute,...
+                                    iAction,iClock,sim(iSim).agent(iAgent).id);
+                            end
+                            
+                        else % out of geofence
+                            sim(iSim).planner(iAgent).candidate.Hbefore(:,iAction) = inf;
+                            sim(iSim).planner(iAgent).candidate.Hafter(:,iAction) = inf;
+                            sim(iSim).planner(iAgent).candidate.I(iAction) = inf;
+                        end
+                    end
+                    
+                    % decision making: maximize mutual information
+                    
+                    % AD-HOC: when the agent is close to the geofence so that all
+                    % cost candidates are infinity, then go to the origin.
+                    if min(sim(iSim).planner(iAgent).candidate.I) == inf
+                        sim(iSim).planner(iAgent).actIdx = MoveToPoint([0 0], sim(iSim).agent(iAgent).s);
+                    else
+                        [~,sim(iSim).planner(iAgent).actIdx] = max(sim(iSim).planner(iAgent).candidate.I);
+                    end
+                    sim(iSim).planner(iAgent).input = sim(iSim).planner(iAgent).actionSet(:,sim(iSim).planner(iAgent).actIdx);
+                    
+                    sim(iSim).planner(iAgent).I = sim(iSim).planner(iAgent).candidate.I(sim(iSim).planner(iAgent).actIdx);
+                    sim(iSim).planner(iAgent).Hbefore = sim(iSim).planner(iAgent).candidate.Hbefore(:,sim(iSim).planner(iAgent).actIdx);
+                    sim(iSim).planner(iAgent).Hafter = sim(iSim).planner(iAgent).candidate.Hafter(:,sim(iSim).planner(iAgent).actIdx);
+                    
+                    
+                    % add computed information to analyze Monte-Carlo based
+                    % approach
+                    sim(iSim).planner(iAgent).Isum = sim(iSim).planner(iAgent).Isum + sim(iSim).planner(iAgent).I;
+                    sim(iSim).planner(iAgent).HbeforeSum = sim(iSim).planner(iAgent).HbeforeSum + sim(iSim).planner(iAgent).Hbefore;
+                    sim(iSim).planner(iAgent).HafterSum = sim(iSim).planner(iAgent).HafterSum + sim(iSim).planner(iAgent).Hafter;
+                    
             end
             
-            % decision making: maximize mutual information
-            
-            % AD-HOC: when the agent is close to the geofence so that all
-            % cost candidates are infinity, then go to the origin.
-            if min(sim(iSim).planner(iAgent).candidate.I) == inf
-                sim(iSim).planner(iAgent).actIdx = ReturnToHome(sim(iSim).agent(iAgent).s);
-            else
-                [~,sim(iSim).planner(iAgent).actIdx] = max(sim(iSim).planner(iAgent).candidate.I);
-            end
-            sim(iSim).planner(iAgent).input = sim(iSim).planner(iAgent).actionSet(:,sim(iSim).planner(iAgent).actIdx);
-            
-            sim(iSim).planner(iAgent).I = sim(iSim).planner(iAgent).candidate.I(sim(iSim).planner(iAgent).actIdx);
-            sim(iSim).planner(iAgent).Hbefore = sim(iSim).planner(iAgent).candidate.Hbefore(:,sim(iSim).planner(iAgent).actIdx);
-            sim(iSim).planner(iAgent).Hafter = sim(iSim).planner(iAgent).candidate.Hafter(:,sim(iSim).planner(iAgent).actIdx);
-            
-            
-            % add computed information to analyze Monte-Carlo based
-            % approach
-            sim(iSim).planner(iAgent).Isum = sim(iSim).planner(iAgent).Isum + sim(iSim).planner(iAgent).I;
-            sim(iSim).planner(iAgent).HbeforeSum = sim(iSim).planner(iAgent).HbeforeSum + sim(iSim).planner(iAgent).Hbefore;
-            sim(iSim).planner(iAgent).HafterSum = sim(iSim).planner(iAgent).HafterSum + sim(iSim).planner(iAgent).Hafter;
-                
         end
             
         
@@ -431,8 +487,24 @@ for iSim = 1:nSim
         % Actual Agent-Target Dynamics and Measurement
         %-----------------------------------
         
-        % agent moving
+        %-----------------------------------
+        % target moving
+        for iTarget = 1:sim(iSim).nTarget
+            % target dynamics/store data
+            sim(iSim).target(iTarget).x = UpdateTargetState(sim(iSim).target(iTarget).x,sim(iSim).target(iTarget).param,sim(iSim).clock.dt);
+            sim(iSim).target(iTarget).hist.x(:,iClock+1) = sim(iSim).target(iTarget).x;
+            
+            % update plot
+            set(sim(iSim).target(iTarget).plot.pos,'Xdata',sim(iSim).target(iTarget).x(1),'Ydata',sim(iSim).target(iTarget).x(2));
+            set(sim(iSim).target(iTarget).plot.id,'position',[sim(iSim).target(iTarget).x(1),sim(iSim).target(iTarget).x(2)]);
+            addpoints(sim(iSim).target(iTarget).plot.path,sim(iSim).target(iTarget).x(1),sim(iSim).target(iTarget).x(2));
+        end
+        %-----------------------------------
+        
         for iAgent = 1:sim(iSim).nAgent
+            
+            %-----------------------------------
+            % agent moving
             % agent dynamics/store data
             sim(iSim).agent(iAgent).s = UpdateAgentState(sim(iSim).agent(iAgent).s,sim(iSim).planner(iAgent).input(1),sim(iSim).clock.dt);
             sim(iSim).agent(iAgent).hist.s(:,iClock+1) = sim(iSim).agent(iAgent).s;
@@ -443,85 +515,71 @@ for iSim = 1:nSim
             addpoints(sim(iSim).agent(iAgent).plot.path,sim(iSim).agent(iAgent).s(1),sim(iSim).agent(iAgent).s(2));
             set(gca,'xlim',[sim(iSim).field.boundary(1),sim(iSim).field.boundary(2)],...
                 'ylim',[sim(iSim).field.boundary(3),sim(iSim).field.boundary(4)])
-        end
+            %-----------------------------------
         
-        % target moving
-        for iTarget = 1:sim(iSim).nTarget
-            % target dynamics/store data
-            sim(iSim).target(iTarget).x = UpdateTargetState(sim(iSim).target(iTarget).x,sim(iSim).target(iTarget).param,sim(iSim).clock.dt);
-            sim(iSim).target(iTarget).hist.x(:,iClock+1) = sim(iSim).target(iTarget).x;
             
-            % update plot
-            set(sim(iSim).target(iTarget).plot.pos,'Xdata',sim(iSim).target(iTarget).x(1),'Ydata',sim(iSim).target(iTarget).x(2));
-            set(sim(iSim).target(iTarget).plot.id,'position',[sim(iSim).target(iTarget).x(1),sim(iSim).target(iTarget).x(2)]);            
-            addpoints(sim(iSim).target(iTarget).plot.path,sim(iSim).target(iTarget).x(1),sim(iSim).target(iTarget).x(2));
-        end
-        
-        % take measurement
-        for iSensor = 1:sim(iSim).nAgent
-            
-            sim(iSim).sensor(iSensor,1).plot.bDetect = 0;
+            %-----------------------------------
+            % take measurement
+            sim(iSim).sensor(iAgent,1).plot.bDetect = 0;
             for iTarget = 1:sim(iSim).nTarget
-                sim(iSim).sensor(iSensor,iTarget).y = ...
-                    TakeMeasurement(sim(iSim).target(iTarget).x,sim(iSim).agent(iSensor).s,sim(iSim).sensor(iSensor,iTarget).param);
-                sim(iSim).sensor(iSensor,iTarget).hist.y(:,iClock+1) = sim(iSim).sensor(iSensor,iTarget).y;
+                sim(iSim).sensor(iAgent,iTarget).y = ...
+                    TakeMeasurement(sim(iSim).target(iTarget).x,sim(iSim).agent(iAgent).s,sim(iSim).sensor(iAgent,iTarget).param);
+                sim(iSim).sensor(iAgent,iTarget).hist.y(:,iClock+1) = sim(iSim).sensor(iAgent,iTarget).y;
                 
-                if sim(iSim).sensor(iSensor,iTarget).y == 1
-                    sim(iSim).sensor(iSensor,1).plot.bDetect = 1;
+                if sim(iSim).sensor(iAgent,iTarget).y == 1
+                    sim(iSim).sensor(iAgent,1).plot.bDetect = 1;
                 end
             end
-            sim(iSim).sensor(iSensor,1).plot.hist.bDetect(:,iClock+1) = sim(iSim).sensor(iSensor,1).plot.bDetect;
+            sim(iSim).sensor(iAgent,1).plot.hist.bDetect(:,iClock+1) = sim(iSim).sensor(iAgent,1).plot.bDetect;
             
             % update plot
-            [sim(iSim).sensor(iSensor,1).plot.data.x,sim(iSim).sensor(iSensor,1).plot.data.y,~] = ...
-                GetCircleData(sim(iSim).agent(iSensor).s(1),sim(iSim).agent(iSensor).s(2),sim(iSim).sensor(iSensor,1).param.regionRadius);
-            set(sim(iSim).sensor(iSensor,1).plot.fov,'Xdata',sim(iSim).sensor(iSensor,1).plot.data.x,'Ydata',sim(iSim).sensor(iSensor,1).plot.data.y);
-            sim(iSim).sensor(iSensor,1).plot.hist.data.x(:,iClock+1) = sim(iSim).sensor(iSensor,1).plot.data.x';
-            sim(iSim).sensor(iSensor,1).plot.hist.data.y(:,iClock+1) = sim(iSim).sensor(iSensor,1).plot.data.y';
+            [sim(iSim).sensor(iAgent,1).plot.data.x,sim(iSim).sensor(iAgent,1).plot.data.y,~] = ...
+                GetCircleData(sim(iSim).agent(iAgent).s(1),sim(iSim).agent(iAgent).s(2),sim(iSim).sensor(iAgent,1).param.regionRadius);
+            set(sim(iSim).sensor(iAgent,1).plot.fov,'Xdata',sim(iSim).sensor(iAgent,1).plot.data.x,'Ydata',sim(iSim).sensor(iAgent,1).plot.data.y);
+            sim(iSim).sensor(iAgent,1).plot.hist.data.x(:,iClock+1) = sim(iSim).sensor(iAgent,1).plot.data.x';
+            sim(iSim).sensor(iAgent,1).plot.hist.data.y(:,iClock+1) = sim(iSim).sensor(iAgent,1).plot.data.y';
             
-            if sim(iSim).sensor(iSensor,1).plot.bDetect % when the sensor detects at least one of targets
-                set(sim(iSim).sensor(iSensor,1).plot.fov,'FaceColor',sim(iSim).sensor(iSensor,1).plot.clr.detect);
+            if sim(iSim).sensor(iAgent,1).plot.bDetect % when the sensor detects at least one of targets
+                set(sim(iSim).sensor(iAgent,1).plot.fov,'FaceColor',sim(iSim).sensor(iAgent,1).plot.clr.detect);
             else
-                set(sim(iSim).sensor(iSensor,1).plot.fov,'FaceColor',sim(iSim).sensor(iSensor,1).plot.clr.noDetect);
+                set(sim(iSim).sensor(iAgent,1).plot.fov,'FaceColor',sim(iSim).sensor(iAgent,1).plot.clr.noDetect);
             end
-        end
-        
-        % particle measurement and agent state sharing through communication
-        for iComm = 1:sim(iSim).nAgent
-            [sim(iSim).comm(iComm).beta,sim(iSim).comm(iComm).bConnect,sim(iSim).planner(iComm).agent,sim(iSim).comm(iComm).z] = ...
-                ShareInformation(sim(iSim).agent,sim(iSim).sensor,sim(iSim).planner(iComm).agent,sim(iSim).PF(iComm).id(1), sim(iSim).flagComm);
-            sim(iSim).comm(iComm).hist.beta(:,iClock+1) = sim(iSim).comm(iComm).beta;
-            sim(iSim).comm(iComm).hist.bConnect(:,iClock+1) = sim(iSim).comm(iComm).bConnect;
-            sim(iSim).comm(iComm).hist.Z(:,:,iClock+1) = sim(iSim).comm(iComm).z';
-        end
-        
-        %-----------------------------------
-        % Actual measurement and estimation: PF
-        %-----------------------------------
-        
-        % PF is locally performend, and measurement information is delivered
-        % under the communication probability
-        for iPF = 1:sim(iSim).nAgent
+            %-----------------------------------
             
+            
+            %-----------------------------------
+            % particle measurement and agent state sharing through communication
+            [sim(iSim).comm(iAgent).beta,sim(iSim).comm(iAgent).bConnect,sim(iSim).planner(iAgent).agent,sim(iSim).comm(iAgent).z] = ...
+                ShareInformation(sim(iSim).agent,sim(iSim).sensor,sim(iSim).planner(iAgent).agent,sim(iSim).PF(iAgent).id(1), sim(iSim).flagComm);
+            sim(iSim).comm(iAgent).hist.beta(:,iClock+1) = sim(iSim).comm(iAgent).beta;
+            sim(iSim).comm(iAgent).hist.bConnect(:,iClock+1) = sim(iSim).comm(iAgent).bConnect;
+            sim(iSim).comm(iAgent).hist.Z(:,:,iClock+1) = sim(iSim).comm(iAgent).z';
+            %-----------------------------------
+            
+            %-----------------------------------
+            % Actual measurement and estimation: PF
+            %
+            % PF is locally performend, and measurement information is delivered
+            % under the communication probability
             for iTarget = 1:sim(iSim).nTarget
                 % particle state update
-                sim(iSim).PF(iPF,iTarget).pt = UpdateParticle(sim(iSim).PF(iPF,iTarget).pt,sim(iSim).PF(iPF,iTarget).param,sim(iSim).clock.dt);
+                sim(iSim).PF(iAgent,iTarget).pt = UpdateParticle(sim(iSim).PF(iAgent,iTarget).pt,sim(iSim).PF(iAgent,iTarget).param,sim(iSim).clock.dt);
                 
                 % particle weight update
-                sim(iSim).PF(iPF,iTarget).w = UpdateParticleWeight(sim(iSim).comm(iPF).z(:,iTarget),sim(iSim).PF(iPF,iTarget).pt,sim(iSim).planner(iPF).agent,sim(iSim).sensor(iPF).param);
+                sim(iSim).PF(iAgent,iTarget).w = UpdateParticleWeight(sim(iSim).comm(iAgent).z(:,iTarget),sim(iSim).PF(iAgent,iTarget).pt,sim(iSim).planner(iAgent).agent,sim(iSim).sensor(iAgent).param);
                 
                 % update plot
                 % AGENT 1 ONLY VISUALIZES PARTICLE INFO BECAUSE OF HUGE
                 % PLOTTING SPACE!
-                if iPF == 1
-                    figure(1+iPF)
-                    subplot(sim(iSim).PF(iPF,iTarget).plot.location.col,...
-                        sim(iSim).PF(iPF,iTarget).plot.location.row,...
-                        sim(iSim).PF(iPF,iTarget).plot.location.num)
-                    set(sim(iSim).PF(iPF,iTarget).plot.targetPos,'Xdata',sim(iSim).target(iTarget).x(1),'Ydata',sim(iSim).target(iTarget).x(2));
-                    set(sim(iSim).PF(iPF,iTarget).plot.pt,'Xdata',sim(iSim).PF(iPF,iTarget).pt(1,:),'Ydata',sim(iSim).PF(iPF,iTarget).pt(2,:),...
-                        'Cdata',sim(iSim).PF(iPF,iTarget).w);
-                    set(sim(iSim).PF(iPF,iTarget).plot.targetId,'position',...
+                if iAgent == 1
+                    figure(1+iAgent)
+                    subplot(sim(iSim).PF(iAgent,iTarget).plot.location.col,...
+                        sim(iSim).PF(iAgent,iTarget).plot.location.row,...
+                        sim(iSim).PF(iAgent,iTarget).plot.location.num)
+                    set(sim(iSim).PF(iAgent,iTarget).plot.targetPos,'Xdata',sim(iSim).target(iTarget).x(1),'Ydata',sim(iSim).target(iTarget).x(2));
+                    set(sim(iSim).PF(iAgent,iTarget).plot.pt,'Xdata',sim(iSim).PF(iAgent,iTarget).pt(1,:),'Ydata',sim(iSim).PF(iAgent,iTarget).pt(2,:),...
+                        'Cdata',sim(iSim).PF(iAgent,iTarget).w);
+                    set(sim(iSim).PF(iAgent,iTarget).plot.targetId,'position',...
                         [sim(iSim).target(iTarget).x(1),sim(iSim).target(iTarget).x(2)]);
                     set(gca,'xlim',[sim(iSim).field.boundary(1),sim(iSim).field.boundary(2)],...
                         'ylim',[sim(iSim).field.boundary(3),sim(iSim).field.boundary(4)])
@@ -529,50 +587,57 @@ for iSim = 1:nSim
                 
                 
                 % resample particle
-                [sim(iSim).PF(iPF,iTarget).pt,sim(iSim).PF(iPF,iTarget).w] = ResampleParticle(sim(iSim).PF(iPF,iTarget).pt,sim(iSim).PF(iPF,iTarget).w,sim(iSim).field);
+                [sim(iSim).PF(iAgent,iTarget).pt,sim(iSim).PF(iAgent,iTarget).w] = ResampleParticle(sim(iSim).PF(iAgent,iTarget).pt,sim(iSim).PF(iAgent,iTarget).w,sim(iSim).field);
                 
                 % particle filter info update/store
-                sim(iSim).PF(iPF,iTarget).xhat = (sim(iSim).PF(iPF,iTarget).w*sim(iSim).PF(iPF,iTarget).pt')';
-                sim(iSim).PF(iPF,iTarget).hist.pt(:,:,iClock+1) = sim(iSim).PF(iPF,iTarget).pt;
-                sim(iSim).PF(iPF,iTarget).hist.w(:,:,iClock+1) = sim(iSim).PF(iPF,iTarget).w;
-                sim(iSim).PF(iPF,iTarget).hist.xhat(:,iClock+1) = sim(iSim).PF(iPF,iTarget).xhat;
-                                
+                sim(iSim).PF(iAgent,iTarget).xhat = (sim(iSim).PF(iAgent,iTarget).w*sim(iSim).PF(iAgent,iTarget).pt')';
+                sim(iSim).PF(iAgent,iTarget).hist.pt(:,:,iClock+1) = sim(iSim).PF(iAgent,iTarget).pt;
+                sim(iSim).PF(iAgent,iTarget).hist.w(:,:,iClock+1) = sim(iSim).PF(iAgent,iTarget).w;
+                sim(iSim).PF(iAgent,iTarget).hist.xhat(:,iClock+1) = sim(iSim).PF(iAgent,iTarget).xhat;
+                
+                
                 % update planner initial info
-                sim(iSim).planner(iPF).x = sim(iSim).PF(iPF,iTarget).xhat;
-                sim(iSim).planner(iPF).w = sim(iSim).PF(iPF,iTarget).w;
-                sim(iSim).planner(iPF).pt = sim(iSim).PF(iPF,iTarget).pt;
+                sim(iSim).planner(iAgent).PTset(iTarget).xhat = sim(iSim).PF(iAgent,iTarget).xhat;
+                sim(iSim).planner(iAgent).PTset(iTarget).w = sim(iSim).PF(iAgent,iTarget).w;
+                sim(iSim).planner(iAgent).PTset(iTarget).pt = sim(iSim).PF(iAgent,iTarget).pt;
                 
                 % store optimized infomation data
-                for iPlanner = 1:sim(iSim).nAgent
-                    sim(iSim).planner(iPlanner).hist.actIdx(iClock+1) = sim(iSim).planner(iPlanner).actIdx;
-                    sim(iSim).planner(iPlanner).hist.input(:,iClock+1) = sim(iSim).planner(iPlanner).input;
-                    sim(iSim).planner(iPlanner).hist.I(:,iClock+1) = sim(iSim).planner(iPlanner).I;
-                    sim(iSim).planner(iPlanner).hist.Hafter(:,iClock+1) = sim(iSim).planner(iPlanner).Hafter';
-                    sim(iSim).planner(iPlanner).hist.Hbefore(:,iClock+1) = sim(iSim).planner(iPlanner).Hbefore';
+                sim(iSim).planner(iPlanner).hist.actIdx(iClock+1) = sim(iSim).planner(iPlanner).actIdx;
+                sim(iSim).planner(iPlanner).hist.input(:,iClock+1) = sim(iSim).planner(iPlanner).input;
+                
+                % store entropy-based data for planner: only useful for MI-based planning
+                if strcmp(sim(iSim).flagDM,'MI')
+                    for iPlanner = 1:sim(iSim).nAgent
+                        sim(iSim).planner(iPlanner).hist.I(:,iClock+1) = sim(iSim).planner(iPlanner).I;
+                        sim(iSim).planner(iPlanner).hist.Hafter(:,iClock+1) = sim(iSim).planner(iPlanner).Hafter';
+                        sim(iSim).planner(iPlanner).hist.Hbefore(:,iClock+1) = sim(iSim).planner(iPlanner).Hbefore';
+                    end
                 end
                 
-                % take decision making for agent input
-                for iAgent = 1:sim(iSim).nAgent
-                    sim(iSim).agent(iAgent).vel = sim(iSim).planner(iAgent).input(1);
-                end
-                
-                % compute entropy for comparison
-                targetUpdatePdf = ComputePDFMixture(sim(iSim).PF(iPF,iTarget).pt,sim(iSim).PF(iPF,iTarget).w,sim(iSim).planner(iPF).param,sim(iSim).flagPdfCompute);
-                sim(iSim).PF(iPF,iTarget).H = ComputeEntropy(targetUpdatePdf,sim(iSim).PF(iPF,iTarget).pt,sim(iSim).planner(iPF).param,sim(iSim).flagPdfCompute);
-                sim(iSim).PF(iPF,iTarget).hist.H(:,iClock+1) = sim(iSim).PF(iPF,iTarget).H;
+                % compute actual entropy for comparison
+                targetUpdatePdf = ComputePDFMixture(sim(iSim).PF(iAgent,iTarget).pt,sim(iSim).PF(iAgent,iTarget).w,sim(iSim).planner(iAgent).param,sim(iSim).flagPdfCompute);
+                sim(iSim).PF(iAgent,iTarget).H = ComputeEntropy(targetUpdatePdf,sim(iSim).PF(iAgent,iTarget).pt,sim(iSim).planner(iAgent).param,sim(iSim).flagPdfCompute);
+                sim(iSim).PF(iAgent,iTarget).hist.H(:,iClock+1) = sim(iSim).PF(iAgent,iTarget).H;
                 
             end
+            %-----------------------------------
+            
+
+            %-----------------------------------
+            % take decision making for agent input
+            sim(iSim).agent(iAgent).vel = sim(iSim).planner(iAgent).input(1);
+            %-----------------------------------
+
+            
         end
         
         % clock update
         sim(iSim).clock.hist.time(:,iClock+1) = iClock*sim(iSim).clock.dt;
         
-        % display current clock when this script does not use Monte-Carlo
-        if nSim == 1
-            fprintf('iClock = %d\n',iClock);
-        end
-        
+        % update figure
         drawnow;
+        figure(1)
+        title(sprintf('t = %.1f [sec]', sim(iSim).clock.hist.time(:,iClock+1)))
         
     end
 

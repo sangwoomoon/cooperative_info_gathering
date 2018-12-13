@@ -1,12 +1,12 @@
 
 clear;
 
-load('a5t10.mat');
+load('a5t3.mat');
 close all;
 
 
 iSim = 1; % take one of simulations
-
+bMovie = 0; % movie making flag (as gif)
 
 %----------------------
 % simulation plotting initialization:
@@ -28,6 +28,7 @@ set(gca,'xlim',[sim(iSim).field.boundary(1),sim(iSim).field.boundary(2)],...
     'ylim',[sim(iSim).field.boundary(3),sim(iSim).field.boundary(4)])
 set(sim(iSim).plot.fieldView,'color','w')
 xlabel('East [m]'); ylabel('North [m]'); axis equal;
+title(sprintf('t = %.1f [sec]', 0))
 %----------------------
 
 %----------------------
@@ -42,7 +43,8 @@ for iTarget = 1:sim(iSim).nTarget
         targetID(iTarget));
     
     % trajectory plot setting
-    sim(iSim).target(iTarget).plot.path = animatedline(sim(iSim).target(iTarget).hist.x(1,1),sim(iSim).target(iTarget).hist.x(2,1));
+    sim(iSim).target(iTarget).plot.path = animatedline(sim(iSim).target(iTarget).hist.x(1,1),sim(iSim).target(iTarget).hist.x(2,1),'color',sim(iSim).target(iTarget).plot.clr);
+    alpha(sim(iSim).target(iTarget).plot.path,sim(iSim).target(iTarget).plot.opaque);
 end
 %----------------------
 
@@ -58,7 +60,8 @@ for iAgent = 1:sim(iSim).nAgent
         num2str(iAgent));
     
     % agent trajectory plotting
-    sim(iSim).agent(iAgent).plot.path = animatedline(sim(iSim).agent(iAgent).hist.s(1,1),sim(iSim).agent(iAgent).hist.s(2,1));
+    sim(iSim).agent(iAgent).plot.path = animatedline(sim(iSim).agent(iAgent).hist.s(1,1),sim(iSim).agent(iAgent).hist.s(2,1),'color',sim(iSim).agent(iAgent).plot.clr);
+    alpha(sim(iSim).agent(iAgent).plot.path,sim(iSim).agent(iAgent).plot.opaque);
 end
 %----------------------
 
@@ -84,6 +87,9 @@ for iAgent = 1:sim(iSim).nAgent
         % AGENT 1 ONLY VISUALIZES PARTICLE BECAUSE OF HUGE PLOTTING SPACE!
         if iAgent == 1
             figure(1+iAgent)
+            sim(iSim).plot.particle(iAgent).Units = 'inches';
+            sim(iSim).plot.particle(iAgent).OuterPosition = [0 0 2*ceil(sim(iSim).nTarget/2) 2*(sim(iSim).nTarget<2)+4*(sim(iSim).nTarget>=2)];
+
             subplot(sim(iSim).PF(iAgent,iTarget).plot.location.col,...
                 sim(iSim).PF(iAgent,iTarget).plot.location.row,...
                 sim(iSim).PF(iAgent,iTarget).plot.location.num),
@@ -103,13 +109,27 @@ for iAgent = 1:sim(iSim).nAgent
             % particle plot
             sim(iSim).PF(iAgent,iTarget).plot.pt = ...
                 scatter(sim(iSim).PF(iAgent,iTarget).hist.pt(1,:,1),sim(iSim).PF(iAgent,iTarget).hist.pt(2,:,1),10,sim(iSim).PF(iAgent,iTarget).w,'filled');
-            
         end
     end
     
 end
 %----------------------
 
+%----------------------
+% movie initialization
+if bMovie
+    gif.field.file = ['a',num2str(sim(1).nAgent),'t',num2str(sim(1).nTarget),'_fieldView.gif'];
+    gif.field.frame = getframe(sim(iSim).plot.fieldView);
+    gif.field.im = frame2im(gif.field.frame);
+    [gif.field.imind,gif.field.cm] = rgb2ind(gif.field.im,256);
+    imwrite(gif.field.imind,gif.field.cm,gif.field.file,'gif','Loopcount',inf);
+    
+    gif.pf.file = ['a',num2str(sim(1).nAgent),'t',num2str(sim(1).nTarget),'_PF.gif'];
+    gif.pf.frame = getframe(sim(iSim).plot.particle(1));
+    gif.pf.im = frame2im(gif.pf.frame);
+    [gif.pf.imind,gif.pf.cm] = rgb2ind(gif.pf.im,256);
+    imwrite(gif.pf.imind,gif.pf.cm,gif.pf.file,'gif','Loopcount',inf);
+end
 
 
 %% ---------------------------------
@@ -149,8 +169,8 @@ for iClock = 2:sim(iSim).clock.nt
                     sim(iSim).PF(iAgent,iTarget).plot.location.row,...
                     sim(iSim).PF(iAgent,iTarget).plot.location.num)
                 set(sim(iSim).PF(iAgent,iTarget).plot.targetPos,'Xdata',sim(iSim).target(iTarget).hist.x(1,iClock),'Ydata',sim(iSim).target(iTarget).hist.x(2,iClock));
-                set(sim(iSim).PF(iAgent,iTarget).plot.pt,'Xdata',sim(iSim).PF(iPF,iTarget).hist.pt(1,:,iClock),'Ydata',sim(iSim).PF(iPF,iTarget).hist.pt(2,:,iClock),...
-                    'Cdata',sim(iSim).PF(iPF,iTarget).hist.w(:,:,iClock));
+                set(sim(iSim).PF(iAgent,iTarget).plot.pt,'Xdata',sim(iSim).PF(iAgent,iTarget).hist.pt(1,:,iClock),'Ydata',sim(iSim).PF(iAgent,iTarget).hist.pt(2,:,iClock),...
+                    'Cdata',sim(iSim).PF(iAgent,iTarget).hist.w(:,:,iClock));
                 set(sim(iSim).PF(iAgent,iTarget).plot.targetId,'position',...
                     [sim(iSim).target(iTarget).x(1),sim(iSim).target(iTarget).x(2)]);
                 set(gca,'xlim',[sim(iSim).field.boundary(1),sim(iSim).field.boundary(2)],...
@@ -169,13 +189,26 @@ for iClock = 2:sim(iSim).clock.nt
         set(sim(iSim).target(iTarget).plot.id,'position',[sim(iSim).target(iTarget).hist.x(1,iClock),sim(iSim).target(iTarget).hist.x(2,iClock)]);
         addpoints(sim(iSim).target(iTarget).plot.path,sim(iSim).target(iTarget).hist.x(1,iClock),sim(iSim).target(iTarget).hist.x(2,iClock));
     end
+    title(sprintf('t = %.1f [sec]', iClock-1))
     
     
-    
+    % draw current states in figures
     drawnow;
+    
+    % movie file update
+    if bMovie
+        gif.field.frame = getframe(sim(iSim).plot.fieldView);
+        gif.field.im = frame2im(gif.field.frame);
+        [gif.field.imind,gif.field.cm] = rgb2ind(gif.field.im,256);
+        imwrite(gif.field.imind,gif.field.cm,gif.field.file,'gif','WriteMode','append');
+        
+        gif.pf.frame = getframe(sim(iSim).plot.particle(1));
+        gif.pf.im = frame2im(gif.pf.frame);
+        [gif.pf.imind,gif.pf.cm] = rgb2ind(gif.pf.im,256);
+        imwrite(gif.pf.imind,gif.pf.cm,gif.pf.file,'gif','WriteMode','append');
+    end
+    
 end
-
-
 
 
 %%
