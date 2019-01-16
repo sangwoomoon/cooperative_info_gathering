@@ -28,14 +28,18 @@ format compact;
 hold on;
 
 D2R = pi/180;
-nSim = 1; % for Monte-Carlo approach or method comparison
+nSim = 10; % for Monte-Carlo approach or method comparison
 targetID = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+RandSeed = rng;
 
 for iSim = 1:nSim
     
     %-------------------------------
     %   sim setting
     %-------------------------------
+
+    rng(RandSeed);
     
     %----------------------
     % simulation structure
@@ -46,7 +50,7 @@ for iSim = 1:nSim
     sim(iSim).flagInfoCom = 1; % 0: Ryan's approach | 1: Our approach(consider all measurements)
     sim(iSim).flagDM = 'MI'; % 0: 'random': random decision | 'MI': mutual information-based decision | 'mean': particle mean following
     sim(iSim).flagPDF = 0; % 0: no PDF draw | 1: PDF draw
-    sim(iSim).flagComm = 0; % 0: perfect communication | 1: imperfect communication and communication awareness
+    sim(iSim).flagComm = 1; % 0: perfect communication | 1: imperfect communication and communication awareness
     sim(iSim).flagPdfCompute = 'cylinder'; % 'uniform': uniformly discretized domain | 'cylinder': cylinder based computation w.r.t particle set
     sim(iSim).flagLog = 0;
     
@@ -73,7 +77,7 @@ for iSim = 1:nSim
     
     %----------------------
     % clock structure
-    sim(iSim).clock.nt = 500;
+    sim(iSim).clock.nt = 3;
     sim(iSim).clock.dt = 1;
     sim(iSim).clock.hist.time = 0;
     %----------------------
@@ -120,10 +124,10 @@ for iSim = 1:nSim
         % position plot setting
         sim(iSim).target(iTarget).plot.pos = ...
             plot(sim(iSim).target(iTarget).x(1),sim(iSim).target(iTarget).x(2),...
-                sim(iSim).target(iTarget).plot.marker,'LineWidth',2,'color',sim(iSim).target(iTarget).plot.clr);
+            sim(iSim).target(iTarget).plot.marker,'LineWidth',2,'color',sim(iSim).target(iTarget).plot.clr);
         sim(iSim).target(iTarget).plot.id = ...
             text(sim(iSim).target(iTarget).x(1),sim(iSim).target(iTarget).x(2),...
-                targetID(iTarget));
+            targetID(iTarget));
         
         % trajectory plot setting
         sim(iSim).target(iTarget).plot.path = animatedline(sim(iSim).target(iTarget).x(1),sim(iSim).target(iTarget).x(2),'color',sim(iSim).target(iTarget).plot.clr);
@@ -132,7 +136,7 @@ for iSim = 1:nSim
     
     %----------------------
     % agent structure
-    
+
     % parameters fleet of agent for initial positioning
     nSquad = ceil(sim(iSim).nAgent/4);
     iSquad = 1;
@@ -143,11 +147,11 @@ for iSim = 1:nSim
         % deploy agents as 4 groups: corner
         switch iSquad
             case 1
-                pos = [sim(iSim).field.bufferZone(2)-rand()*sim(iSim).field.zoneLength(1)/8 sim(iSim).field.bufferZone(4)-rand()*sim(iSim).field.zoneLength(2)/8, 5/8*2*pi];
+                pos = [-rand()*sim(iSim).field.zoneLength(1)/8 -rand()*sim(iSim).field.zoneLength(2)/8, 5/8*2*pi];
             case 2
-                pos = [sim(iSim).field.bufferZone(1)+rand()*sim(iSim).field.zoneLength(1)/8 sim(iSim).field.bufferZone(4)-rand()*sim(iSim).field.zoneLength(2)/8, 7/8*2*pi];
+                pos = [rand()*sim(iSim).field.zoneLength(1)/8 -rand()*sim(iSim).field.zoneLength(2)/8, 7/8*2*pi];
             case 3
-                pos = [sim(iSim).field.bufferZone(1)+rand()*sim(iSim).field.zoneLength(1)/8 sim(iSim).field.bufferZone(3)+rand()*sim(iSim).field.zoneLength(2)/8, 1/8*2*pi];
+                pos = [rand()*sim(iSim).field.zoneLength(1)/8 +rand()*sim(iSim).field.zoneLength(2)/8, 1/8*2*pi];
             case 4
                 pos = [sim(iSim).field.bufferZone(2)-rand()*sim(iSim).field.zoneLength(1)/8 sim(iSim).field.bufferZone(3)+rand()*sim(iSim).field.zoneLength(2)/8, 3/8*2*pi];
         end
@@ -163,11 +167,11 @@ for iSim = 1:nSim
         % agent position plotting
         sim(iSim).agent(iAgent).plot.pos = ...
             plot(sim(iSim).agent(iAgent).s(1),sim(iSim).agent(iAgent).s(2),...
-                sim(iSim).agent(iAgent).plot.marker,'LineWidth',2,'color',sim(iSim).agent(iAgent).plot.clr);
+            sim(iSim).agent(iAgent).plot.marker,'LineWidth',2,'color',sim(iSim).agent(iAgent).plot.clr);
         sim(iSim).agent(iAgent).plot.id = ...
             text(sim(iSim).agent(iAgent).s(1),sim(iSim).agent(iAgent).s(2),...
-                num2str(iAgent));
-            
+            num2str(iAgent));
+        
         % agent trajectory plotting
         sim(iSim).agent(iAgent).plot.path = animatedline(sim(iSim).agent(iAgent).s(1),sim(iSim).agent(iAgent).s(2),'color',sim(iSim).agent(iAgent).plot.clr);
         
@@ -223,7 +227,8 @@ for iSim = 1:nSim
         
         for iTarget = 1:sim(iSim).nTarget
             sim(iSim).PF(iAgent,iTarget).id = [iAgent, iTarget];
-            sim(iSim).PF(iAgent,iTarget).nPt = 100;
+            sim(iSim).PF(iAgent,iTarget).nPt = floor(10^(0.15*(iSim+3)));
+%             sim(iSim).PF(iAgent,iTarget).nPt = 100;
             sim(iSim).PF(iAgent,iTarget).w = ones(1,sim(iSim).PF(iAgent,iTarget).nPt)./sim(iSim).PF(iAgent,iTarget).nPt;
             if iAgent == 1
                 for iPt = 1 : sim(iSim).PF(iAgent,iTarget).nPt
@@ -371,7 +376,6 @@ for iSim = 1:nSim
     %----------------------
 
     
-    
     %% ---------------------------------
     % Sim Operation
     %-----------------------------------
@@ -436,12 +440,14 @@ for iSim = 1:nSim
                             
                             if ~sim(iSim).flagInfoCom
                                 % Ryan's approach-based Mutual Information computation: Measurement sampling-based
-                                [sim(iSim).planner(iAgent).candidate.Hbefore(:,iAction),sim(iSim).planner(iAgent).candidate.Hafter(:,iAction),sim(iSim).planner(iAgent).candidate.I(iAction)] = ...
+                                [sim(iSim).planner(iAgent).candidate.Hbefore(:,iAction),sim(iSim).planner(iAgent).candidate.Hafter(:,iAction),sim(iSim).planner(iAgent).candidate.I(iAction),...
+                                    sim(iSim).planner(iAgent).candidate.HbeforeRef(:,iAction),sim(iSim).planner(iAgent).candidate.HafterRef(:,iAction),sim(iSim).planner(iAgent).candidate.IRef(iAction)] = ...
                                     ComputeInformation(sim(iSim).planner(iAgent),agent,sim(iSim).field,sim(iSim).planner(iAgent).param.clock,sim(iSim),iAction,iClock);
                             elseif sim(iSim).flagInfoCom
                                 % Mutual Information computation: Consider all future measurements
                                 % consider communicaiton awareness
-                                [sim(iSim).planner(iAgent).candidate.Hbefore(:,iAction),sim(iSim).planner(iAgent).candidate.Hafter(:,iAction),sim(iSim).planner(iAgent).candidate.I(iAction)] = ...
+                                [sim(iSim).planner(iAgent).candidate.Hbefore(:,iAction),sim(iSim).planner(iAgent).candidate.Hafter(:,iAction),sim(iSim).planner(iAgent).candidate.I(iAction),...
+                                    sim(iSim).planner(iAgent).candidate.HbeforeRef(:,iAction),sim(iSim).planner(iAgent).candidate.HafterRef(:,iAction),sim(iSim).planner(iAgent).candidate.IRef(iAction)] = ...
                                     ComputeInformationMeasConsider(sim(iSim).planner(iAgent),sim(iSim).agent,sim(iSim).field,sim(iSim).planner(iAgent).param.clock,...
                                     sim(iSim).flagDisp,sim(iSim).flagComm,sim(iSim).flagPdfCompute,...
                                     iAction,iClock,sim(iSim).agent(iAgent).id);
@@ -469,6 +475,9 @@ for iSim = 1:nSim
                     sim(iSim).planner(iAgent).Hbefore = sim(iSim).planner(iAgent).candidate.Hbefore(:,sim(iSim).planner(iAgent).actIdx);
                     sim(iSim).planner(iAgent).Hafter = sim(iSim).planner(iAgent).candidate.Hafter(:,sim(iSim).planner(iAgent).actIdx);
                     
+                    sim(iSim).planner(iAgent).IRef = sim(iSim).planner(iAgent).candidate.IRef(sim(iSim).planner(iAgent).actIdx);
+                    sim(iSim).planner(iAgent).HbeforeRef = sim(iSim).planner(iAgent).candidate.HbeforeRef(:,sim(iSim).planner(iAgent).actIdx);
+                    sim(iSim).planner(iAgent).HafterRef = sim(iSim).planner(iAgent).candidate.HafterRef(:,sim(iSim).planner(iAgent).actIdx);
                     
                     % add computed information to analyze Monte-Carlo based
                     % approach
@@ -611,6 +620,10 @@ for iSim = 1:nSim
                         sim(iSim).planner(iPlanner).hist.I(:,iClock+1) = sim(iSim).planner(iPlanner).I;
                         sim(iSim).planner(iPlanner).hist.Hafter(:,iClock+1) = sim(iSim).planner(iPlanner).Hafter';
                         sim(iSim).planner(iPlanner).hist.Hbefore(:,iClock+1) = sim(iSim).planner(iPlanner).Hbefore';
+                        
+                        sim(iSim).planner(iPlanner).hist.IRef(:,iClock+1) = sim(iSim).planner(iPlanner).IRef;
+                        sim(iSim).planner(iPlanner).hist.HafterRef(:,iClock+1) = sim(iSim).planner(iPlanner).HafterRef';
+                        sim(iSim).planner(iPlanner).hist.HbeforeRef(:,iClock+1) = sim(iSim).planner(iPlanner).HbeforeRef';
                     end
                 end
                 

@@ -2,7 +2,7 @@
 % PF-based Mutual information Computation when considering all possible
 % measurements
 %-----------------------------------
-function [Hbefore,Hafter,I] = ComputeInformationMeasConsider(planner,agent,field,clock,bPdfDisp,flagComm,flagPdfCompute,iAction,iClock,id)
+function [Hbefore,Hafter,I,  HbeforeRef,HafterRef,Iref] = ComputeInformationMeasConsider(planner,agent,field,clock,bPdfDisp,flagComm,flagPdfCompute,iAction,iClock,id)
 
 nMeasSet = length(planner.measSet(1,:));
 nCommSet = length(planner.commSet(1,:));
@@ -12,16 +12,29 @@ Hbefore = zeros(clock.nT,1);
 Hafter = zeros(clock.nT,1);
 
 
+% mutual information under Gaussian assumption
+Iref = 0; 
+HbeforeRef = zeros(clock.nT,1);
+HafterRef = zeros(clock.nT,1);
+%---
+
 for iMeas = 1:nMeasSet
     
     for iComm = 1:nCommSet
         
-        [HbeforeElement,HafterElement,Ielement] = ...
+        [HbeforeElement,HafterElement,Ielement, HbeforeRefElement,HafterRefElement,IrefElement] = ...
             ComputeInformationSinleMeasCommSet(planner,agent,field,clock,bPdfDisp,flagComm,flagPdfCompute,iAction,iClock,iMeas,iComm,id);
         
         I = I + sum(Ielement);
         Hbefore = Hbefore + sum(HbeforeElement,1)';
         Hafter = Hafter + sum(HafterElement,1)';
+        
+        
+        % mutual information under Gaussian Assumption
+        Iref = Iref + sum(IrefElement);
+        HbeforeRef = HbeforeRef + sum(HbeforeRefElement,1)';
+        HafterRef = HafterRef + sum(HafterRefElement,1)';        
+        %---
         
     end
      
@@ -33,10 +46,17 @@ I = I/nPossibleEvents;
 Hbefore = Hbefore/nPossibleEvents;
 Hafter = Hafter/nPossibleEvents;
 
+
+% mutual information under Gaussian Assumption
+Iref = Iref/nPossibleEvents;
+HbeforeRef = HbeforeRef/nPossibleEvents;
+HafterRef = HafterRef/nPossibleEvents;
+%---
+
 end
 
 
-function [Hbefore,Hafter,I] = ComputeInformationSinleMeasCommSet(planner,agent,field,clock,bPdfDisp,flagComm,flagPdfCompute,iAction,iClock,iMeas,iComm,id)
+function [Hbefore,Hafter,I, HbeforeRef,HafterRef,Iref] = ComputeInformationSinleMeasCommSet(planner,agent,field,clock,bPdfDisp,flagComm,flagPdfCompute,iAction,iClock,iMeas,iComm,id)
 
 nAgent = length(agent);
 nTarget = length(planner.PTset);
@@ -46,6 +66,10 @@ I = zeros(nTarget,1);
 Hbefore = nan(nTarget,clock.nT);
 Hafter = nan(nTarget,clock.nT);
 
+
+Iref = zeros(nTarget,1);
+HbeforeRef = nan(nTarget,clock.nT);
+HafterRef = nan(nTarget,clock.nT);
 
 for iPlan = 1:clock.nT
     
@@ -65,6 +89,11 @@ for iPlan = 1:clock.nT
         
         % Entropy computation: H(X_k|Z_{k-1})
         Hbefore(iTarget,iPlan) = ComputeEntropy(targetUpdatePdf,planner.PTset(iTarget).pt,planner.param,flagPdfCompute);
+        
+        
+        % Compute Entropy under Gaussian Assumption
+        HbeforeRef(iTarget,iPlan) = -1/2*log((2*pi*exp(1))^2*det(inv(diag(var(planner.PTset(iTarget).pt')))));
+        
     
         % agent moving along with planner action:
         % THE PLANNER ONLY MOVES ITS OWN AGENT ONLY
@@ -118,6 +147,12 @@ for iPlan = 1:clock.nT
         [planner.PTset(iTarget).pt,planner.PTset(iTarget).w] = ...
             ResampleParticle(planner.PTset(iTarget).pt,planner.PTset(iTarget).w,field);
     
+        
+        % Compute Entropy under Gaussian Assumption
+        HafterRef(iTarget,iPlan) = -1/2*log((2*pi*exp(1))^2*det(inv(diag(var(planner.PTset(iTarget).pt')))));
+        Iref(iTarget) = Iref(iTarget) + (HbeforeRef(iTarget,iPlan) - HafterRef(iTarget,iPlan));
+
+        
         % take weighted mean of particles
         planner.xSet(iTarget).x = (planner.PTset(iTarget).w*planner.PTset(iTarget).pt')';
     
