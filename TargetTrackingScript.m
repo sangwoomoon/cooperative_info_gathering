@@ -28,7 +28,7 @@ format compact;
 hold on;
 
 D2R = pi/180;
-nSim = 10; % for Monte-Carlo approach or method comparison
+nSim = 1; % for Monte-Carlo approach or method comparison
 targetID = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 RandSeed = rng;
@@ -43,7 +43,7 @@ for iSim = 1:nSim
     
     %----------------------
     % simulation structure
-    sim(iSim).nAgent = 3;
+    sim(iSim).nAgent = 100;
     sim(iSim).nTarget = 1;
     
     sim(iSim).flagScene = 0; % 0: stationary ground station | 1: moving ground station
@@ -53,6 +53,9 @@ for iSim = 1:nSim
     sim(iSim).flagComm = 1; % 0: perfect communication | 1: imperfect communication and communication awareness
     sim(iSim).flagPdfCompute = 'cylinder'; % 'uniform': uniformly discretized domain | 'cylinder': cylinder based computation w.r.t particle set
     sim(iSim).flagLog = 0;
+    sim(iSim).flagPlot = 0; % flag for the display of trajectories and particles evolution
+    
+    
     
     if ~sim(iSim).flagPDF
         sim(iSim).flagDisp.before = 0;
@@ -66,18 +69,20 @@ for iSim = 1:nSim
     
     % simulation plotting initialization:
     % Figure 1: agent/target moving
-    sim(iSim).plot.fieldView = figure(1); hold on;
-    % Figure 2+ (# of agents): estimation. particle evolution
-    % ONLY AGENT 1 PLOTS ESTIMATION RESULT BECAUSE OF HUGE PLOTTING SPACE!!
-    %for iAgent = 1:sim(iSim).nAgent
+    if sim(iSim).flagPlot
+        sim(iSim).plot.fieldView = figure(1); hold on;
+        % Figure 2+ (# of agents): estimation. particle evolution
+        % ONLY AGENT 1 PLOTS ESTIMATION RESULT BECAUSE OF HUGE PLOTTING SPACE!!
+        %for iAgent = 1:sim(iSim).nAgent
         iAgent = 1;
         sim(iSim).plot.particle(iAgent) = figure(1+iAgent); hold on;
-    %end
+        %end
+    end
     %----------------------
     
     %----------------------
     % clock structure
-    sim(iSim).clock.nt = 3;
+    sim(iSim).clock.nt = 100;
     sim(iSim).clock.dt = 1;
     sim(iSim).clock.hist.time = 0;
     %----------------------
@@ -92,12 +97,14 @@ for iSim = 1:nSim
     sim(iSim).field.zoneLength = [sim(iSim).field.bufferZone(2)-sim(iSim).field.bufferZone(1) sim(iSim).field.bufferZone(4)-sim(iSim).field.bufferZone(3)];
     
     % field plotting setting
-    figure(1)
-    set(gca,'xlim',[sim(iSim).field.boundary(1),sim(iSim).field.boundary(2)],...
-        'ylim',[sim(iSim).field.boundary(3),sim(iSim).field.boundary(4)])
-    set(sim(iSim).plot.fieldView,'color','w')
-    xlabel('East [m]'); ylabel('North [m]'); axis equal;
-    title(sprintf('t = %.1f [sec]', 0))
+    if sim(iSim).flagPlot
+        figure(1)
+        set(gca,'xlim',[sim(iSim).field.boundary(1),sim(iSim).field.boundary(2)],...
+            'ylim',[sim(iSim).field.boundary(3),sim(iSim).field.boundary(4)])
+        set(sim(iSim).plot.fieldView,'color','w')
+        xlabel('East [m]'); ylabel('North [m]'); axis equal;
+        title(sprintf('t = %.1f [sec]', 0))
+    end
     %----------------------
     
     %----------------------
@@ -106,8 +113,7 @@ for iSim = 1:nSim
         
         % basic property setting
         sim(iSim).target(iTarget).id = iTarget;
-        sim(iSim).target(iTarget).x = ...
-            [sim(iSim).field.bufferZone(1)+rand()*sim(iSim).field.zoneLength(1) sim(iSim).field.bufferZone(3)+rand()*sim(iSim).field.zoneLength(2)]'; % x_pos, y_pos
+        sim(iSim).target(iTarget).x = [sim(iSim).field.bufferZone(1)+rand()*sim(iSim).field.zoneLength(1) sim(iSim).field.bufferZone(3)+rand()*sim(iSim).field.zoneLength(2)]'; % x_pos, y_pos
         sim(iSim).target(iTarget).hist.x = sim(iSim).target(iTarget).x;
         sim(iSim).target(iTarget).nState = length(sim(iSim).target(iTarget).x);
         %rotational moving
@@ -116,21 +122,26 @@ for iSim = 1:nSim
         sim(iSim).target(iTarget).param.F = eye(length(sim(iSim).target(iTarget).x));
         sim(iSim).target(iTarget).param.Q = zeros(sim(iSim).target(iTarget).nState); % certainly ideal
         
-        % plotting parameters setting: red, square
-        sim(iSim).target(iTarget).plot.clr = [1 rand() 0];
-        sim(iSim).target(iTarget).plot.marker = 'square';
-        sim(iSim).target(iTarget).plot.opaque = 0.1;
-        
-        % position plot setting
-        sim(iSim).target(iTarget).plot.pos = ...
-            plot(sim(iSim).target(iTarget).x(1),sim(iSim).target(iTarget).x(2),...
-            sim(iSim).target(iTarget).plot.marker,'LineWidth',2,'color',sim(iSim).target(iTarget).plot.clr);
-        sim(iSim).target(iTarget).plot.id = ...
-            text(sim(iSim).target(iTarget).x(1),sim(iSim).target(iTarget).x(2),...
-            targetID(iTarget));
-        
-        % trajectory plot setting
-        sim(iSim).target(iTarget).plot.path = animatedline(sim(iSim).target(iTarget).x(1),sim(iSim).target(iTarget).x(2),'color',sim(iSim).target(iTarget).plot.clr);
+        % target display
+        if sim(iSim).flagPlot
+            
+            % plotting parameters setting: red, square
+            sim(iSim).target(iTarget).plot.clr = [1 rand() 0];
+            sim(iSim).target(iTarget).plot.marker = 'square';
+            sim(iSim).target(iTarget).plot.opaque = 0.1;
+            
+            % position plot setting
+            sim(iSim).target(iTarget).plot.pos = ...
+                plot(sim(iSim).target(iTarget).x(1),sim(iSim).target(iTarget).x(2),...
+                sim(iSim).target(iTarget).plot.marker,'LineWidth',2,'color',sim(iSim).target(iTarget).plot.clr);
+            sim(iSim).target(iTarget).plot.id = ...
+                text(sim(iSim).target(iTarget).x(1),sim(iSim).target(iTarget).x(2),...
+                targetID(iTarget));
+            
+            % trajectory plot setting
+            sim(iSim).target(iTarget).plot.path = animatedline(sim(iSim).target(iTarget).x(1),sim(iSim).target(iTarget).x(2),'color',sim(iSim).target(iTarget).plot.clr);
+            
+        end
     end
     %----------------------
     
@@ -153,27 +164,32 @@ for iSim = 1:nSim
             case 3
                 pos = [rand()*sim(iSim).field.zoneLength(1)/8 +rand()*sim(iSim).field.zoneLength(2)/8, 1/8*2*pi];
             case 4
-                pos = [sim(iSim).field.bufferZone(2)-rand()*sim(iSim).field.zoneLength(1)/8 sim(iSim).field.bufferZone(3)+rand()*sim(iSim).field.zoneLength(2)/8, 3/8*2*pi];
+                pos = [-rand()*sim(iSim).field.zoneLength(1)/8 rand()*sim(iSim).field.zoneLength(2)/8, 3/8*2*pi];
         end
         
-        sim(iSim).agent(iAgent).s = [pos 10]';
+        sim(iSim).agent(iAgent).s = [pos 1]';
         sim(iSim).agent(iAgent).hist.s = sim(iSim).agent(iAgent).s;
         
-        % plotting parameter setting: blue, circle color
-        sim(iSim).agent(iAgent).plot.clr = [0 rand() 1];
-        sim(iSim).agent(iAgent).plot.marker = 'o';
-        sim(iSim).agent(iAgent).plot.opaque = 0.1;
-        
-        % agent position plotting
-        sim(iSim).agent(iAgent).plot.pos = ...
-            plot(sim(iSim).agent(iAgent).s(1),sim(iSim).agent(iAgent).s(2),...
-            sim(iSim).agent(iAgent).plot.marker,'LineWidth',2,'color',sim(iSim).agent(iAgent).plot.clr);
-        sim(iSim).agent(iAgent).plot.id = ...
-            text(sim(iSim).agent(iAgent).s(1),sim(iSim).agent(iAgent).s(2),...
-            num2str(iAgent));
-        
-        % agent trajectory plotting
-        sim(iSim).agent(iAgent).plot.path = animatedline(sim(iSim).agent(iAgent).s(1),sim(iSim).agent(iAgent).s(2),'color',sim(iSim).agent(iAgent).plot.clr);
+        % agent display
+        if sim(iSim).flagPlot
+            
+            % plotting parameter setting: blue, circle color
+            sim(iSim).agent(iAgent).plot.clr = [0 rand() 1];
+            sim(iSim).agent(iAgent).plot.marker = 'o';
+            sim(iSim).agent(iAgent).plot.opaque = 0.1;
+            
+            % agent position plotting
+            sim(iSim).agent(iAgent).plot.pos = ...
+                plot(sim(iSim).agent(iAgent).s(1),sim(iSim).agent(iAgent).s(2),...
+                sim(iSim).agent(iAgent).plot.marker,'LineWidth',2,'color',sim(iSim).agent(iAgent).plot.clr);
+            sim(iSim).agent(iAgent).plot.id = ...
+                text(sim(iSim).agent(iAgent).s(1),sim(iSim).agent(iAgent).s(2),...
+                num2str(iAgent));
+            
+            % agent trajectory plotting
+            sim(iSim).agent(iAgent).plot.path = animatedline(sim(iSim).agent(iAgent).s(1),sim(iSim).agent(iAgent).s(2),'color',sim(iSim).agent(iAgent).plot.clr);
+            
+        end
         
         if mod(iAgent,nSquad) == 0
             iSquad = iSquad + 1;
@@ -192,21 +208,27 @@ for iSim = 1:nSim
             sim(iSim).sensor(iSensor,iTarget).param.detectBeta = 0.9; % bernoulli detection parameter
         end
         
-        % plotting parameter setting
-        sim(iSim).sensor(iSensor,1).plot.clr.detect = [0 1 0]; % green
-        sim(iSim).sensor(iSensor,1).plot.clr.noDetect = [1 0 0]; % red
-        sim(iSim).sensor(iSensor,1).plot.clr.opaqueValue = 0.1; % transparent value
-        sim(iSim).sensor(iSensor,1).plot.bDetect = 0; % binary value for sening alarm
-        sim(iSim).sensor(iSensor,1).plot.hist.bDetect(:,1) = sim(iSim).sensor(iSensor,1).plot.bDetect;
+        % sensor display
+        if sim(iSim).flagPlot
+            
+            % plotting parameter setting
+            sim(iSim).sensor(iSensor,1).plot.clr.detect = [0 1 0]; % green
+            sim(iSim).sensor(iSensor,1).plot.clr.noDetect = [1 0 0]; % red
+            sim(iSim).sensor(iSensor,1).plot.clr.opaqueValue = 0.1; % transparent value
+            sim(iSim).sensor(iSensor,1).plot.bDetect = 0; % binary value for sening alarm
+            sim(iSim).sensor(iSensor,1).plot.hist.bDetect(:,1) = sim(iSim).sensor(iSensor,1).plot.bDetect;
+            
+            % field of view plot
+            [sim(iSim).sensor(iSensor,1).plot.data.x,sim(iSim).sensor(iSensor,1).plot.data.y,sim(iSim).sensor(iSensor,1).plot.fov] = ...
+                GetCircleData(sim(iSim).agent(iSensor).s(1),sim(iSim).agent(iSensor).s(2),...
+                sim(iSim).sensor(iSensor,iTarget).param.regionRadius,...
+                sim(iSim).sensor(iSensor,1).plot.clr.noDetect,...
+                sim(iSim).sensor(iSensor,1).plot.clr.opaqueValue); hold on;
+            sim(iSim).sensor(iSensor,1).plot.hist.data.x(:,1) = sim(iSim).sensor(iSensor,1).plot.data.x';
+            sim(iSim).sensor(iSensor,1).plot.hist.data.y(:,1) = sim(iSim).sensor(iSensor,1).plot.data.y';
+            
+        end
         
-        % field of view plot
-        [sim(iSim).sensor(iSensor,1).plot.data.x,sim(iSim).sensor(iSensor,1).plot.data.y,sim(iSim).sensor(iSensor,1).plot.fov] = ...
-            GetCircleData(sim(iSim).agent(iSensor).s(1),sim(iSim).agent(iSensor).s(2),...
-            sim(iSim).sensor(iSensor,iTarget).param.regionRadius,...
-            sim(iSim).sensor(iSensor,1).plot.clr.noDetect,...
-            sim(iSim).sensor(iSensor,1).plot.clr.opaqueValue); hold on;
-        sim(iSim).sensor(iSensor,1).plot.hist.data.x(:,1) = sim(iSim).sensor(iSensor,1).plot.data.x';
-        sim(iSim).sensor(iSensor,1).plot.hist.data.y(:,1) = sim(iSim).sensor(iSensor,1).plot.data.y';
     end
     %----------------------
     
@@ -227,8 +249,8 @@ for iSim = 1:nSim
         
         for iTarget = 1:sim(iSim).nTarget
             sim(iSim).PF(iAgent,iTarget).id = [iAgent, iTarget];
-            sim(iSim).PF(iAgent,iTarget).nPt = floor(10^(0.15*(iSim+3)));
-%             sim(iSim).PF(iAgent,iTarget).nPt = 100;
+            % sim(iSim).PF(iAgent,iTarget).nPt = floor(10^(0.15*(iSim+6)));
+            sim(iSim).PF(iAgent,iTarget).nPt = 100;
             sim(iSim).PF(iAgent,iTarget).w = ones(1,sim(iSim).PF(iAgent,iTarget).nPt)./sim(iSim).PF(iAgent,iTarget).nPt;
             if iAgent == 1
                 for iPt = 1 : sim(iSim).PF(iAgent,iTarget).nPt
@@ -251,41 +273,47 @@ for iSim = 1:nSim
             sim(iSim).PF(iAgent,iTarget).hist.w(:,:,1) = sim(iSim).PF(iAgent,iTarget).w;
             sim(iSim).PF(iAgent,iTarget).hist.xhat(:,1) = sim(iSim).PF(iAgent,iTarget).xhat;
             
-            % plotting parameter setting
-            sim(iSim).PF(iAgent,iTarget).plot.location.col = 2;
-            sim(iSim).PF(iAgent,iTarget).plot.location.row = ceil(sim(iSim).nTarget/sim(iSim).PF(iAgent,iTarget).plot.location.col);
-            sim(iSim).PF(iAgent,iTarget).plot.location.num = iTarget;
-            
-            sim(iSim).PF(iAgent,iTarget).plot.clr = 'magenta';
-            sim(iSim).PF(iAgent,iTarget).plot.marker = '.';
-            sim(iSim).PF(iAgent,iTarget).plot.size = 2;
-            
-            % particle scatter plot setting
-            % AGENT 1 ONLY VISUALIZES PARTICLE BECAUSE OF HUGE PLOTTING
-            % SPACE!
-            if iAgent == 1
-                figure(1+iAgent)
-                subplot(sim(iSim).PF(iAgent,iTarget).plot.location.col,...
-                    sim(iSim).PF(iAgent,iTarget).plot.location.row,...
-                    sim(iSim).PF(iAgent,iTarget).plot.location.num),
-                set(gca,'xlim',[sim(iSim).field.boundary(1),sim(iSim).field.boundary(2)],...
-                    'ylim',[sim(iSim).field.boundary(3),sim(iSim).field.boundary(4)])
-                set(sim(iSim).plot.particle(iAgent),'color','w')
-                xlabel('East [m]'); ylabel('North [m]'); axis equal; hold on;
+            % filter display
+            if sim(iSim).flagPlot
                 
-                % actual target plot setting for comparison
-                sim(iSim).PF(iAgent,iTarget).plot.targetPos = ...
-                    plot(sim(iSim).target(iTarget).x(1),sim(iSim).target(iTarget).x(2),...
-                    sim(iSim).target(iTarget).plot.marker,'LineWidth',2,'color',sim(iSim).target(iTarget).plot.clr);
-                sim(iSim).PF(iAgent,iTarget).plot.targetId = ...
-                    text(sim(iSim).target(iTarget).x(1),sim(iSim).target(iTarget).x(2),...
-                    targetID(iTarget));
+                % plotting parameter setting
+                sim(iSim).PF(iAgent,iTarget).plot.location.col = 2;
+                sim(iSim).PF(iAgent,iTarget).plot.location.row = ceil(sim(iSim).nTarget/sim(iSim).PF(iAgent,iTarget).plot.location.col);
+                sim(iSim).PF(iAgent,iTarget).plot.location.num = iTarget;
                 
-                % particle plot
-                sim(iSim).PF(iAgent,iTarget).plot.pt = ...
-                    scatter(sim(iSim).PF(iAgent,iTarget).pt(1,:),sim(iSim).PF(iAgent,iTarget).pt(2,:),10,sim(iSim).PF(iAgent,iTarget).w,'filled');
+                sim(iSim).PF(iAgent,iTarget).plot.clr = 'magenta';
+                sim(iSim).PF(iAgent,iTarget).plot.marker = '.';
+                sim(iSim).PF(iAgent,iTarget).plot.size = 2;
+                
+                % particle scatter plot setting
+                % AGENT 1 ONLY VISUALIZES PARTICLE BECAUSE OF HUGE PLOTTING
+                % SPACE!
+                if iAgent == 1
+                    figure(1+iAgent)
+                    subplot(sim(iSim).PF(iAgent,iTarget).plot.location.col,...
+                        sim(iSim).PF(iAgent,iTarget).plot.location.row,...
+                        sim(iSim).PF(iAgent,iTarget).plot.location.num),
+                    set(gca,'xlim',[sim(iSim).field.boundary(1),sim(iSim).field.boundary(2)],...
+                        'ylim',[sim(iSim).field.boundary(3),sim(iSim).field.boundary(4)])
+                    set(sim(iSim).plot.particle(iAgent),'color','w')
+                    xlabel('East [m]'); ylabel('North [m]'); axis equal; hold on;
+                    
+                    % actual target plot setting for comparison
+                    sim(iSim).PF(iAgent,iTarget).plot.targetPos = ...
+                        plot(sim(iSim).target(iTarget).x(1),sim(iSim).target(iTarget).x(2),...
+                        sim(iSim).target(iTarget).plot.marker,'LineWidth',2,'color',sim(iSim).target(iTarget).plot.clr);
+                    sim(iSim).PF(iAgent,iTarget).plot.targetId = ...
+                        text(sim(iSim).target(iTarget).x(1),sim(iSim).target(iTarget).x(2),...
+                        targetID(iTarget));
+                    
+                    % particle plot
+                    sim(iSim).PF(iAgent,iTarget).plot.pt = ...
+                        scatter(sim(iSim).PF(iAgent,iTarget).pt(1,:),sim(iSim).PF(iAgent,iTarget).pt(2,:),10,sim(iSim).PF(iAgent,iTarget).w,'filled');
+                    
+                end
                 
             end
+            
         end
         
     end
@@ -368,8 +396,11 @@ for iSim = 1:nSim
         for iTarget = 1:sim(iSim).nTarget
             targetUpdatePdf = ...
                 ComputePDFMixture(sim(iSim).PF(iPlanner,iTarget).pt,sim(iSim).PF(iPlanner,iTarget).w,sim(iSim).planner(iPlanner).param,sim(iSim).flagPdfCompute);
-            sim(iSim).PF(iPlanner,iTarget).H = ComputeEntropy(targetUpdatePdf,sim(iSim).PF(iPlanner,iTarget).pt,sim(iSim).planner(iPlanner).param,sim(iSim).flagPdfCompute);
-            sim(iSim).PF(iPlanner,iTarget).hist.H(:,1) = sim(iSim).PF(iPlanner,iTarget).H;
+            sim(iSim).PF(iPlanner,iTarget).Hbefore = ComputeEntropy(targetUpdatePdf,sim(iSim).PF(iPlanner,iTarget).pt,sim(iSim).planner(iPlanner).param,sim(iSim).flagPdfCompute);
+            sim(iSim).PF(iPlanner,iTarget).hist.Hbefore(:,1) = sim(iSim).PF(iPlanner,iTarget).Hbefore;
+            
+            sim(iSim).PF(iPlanner,iTarget).I = nan;
+            sim(iSim).PF(iPlanner,iTarget).hist.I(:,1) = sim(iSim).PF(iPlanner,iTarget).I;
         end
         
     end
@@ -504,9 +535,11 @@ for iSim = 1:nSim
             sim(iSim).target(iTarget).hist.x(:,iClock+1) = sim(iSim).target(iTarget).x;
             
             % update plot
-            set(sim(iSim).target(iTarget).plot.pos,'Xdata',sim(iSim).target(iTarget).x(1),'Ydata',sim(iSim).target(iTarget).x(2));
-            set(sim(iSim).target(iTarget).plot.id,'position',[sim(iSim).target(iTarget).x(1),sim(iSim).target(iTarget).x(2)]);
-            addpoints(sim(iSim).target(iTarget).plot.path,sim(iSim).target(iTarget).x(1),sim(iSim).target(iTarget).x(2));
+            if sim(iSim).flagPlot
+                set(sim(iSim).target(iTarget).plot.pos,'Xdata',sim(iSim).target(iTarget).x(1),'Ydata',sim(iSim).target(iTarget).x(2));
+                set(sim(iSim).target(iTarget).plot.id,'position',[sim(iSim).target(iTarget).x(1),sim(iSim).target(iTarget).x(2)]);
+                addpoints(sim(iSim).target(iTarget).plot.path,sim(iSim).target(iTarget).x(1),sim(iSim).target(iTarget).x(2)); 
+            end
         end
         %-----------------------------------
         
@@ -519,11 +552,13 @@ for iSim = 1:nSim
             sim(iSim).agent(iAgent).hist.s(:,iClock+1) = sim(iSim).agent(iAgent).s;
             
             % update plot 
-            set(sim(iSim).agent(iAgent).plot.pos,'Xdata',sim(iSim).agent(iAgent).s(1),'Ydata',sim(iSim).agent(iAgent).s(2));
-            set(sim(iSim).agent(iAgent).plot.id,'position',[sim(iSim).agent(iAgent).s(1),sim(iSim).agent(iAgent).s(2)]);
-            addpoints(sim(iSim).agent(iAgent).plot.path,sim(iSim).agent(iAgent).s(1),sim(iSim).agent(iAgent).s(2));
-            set(gca,'xlim',[sim(iSim).field.boundary(1),sim(iSim).field.boundary(2)],...
-                'ylim',[sim(iSim).field.boundary(3),sim(iSim).field.boundary(4)])
+            if sim(iSim).flagPlot
+                set(sim(iSim).agent(iAgent).plot.pos,'Xdata',sim(iSim).agent(iAgent).s(1),'Ydata',sim(iSim).agent(iAgent).s(2));
+                set(sim(iSim).agent(iAgent).plot.id,'position',[sim(iSim).agent(iAgent).s(1),sim(iSim).agent(iAgent).s(2)]);
+                addpoints(sim(iSim).agent(iAgent).plot.path,sim(iSim).agent(iAgent).s(1),sim(iSim).agent(iAgent).s(2));
+                set(gca,'xlim',[sim(iSim).field.boundary(1),sim(iSim).field.boundary(2)],...
+                    'ylim',[sim(iSim).field.boundary(3),sim(iSim).field.boundary(4)])
+            end
             %-----------------------------------
         
             
@@ -542,16 +577,18 @@ for iSim = 1:nSim
             sim(iSim).sensor(iAgent,1).plot.hist.bDetect(:,iClock+1) = sim(iSim).sensor(iAgent,1).plot.bDetect;
             
             % update plot
-            [sim(iSim).sensor(iAgent,1).plot.data.x,sim(iSim).sensor(iAgent,1).plot.data.y,~] = ...
-                GetCircleData(sim(iSim).agent(iAgent).s(1),sim(iSim).agent(iAgent).s(2),sim(iSim).sensor(iAgent,1).param.regionRadius);
-            set(sim(iSim).sensor(iAgent,1).plot.fov,'Xdata',sim(iSim).sensor(iAgent,1).plot.data.x,'Ydata',sim(iSim).sensor(iAgent,1).plot.data.y);
-            sim(iSim).sensor(iAgent,1).plot.hist.data.x(:,iClock+1) = sim(iSim).sensor(iAgent,1).plot.data.x';
-            sim(iSim).sensor(iAgent,1).plot.hist.data.y(:,iClock+1) = sim(iSim).sensor(iAgent,1).plot.data.y';
-            
-            if sim(iSim).sensor(iAgent,1).plot.bDetect % when the sensor detects at least one of targets
-                set(sim(iSim).sensor(iAgent,1).plot.fov,'FaceColor',sim(iSim).sensor(iAgent,1).plot.clr.detect);
-            else
-                set(sim(iSim).sensor(iAgent,1).plot.fov,'FaceColor',sim(iSim).sensor(iAgent,1).plot.clr.noDetect);
+            if sim(iSim).flagPlot
+                [sim(iSim).sensor(iAgent,1).plot.data.x,sim(iSim).sensor(iAgent,1).plot.data.y,~] = ...
+                    GetCircleData(sim(iSim).agent(iAgent).s(1),sim(iSim).agent(iAgent).s(2),sim(iSim).sensor(iAgent,1).param.regionRadius);
+                set(sim(iSim).sensor(iAgent,1).plot.fov,'Xdata',sim(iSim).sensor(iAgent,1).plot.data.x,'Ydata',sim(iSim).sensor(iAgent,1).plot.data.y);
+                sim(iSim).sensor(iAgent,1).plot.hist.data.x(:,iClock+1) = sim(iSim).sensor(iAgent,1).plot.data.x';
+                sim(iSim).sensor(iAgent,1).plot.hist.data.y(:,iClock+1) = sim(iSim).sensor(iAgent,1).plot.data.y';
+                
+                if sim(iSim).sensor(iAgent,1).plot.bDetect % when the sensor detects at least one of targets
+                    set(sim(iSim).sensor(iAgent,1).plot.fov,'FaceColor',sim(iSim).sensor(iAgent,1).plot.clr.detect);
+                else
+                    set(sim(iSim).sensor(iAgent,1).plot.fov,'FaceColor',sim(iSim).sensor(iAgent,1).plot.clr.noDetect);
+                end
             end
             %-----------------------------------
             
@@ -580,7 +617,7 @@ for iSim = 1:nSim
                 % update plot
                 % AGENT 1 ONLY VISUALIZES PARTICLE INFO BECAUSE OF HUGE
                 % PLOTTING SPACE!
-                if iAgent == 1
+                if (sim(iSim).flagPlot) && (iAgent == 1)
                     figure(1+iAgent)
                     subplot(sim(iSim).PF(iAgent,iTarget).plot.location.col,...
                         sim(iSim).PF(iAgent,iTarget).plot.location.row,...
@@ -629,8 +666,11 @@ for iSim = 1:nSim
                 
                 % compute actual entropy for comparison
                 targetUpdatePdf = ComputePDFMixture(sim(iSim).PF(iAgent,iTarget).pt,sim(iSim).PF(iAgent,iTarget).w,sim(iSim).planner(iAgent).param,sim(iSim).flagPdfCompute);
-                sim(iSim).PF(iAgent,iTarget).H = ComputeEntropy(targetUpdatePdf,sim(iSim).PF(iAgent,iTarget).pt,sim(iSim).planner(iAgent).param,sim(iSim).flagPdfCompute);
-                sim(iSim).PF(iAgent,iTarget).hist.H(:,iClock+1) = sim(iSim).PF(iAgent,iTarget).H;
+                sim(iSim).PF(iAgent,iTarget).Hafter = ComputeEntropy(targetUpdatePdf,sim(iSim).PF(iAgent,iTarget).pt,sim(iSim).planner(iAgent).param,sim(iSim).flagPdfCompute);
+                sim(iSim).PF(iAgent,iTarget).I = sim(iSim).PF(iAgent,iTarget).Hbefore - sim(iSim).PF(iAgent,iTarget).Hafter;
+                
+                sim(iSim).PF(iAgent,iTarget).hist.Hafter(:,iClock+1) = sim(iSim).PF(iAgent,iTarget).Hafter;
+                sim(iSim).PF(iAgent,iTarget).hist.I(:,iClock+1) = sim(iSim).PF(iAgent,iTarget).I;
                 
             end
             %-----------------------------------
@@ -648,10 +688,12 @@ for iSim = 1:nSim
         sim(iSim).clock.hist.time(:,iClock+1) = iClock*sim(iSim).clock.dt;
         
         % update figure
-        drawnow;
-        figure(1)
-        title(sprintf('t = %.1f [sec]', sim(iSim).clock.hist.time(:,iClock+1)))
-        
+        if sim(iSim).flagPlot
+            drawnow;
+            figure(1)
+            title(sprintf('t = %.1f [sec]', sim(iSim).clock.hist.time(:,iClock+1)))
+        end
+
     end
 
     
