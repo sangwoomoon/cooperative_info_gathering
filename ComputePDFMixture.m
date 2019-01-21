@@ -14,6 +14,8 @@ for iPt = 1:nPt
             onePtPdf = GenerateGaussianPDF(pt(:,iPt),param.Q,param.pdf);
         case 'cylinder'
             onePtPdf = GenerateGaussianParticlePDF(pt(:,iPt),param.Q,pt);
+        case 'voronoi'
+            onePtPdf = GenerateGaussianParticlePDF(pt(:,iPt),param.Q,pt);
     end
     
     % weight sum to make PDF mixture

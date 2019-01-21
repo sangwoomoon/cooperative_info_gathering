@@ -2,11 +2,14 @@ function [ptNext,wNext] = ResampleParticle(ptNow,wNow,field)
 
 nPt = length(ptNow(1,:));
 ptNext = nan(2,nPt);
+nState = length(ptNow(:,1));
 
 for iPt = 1:nPt
     bSample = 1;
     while (bSample)
-        ptNext(:,iPt) = ptNow(:,find(rand <= cumsum(wNow),1));
+        % trick: resampled particles should has its own unique location
+        % so "small" random value was added to particle's state
+        ptNext(:,iPt) = ptNow(:,find(rand <= cumsum(wNow),1)) + mvnrnd(zeros(nState,1),(1e-5)*eye(nState))';
         if IsParticleInBoundary(ptNext(:,iPt),field.boundary) % if the new particle is not on the field
             bSample = 0;
         end
