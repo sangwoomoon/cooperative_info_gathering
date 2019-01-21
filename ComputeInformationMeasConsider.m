@@ -117,7 +117,7 @@ for iPlan = 1:plannerClock.nT
         % Particle Method
         [Hbefore(iTarget,iPlan),Hafter(iTarget,iPlan),I(iTarget,iPlan),planner.PTset(iTarget).pt,planner.PTset(iTarget).w] = ...
             ComputeInformationByParticleMethod(id,iPlan,iTarget,iMeas,iClock,planner,plannerAgent,plannerSensor,plannerClock,plannerField,flagSensor,flagComm,flagPdfCompute,bPdfDisp);
-        
+
         % compute information of single measurement / communication using
         % Linear-Gaussian Assumption (KF concept)        
         [HbeforeRef(iTarget,iPlan),HafterRef(iTarget,iPlan),Iref(iTarget,iPlan),planner.PTset(iTarget).xhat,planner.PTset(iTarget).Phat] = ...
@@ -126,6 +126,18 @@ for iPlan = 1:plannerClock.nT
     end
     
 end
+
+% check entropy
+% figure(100)
+% plot(HbeforeRef,'b--','linewidth',3); hold on;
+% plot(Hbefore,'r--','Linewidth',3);
+% 
+% plot(HafterRef,'b-','linewidth',3); hold on;
+% plot(Hafter,'r-','Linewidth',3);
+% 
+% figure(101)
+% plot(Iref,'b-','linewidth',3); hold on;
+% plot(I,'r-','Linewidth',3);
 
 
 end

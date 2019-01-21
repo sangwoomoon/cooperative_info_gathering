@@ -79,7 +79,9 @@ for iTarget = 1:nTarget
     end
     
     planner.PTset(iTarget).xhat = filter(iAgent,iTarget).xhat;
+    planner.PTset(iTarget).Phat = filter(iAgent,iTarget).Phat;
     planner.PTset(iTarget).nState = filter(iAgent,iTarget).nState;
+    
 end
 
 planner.input = nan(planner.param.clock.nT,1);

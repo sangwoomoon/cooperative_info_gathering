@@ -41,7 +41,7 @@ for iSim = 1:nSim
     
     %----------------------
     % simulation structure
-    sim(iSim) = InitializeSim(   3,       1,     'MI',       0,       'voronoi',        0,         1,     'Pos',  'unicycle', 'PosLinear',  'KF'    ); 
+    sim(iSim) = InitializeSim(   3,       1,     'MI',       0,       'uniform',        0,         1,     'Pos',  'unicycle', 'PosLinear',  'KF'    ); 
                             % nAgent | nTarget | flagDM | flagComm | flagPdfCompute | flagLog | flagPlot | target |  agent     | sensor   | filter
     
     % flagDM         ||   'random': random decision | 'MI': mutual information-based decision | 'mean': particle mean following
@@ -105,7 +105,7 @@ for iSim = 1:nSim
             % nPt = floor(10^(0.15*(iSim+6)));
             xhat = zeros(length(sim(iSim).target(iTarget).x),1);
             Phat = diag([50^2,50^2,50^2]);
-            sim(iSim).filter(iAgent,iTarget) = InitializeFilter(sim(iSim),iAgent,iTarget,  xhat,  Phat,   diag([18^2,18^2,18^2]), 500);
+            sim(iSim).filter(iAgent,iTarget) = InitializeFilter(sim(iSim),iAgent,iTarget,  xhat,  Phat,   diag([18^2,18^2,18^2]), 100);
                                                                                         %  xhat | Phat   |            Q         | nPt
         end
     end
@@ -114,7 +114,7 @@ for iSim = 1:nSim
     %----------------------
     % planner structure
     for iAgent = 1:sim(iSim).nAgent
-        sim(iSim).planner(iAgent) = InitializePlanner(iAgent,sim, 3,   5,  500 );
+        sim(iSim).planner(iAgent) = InitializePlanner(iAgent,sim, 3,   5,  100 );
                                                                % dt | nT | nPt                
     end
     %----------------------

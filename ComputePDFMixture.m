@@ -29,6 +29,7 @@ end
 
 % normalize pdf for Target GMM
 region = ComputeParticleRegion(pt,param,option);
-mixedPdf = mixedPdf./(sum(sum(mixedPdf))*(sum(sum(region))/numel(mixedPdf)));
+normFactor = 1/sum(sum(squeeze(mixedPdf).*squeeze(region)));
+mixedPdf = mixedPdf.*normFactor;
 
 end

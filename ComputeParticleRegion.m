@@ -76,8 +76,9 @@ switch option
 %         for iPt = 1:nPt
 %             xunit = radius(iPt)*cos(th) + pt(1,iPt);
 %             yunit = radius(iPt)*sin(th) + pt(2,iPt);
-%             line(xunit,yunit);
+%             line(xunit,yunit,'color','g');
 %         end
+%         voronoi(pt(1,:),pt(2,:));
         
 end
 

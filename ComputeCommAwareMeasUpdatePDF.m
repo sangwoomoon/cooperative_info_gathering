@@ -38,6 +38,7 @@ end
 
 % normalization
 region = ComputeParticleRegion(pt,param,flagPdfCompute);
-measUpdatePdf = measUpdatePdf./(sum(sum(measUpdatePdf))*(sum(sum(region))/numel(measUpdatePdf)));
+normFactor = 1/sum(sum(squeeze(measUpdatePdf).*squeeze(region)));
+measUpdatePdf = measUpdatePdf.*normFactor;
 
 end
