@@ -14,13 +14,9 @@ measUpdatePdf = targetUpdatePdf;
 beta = nan(1,nAgent);
 commProb = nan(1,nAgent);
 
-for iAgent = 1:1 % nAgent
+for iAgent = 1:nAgent
     
-    % 1. take likelihood PDF: should be further considered w.r.t
-    % measurements!
-    likelihoodPdf = ComputeLikelihoodPDF(meas,pt,plannerAgent(iAgent),param.sensor,param.pdf,flagSensor,flagPdfCompute);
-
-    % 2. compute probability of delivery for communication part
+    % compute probability of delivery for communication part
     if flagComm == 1
         beta(iAgent) = ComputeCommProb(plannerAgent(id).s,plannerAgent(iAgent).s);
     else
@@ -29,8 +25,12 @@ for iAgent = 1:1 % nAgent
     
     if commStatus == 1
         commProb(iAgent) = beta(iAgent);
+        % take likelihood PDF since the agent can receive the PDF info
+        likelihoodPdf = ComputeLikelihoodPDF(meas(:,iAgent),pt,plannerAgent(iAgent),param.sensor,param.pdf,flagSensor,flagPdfCompute);
     else
         commProb(iAgent) = 1-beta(iAgent);
+        % the likelihood PDF does not affect to the agent itself.
+        likelihoodPdf = ones(size(measUpdatePdf));
     end
     
     measUpdatePdf = measUpdatePdf.*commProb(iAgent).*likelihoodPdf;

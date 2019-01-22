@@ -5,7 +5,8 @@ flagPlot = sim.flagPlot;
 
 % basic state setting
 agent.id = iAgent;
-agent.s = [-rand()*field.zoneLength(1)/8 -rand()*field.zoneLength(2)/8, 2*pi*rand speed]';
+agent.s = [field.bufferZone(1)/2+field.length(1)/2*rand() field.bufferZone(3)/2+field.length(2)/2*rand(), 2*pi*rand speed]';
+% agent.s = [-rand()*field.zoneLength(1)/2 -rand()*field.zoneLength(2)/2, 2*pi*rand speed]';
 agent.hist.s = agent.s;
 
 % agent display

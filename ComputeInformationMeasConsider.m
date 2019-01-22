@@ -15,32 +15,30 @@ flagSensor = sim.flagSensor;
 nMeasSet = length(planner.measSet(1,:));
 nCommSet = length(planner.commSet(1,:));
 
-I = 0;
+
+% mutual information from particle method
 Hbefore = zeros(plannerClock.nT,1);
 Hafter = zeros(plannerClock.nT,1);
-
+I = nan(plannerClock.nT,1);
 
 % mutual information under Gaussian assumption
-Iref = 0; 
 HbeforeRef = zeros(plannerClock.nT,1);
 HafterRef = zeros(plannerClock.nT,1);
+Iref = nan(plannerClock.nT,1);
 %---
 
 for iMeas = 1:nMeasSet
     
     for iComm = 1:nCommSet
         
-        [HbeforeElement,HafterElement,Ielement, HbeforeRefElement,HafterRefElement,IrefElement] = ...
+        [HbeforeElement,HafterElement, HbeforeRefElement,HafterRefElement] = ...
             ComputeInformationSingleMeasCommSet(planner,bPdfDisp,flagComm,flagPdfCompute,iAction,iClock,iMeas,iComm,iAgent,flagSensor);
         
         % entropy and mutual information from particle method
-        I = I + sum(Ielement);
         Hbefore = Hbefore + sum(HbeforeElement,1)';
         Hafter = Hafter + sum(HafterElement,1)';
         
-        
         % entropy and mutual information under Gaussian Assumption
-        Iref = Iref + sum(IrefElement);
         HbeforeRef = HbeforeRef + sum(HbeforeRefElement,1)';
         HafterRef = HafterRef + sum(HafterRefElement,1)';        
         %---
@@ -49,23 +47,56 @@ for iMeas = 1:nMeasSet
      
 end
 
+
 % divide by number of all possible events: in order to fit the equation
 nPossibleEvents = nMeasSet*nCommSet;
-I = I/nPossibleEvents;
 Hbefore = Hbefore/nPossibleEvents;
 Hafter = Hafter/nPossibleEvents;
 
+for iClock = 1:plannerClock.nT
+    I(iClock) = sum(Hbefore(1:iClock) - Hafter(1:iClock));
+end
 
 % mutual information under Gaussian Assumption
-Iref = Iref/nPossibleEvents;
+% Refer "M.Stachura & E.Frew, Communication-Aware
+%  Information-Gathering Experiments with an Unmanned Aircraft System"
+%  to compute communication-aware Entropy
 HbeforeRef = HbeforeRef/nPossibleEvents;
-HafterRef = HafterRef/nPossibleEvents;
+if flagComm
+    % when computing entropy under communication-awareness,
+    % the computation is repeated twice in my code, so it should be divided by 2.
+    HafterRef = HafterRef/(nPossibleEvents*2);
+else
+    HafterRef = HafterRef/nPossibleEvents;
+end
+
+for iClock = 1:plannerClock.nT
+    Iref(iClock) = sum(HbeforeRef(1:iClock) - HafterRef(1:iClock));
+end
 %---
+
+% check entropy
+figure(100)
+plot(HbeforeRef,'b--','linewidth',3); hold on;
+plot(Hbefore,'r--','Linewidth',3);
+
+plot(HafterRef,'b-','linewidth',3); hold on;
+plot(Hafter,'r-','Linewidth',3);
+legend('H-before (Linear Gaussian)','H-before (Particle Method)','H-after (Linear Gaussian)','H-after (Particle Method)');
+xlabel('t (receding horizon time step)');
+ylabel('entropy');
+
+figure(101)
+plot(Iref,'b-','linewidth',3); hold on;
+plot(I,'r-','Linewidth',3);
+legend('I (Linear Gaussian)','I (Particle Method)');
+xlabel('t (receding horizon time step)');
+ylabel('I(X_{k:k+t};Y_{k:k+t})');
 
 end
 
 
-function [Hbefore,Hafter,I, HbeforeRef,HafterRef,Iref] = ...
+function [Hbefore,Hafter, HbeforeRef,HafterRef] = ...
     ComputeInformationSingleMeasCommSet(planner,bPdfDisp,flagComm,flagPdfCompute,iAction,iClock,iMeas,iComm,id,flagSensor)
 
 plannerAgent = planner.param.agent;
@@ -74,15 +105,14 @@ plannerField = planner.param.field;
 plannerClock = planner.param.clock;
 plannerTarget = planner.param.target;
 
+nAgent = length(plannerAgent);
 nTarget = length(planner.PTset);
 
 % initialization of entropy and mutual info by particle method
-I = nan(nTarget,1);
 Hbefore = nan(nTarget,plannerClock.nT);
 Hafter = nan(nTarget,plannerClock.nT);
 
 % initialization of entropy and mutual info by Gaussian assumption
-Iref = nan(nTarget,1);
 HbeforeRef = nan(nTarget,plannerClock.nT);
 HafterRef = nan(nTarget,plannerClock.nT);
 
@@ -105,45 +135,43 @@ for iPlan = 1:plannerClock.nT
             otherwise
                 % for other measurements: uses target or agent states with
                 % parameters given by sensor/planner class
-                planner.y = TakeMeasurement(plannerTarget(iTarget).x,plannerAgent(planner.id).s,planner.param.sensor,flagSensor);
+                
+                % the planner considers all predicted measurements with
+                % respect to all agents, of which other agents' states are delivered from
+                % other agents/predicted by its own agent
+                for iAgent = 1: nAgent
+                    planner.y(:,iAgent) = TakeMeasurement(plannerTarget(iTarget).x,plannerAgent(iAgent).s,planner.param.sensor,flagSensor);
+                end
         end
     
         % take communication delivery from communication set
         % BEWARE OF BINARY REPRESENTATION: 0-null | 1-y
         planner.z = planner.commSet(iPlan,iComm);
         
-        
         % compute information of single measurement / communication using
         % Particle Method
-        [Hbefore(iTarget,iPlan),Hafter(iTarget,iPlan),I(iTarget,iPlan),planner.PTset(iTarget).pt,planner.PTset(iTarget).w] = ...
+        [Hbefore(iTarget,iPlan),Hafter(iTarget,iPlan),planner.PTset(iTarget).pt,planner.PTset(iTarget).w] = ...
             ComputeInformationByParticleMethod(id,iPlan,iTarget,iMeas,iClock,planner,plannerAgent,plannerSensor,plannerClock,plannerField,flagSensor,flagComm,flagPdfCompute,bPdfDisp);
 
+%         % compute information of single measurement / communication using
+%         % Linear-Gaussian Assumption (KF concept)        
+%         [HbeforeRef(iTarget,iPlan),HafterRef(iTarget,iPlan),Iref(iTarget,iPlan),planner.PTset(iTarget).xhat,planner.PTset(iTarget).Phat] = ...
+%             ComputeInformationByLinearGaussian(id,iPlan,iMeas,iTarget,iClock,planner,bPdfDisp);
+        
         % compute information of single measurement / communication using
-        % Linear-Gaussian Assumption (KF concept)        
-        [HbeforeRef(iTarget,iPlan),HafterRef(iTarget,iPlan),Iref(iTarget,iPlan),planner.PTset(iTarget).xhat,planner.PTset(iTarget).Phat] = ...
-            ComputeInformationByLinearGaussian(id,iPlan,iMeas,iTarget,iClock,planner,bPdfDisp);
-    
+        % Linear-Gaussian Assumption (KF concept): computing predicted-measurement update recursively
+        [HbeforeRef(iTarget,iPlan),HafterRef(iTarget,iPlan),planner.PTset(iTarget).xhat,planner.PTset(iTarget).Phat] = ...
+            ComputeInformationByLinearGaussianRecursiveMeasUpdate(id,iPlan,iMeas,iTarget,iClock,planner,plannerAgent,flagComm,bPdfDisp);
+        
     end
     
 end
 
-% check entropy
-% figure(100)
-% plot(HbeforeRef,'b--','linewidth',3); hold on;
-% plot(Hbefore,'r--','Linewidth',3);
-% 
-% plot(HafterRef,'b-','linewidth',3); hold on;
-% plot(Hafter,'r-','Linewidth',3);
-% 
-% figure(101)
-% plot(Iref,'b-','linewidth',3); hold on;
-% plot(I,'r-','Linewidth',3);
-
 
 end
 
 
-function [Hbefore,Hafter,I,pt,w] = ...
+function [Hbefore,Hafter,pt,w] = ...
     ComputeInformationByParticleMethod(id,iPlan,iTarget,iMeas,iClock,planner,plannerAgent,plannerSensor,plannerClock,plannerField,flagSensor,flagComm,flagPdfCompute,bPdfDisp)
 
 % Sum of prob. target evolution P(X_k|Z_{k-1})
@@ -204,15 +232,10 @@ end
 %----------------------
 
 
-% Mutual Information computation and accumulation for getting cost
-I = Hbefore - Hafter;
-%--------------
-
 end
 
 
-
-function [Hbefore,Hafter,I,xhat,Phat] = ComputeInformationByLinearGaussian(id,iPlan,iMeas,iTarget,iClock,planner,bPdfDisp)
+function [Hbefore,Hafter,xhat,Phat] = ComputeInformationByLinearGaussianRecursiveMeasUpdate(id,iPlan,iMeas,iTarget,iClock,planner,plannerAgent,flagComm,bPdfDisp)
 
 F = planner.param.F;
 Q = planner.param.Q;
@@ -222,12 +245,14 @@ H = planner.param.sensor(iTarget).H;
 
 xhat = planner.PTset(iTarget).xhat;
 Phat = planner.PTset(iTarget).Phat;
+
+nAgent = length(planner.param.agent);
 nState = length(xhat);
 
 y = planner.y;
-z = planner.z;
 
 plannerField = planner.param.field;
+
 
 % state update
 xhat = F*xhat;
@@ -244,9 +269,20 @@ end
 Hbefore = nState/2 + nState/2*log(2*pi) + 1/2*log(det(Phat));
 
 % measurement update
-K = Phat*H'*(R+H*Phat*H')^(-1);
-xhat = xhat + K*(y - H*xhat);
-Phat = (eye(nState)-K*H)*Phat*(eye(nState)-K*H)' + K*R*K';
+for iAgent = 1:nAgent
+    % when the planner consider communication, then the mofified noise
+    % covariance (from M.Stachura & E.Frew, Communication-Aware
+    % Information-Gathering Experiments with an Unmanned Aircraft System)
+    % is computed
+    if flagComm == 1
+        beta = ComputeCommProb(plannerAgent(id).s,plannerAgent(iAgent).s);
+        R = (beta*planner.param.sensor.R^(-1))^(-1);
+    end
+    
+    K = Phat*H'*(R+H*Phat*H')^(-1);
+    xhat = xhat + K*(y(:,iAgent) - H*xhat);
+    Phat = (eye(nState)-K*H)*Phat*(eye(nState)-K*H)' + K*R*K';
+end
 
 % plotting distribution: after
 if bPdfDisp.after == 1
@@ -259,7 +295,51 @@ end
 Hafter = nState/2 + nState/2*log(2*pi) + 1/2*log(det(Phat));
 % Hafter = 1/2*log((2*pi*exp(1))^nState*det(Phat));
 
-% mutual information computation
-I = Hbefore - Hafter;
-
 end
+
+
+% function [Hbefore,Hafter,I,xhat,Phat] = ComputeInformationByLinearGaussian(id,iPlan,iMeas,iTarget,iClock,planner,bPdfDisp)
+% 
+% nAgent = length(planner.param.agent);
+% 
+% F = planner.param.F;
+% Q = planner.param.Q;
+% 
+% R = [];
+% for iAgent = 1:nAgent
+%     R = blkdiag(R,planner.param.sensor(iTarget).R);
+% end
+% 
+% H = repmat(planner.param.sensor(iTarget).H,nAgent,1);
+% 
+% xhat = planner.PTset(iTarget).xhat;
+% Phat = planner.PTset(iTarget).Phat;
+% 
+% nState = length(xhat);
+% 
+% y = reshape(planner.y,nState*nAgent,1);
+% z = planner.z;
+% 
+% plannerField = planner.param.field;
+% 
+% 
+% % state update
+% xhat = F*xhat;
+% Phat = F*Phat*F' + Q;
+% 
+% % compute entropy before taking measurement
+% Hbefore = nState/2 + nState/2*log(2*pi) + 1/2*log(det(Phat));
+% 
+% % measurement update
+% K = Phat*H'*(R+H*Phat*H')^(-1);
+% xhat = xhat + K*(y - H*xhat);
+% Phat = (eye(nState)-K*H)*Phat*(eye(nState)-K*H)' + K*R*K';
+% 
+% % compute entropy after taking measurement
+% Hafter = nState/2 + nState/2*log(2*pi) + 1/2*log(det(Phat));
+% % Hafter = 1/2*log((2*pi*exp(1))^nState*det(Phat));
+% 
+% % mutual information computation
+% I = Hbefore - Hafter;
+% 
+% end
