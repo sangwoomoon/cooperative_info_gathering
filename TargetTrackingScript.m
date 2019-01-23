@@ -42,7 +42,7 @@ for iSim = 1:nSim
     
     %----------------------
     % simulation structure
-    sim(iSim) = InitializeSim(   2,       1,     'MI',       1,       'uniform',        0,         1,     'Pos',  'unicycle', 'PosLinear',   'KF'    ); 
+    sim(iSim) = InitializeSim(   2,       2,     'MI',       1,       'uniform',        0,         1,     'Pos',  'unicycle', 'PosLinear',   'KF'    ); 
                             % nAgent | nTarget | flagDM | flagComm | flagPdfCompute | flagLog | flagPlot | target |  agent     | sensor   | filter
     
     % flagDM         ||   'random': random decision | 'MI': mutual information-based decision | 'mean': particle mean following
