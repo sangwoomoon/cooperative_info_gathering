@@ -1,8 +1,8 @@
 function [ptNext,wNext] = ResampleParticle(ptNow,wNow,field)
 
 nPt = length(ptNow(1,:));
-ptNext = nan(2,nPt);
 nState = length(ptNow(:,1));
+ptNext = nan(nState,nPt);
 
 for iPt = 1:nPt
     bSample = 1;

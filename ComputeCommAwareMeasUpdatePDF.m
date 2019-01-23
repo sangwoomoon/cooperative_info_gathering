@@ -1,6 +1,11 @@
-% ONLY AGENT 2 TAKES MEASUREMENT IN THE SCENARIO: FOR ACC2019 DRAFT
-% the code is only applicable in 2 agents scenario, where agent 1 receives
-% information from agent 2 which is dependent to the communication status
+%--------------------------------------------------------------------------------
+% equation info
+%
+% P(x_t|z_t) = [P(z_t|x_t)P(x_t|z_{t-1}}]/[P(z_t|z_{t-1}]   : final prob
+% P(z_t|x_t) = P_co(z_t|y_t)P_se(y_t|x_t)                : likelihood function
+%
+%--------------------------------------------------------------------------------
+
 function [likelihoodPdf,measUpdatePdf] = ...
     ComputeCommAwareMeasUpdatePDF(targetUpdatePdf,pt,plannerAgent,param,meas,commStatus,id,flagComm,flagSensor,flagPdfCompute)
 
@@ -10,30 +15,35 @@ nAgent = length(plannerAgent);
 
 % 0-1. PDF initialization
 measUpdatePdf = targetUpdatePdf;
-% 0-2. Comm-related variables initialization
-beta = nan(1,nAgent);
-commProb = nan(1,nAgent);
 
 for iAgent = 1:nAgent
     
-    % compute probability of delivery for communication part
-    if flagComm == 1
-        beta(iAgent) = ComputeCommProb(plannerAgent(id).s,plannerAgent(iAgent).s);
+    % take likelihood PDF
+    likelihoodPdf = ComputeLikelihoodPDF(meas(:,iAgent),pt,plannerAgent(iAgent),param.sensor,param.pdf,flagSensor,flagPdfCompute);
+    
+    % consider communication awareness
+    if flagComm
+        % own agent automatically takes measurement update regardless
+        % of the communication
+        if iAgent == id
+            % P(z_t|x_t) = P_co(z_t|y_t)P_se(y_t|x_t)
+            measUpdatePdf = measUpdatePdf.*likelihoodPdf;
+        else
+            beta = ComputeCommProb(plannerAgent(id).s,plannerAgent(iAgent).s);
+            
+            if commStatus(iAgent) % when connected
+                measUpdatePdf = measUpdatePdf.*beta.*likelihoodPdf;
+            else % when disconnected
+                measUpdatePdf = measUpdatePdf.*(1-beta);
+            end
+        end
+        
+    % under perfect communication
     else
-        beta(iAgent) = 1;
+        % P(z_t|x_t) = P_co(z_t|y_t)P_se(y_t|x_t)
+        measUpdatePdf = measUpdatePdf.*likelihoodPdf;
     end
     
-    if commStatus == 1
-        commProb(iAgent) = beta(iAgent);
-        % take likelihood PDF since the agent can receive the PDF info
-        likelihoodPdf = ComputeLikelihoodPDF(meas(:,iAgent),pt,plannerAgent(iAgent),param.sensor,param.pdf,flagSensor,flagPdfCompute);
-    else
-        commProb(iAgent) = 1-beta(iAgent);
-        % the likelihood PDF does not affect to the agent itself.
-        likelihoodPdf = ones(size(measUpdatePdf));
-    end
-    
-    measUpdatePdf = measUpdatePdf.*commProb(iAgent).*likelihoodPdf;
 end
 
 % normalization

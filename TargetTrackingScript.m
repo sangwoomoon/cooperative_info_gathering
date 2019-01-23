@@ -106,7 +106,7 @@ for iSim = 1:nSim
             % nPt = floor(10^(0.15*(iSim+6)));
             xhat = zeros(length(sim(iSim).target(iTarget).x),1);
             Phat = diag([50^2,50^2,50^2]);
-            sim(iSim).filter(iAgent,iTarget) = InitializeFilter(sim(iSim),iAgent,iTarget,  xhat,  Phat,   diag([18^2,18^2,18^2]), 500);
+            sim(iSim).filter(iAgent,iTarget) = InitializeFilter(sim(iSim),iAgent,iTarget,  xhat,  Phat,   diag([18^2,18^2,18^2]), 100);
                                                                                         %  xhat | Phat   |            Q         | nPt
         end
     end
@@ -115,7 +115,7 @@ for iSim = 1:nSim
     %----------------------
     % planner structure
     for iAgent = 1:sim(iSim).nAgent
-        sim(iSim).planner(iAgent) = InitializePlanner(iAgent,sim, 3,  5,  500 );
+        sim(iSim).planner(iAgent) = InitializePlanner(iAgent,sim, 3,  5,  100 );
                                                                % dt | nT | nPt                
     end
     %----------------------
@@ -183,21 +183,19 @@ for iSim = 1:nSim
                         if (state(1) > sim(iSim).field.bufferZone(1) && state(1) < sim(iSim).field.bufferZone(2)) ...
                                 && (state(2) > sim(iSim).field.bufferZone(3) && state(2) < sim(iSim).field.bufferZone(4)) % inside geofence
                             
-                            if ~sim(iSim).flagInfoCom
-                                % Ryan's approach-based Mutual Information computation: Measurement sampling-based
-                                [sim(iSim).planner(iAgent).candidate.Hbefore(:,iAction),sim(iSim).planner(iAgent).candidate.Hafter(:,iAction),sim(iSim).planner(iAgent).candidate.I(iAction),...
-                                    sim(iSim).planner(iAgent).candidate.HbeforeRef(:,iAction),sim(iSim).planner(iAgent).candidate.HafterRef(:,iAction),sim(iSim).planner(iAgent).candidate.IRef(iAction)] = ...
-                                    ComputeInformation(sim(iSim).planner(iAgent),agent,sim(iSim).field,sim(iSim).planner(iAgent).param.clock,sim(iSim),iAction,iClock);
-                            elseif sim(iSim).flagInfoCom
-                                % Mutual Information computation: Consider all future measurements
-                                % consider communicaiton awareness
-                                [sim(iSim).planner(iAgent).candidate.Hbefore(:,iAction),sim(iSim).planner(iAgent).candidate.Hafter(:,iAction),sim(iSim).planner(iAgent).candidate.I(iAction),...
-                                    sim(iSim).planner(iAgent).candidate.HbeforeRef(:,iAction),sim(iSim).planner(iAgent).candidate.HafterRef(:,iAction),sim(iSim).planner(iAgent).candidate.IRef(iAction)] = ...
-                                    ComputeInformationMeasConsider(iAgent,iAction,iClock,sim(iSim));
-%                                     ComputeInformationMeasConsider(sim(iSim).planner(iAgent),sim(iSim).agent,sim(iSim).field,sim(iSim).planner(iAgent).param.clock,...
-%                                     sim(iSim).flagDisp,sim(iSim).flagComm,sim(iSim).flagPdfCompute,...
-%                                     iAction,iClock,sim(iSim).agent(iAgent).id);
-                            end
+                            %---------------------------------------------------------------------------------------------------------
+                            % Mutual Information computation:
+                            %
+                            % four approaches are implemented
+                            % 1. particle method considers all measurement/communication awareness possibilities.
+                            % 2. particle method of which communication is sampled by Pco(Z|Y): motivated by Ryan's approach
+                            % 3. Gaussian approximation with modified covariance approach: Maicej's approach
+                            % 4. Gaussian with all measurement/communication possibilities: exact when the model is Linear/Gaussian
+                            %
+                            [sim(iSim).planner(iAgent).candidate.Hbefore(:,iAction),sim(iSim).planner(iAgent).candidate.Hafter(:,iAction),sim(iSim).planner(iAgent).candidate.I(iAction),...
+                                sim(iSim).planner(iAgent).candidate.HbeforeRef(:,iAction),sim(iSim).planner(iAgent).candidate.HafterRef(:,iAction),sim(iSim).planner(iAgent).candidate.IRef(iAction)] = ...
+                                ComputeInformation(iAgent,iAction,iClock,sim(iSim));
+                            %---------------------------------------------------------------------------------------------------------
                             
                         else % out of geofence
                             sim(iSim).planner(iAgent).candidate.Hbefore(:,iAction) = inf;
@@ -225,8 +223,7 @@ for iSim = 1:nSim
                     sim(iSim).planner(iAgent).HbeforeRef = sim(iSim).planner(iAgent).candidate.HbeforeRef(:,sim(iSim).planner(iAgent).actIdx);
                     sim(iSim).planner(iAgent).HafterRef = sim(iSim).planner(iAgent).candidate.HafterRef(:,sim(iSim).planner(iAgent).actIdx);
                     
-                    % add computed information to analyze Monte-Carlo based
-                    % approach
+                    % add computed information to analyze Monte-Carlo based approach
                     sim(iSim).planner(iAgent).Isum = sim(iSim).planner(iAgent).Isum + sim(iSim).planner(iAgent).I;
                     sim(iSim).planner(iAgent).HbeforeSum = sim(iSim).planner(iAgent).HbeforeSum + sim(iSim).planner(iAgent).Hbefore;
                     sim(iSim).planner(iAgent).HafterSum = sim(iSim).planner(iAgent).HafterSum + sim(iSim).planner(iAgent).Hafter;
