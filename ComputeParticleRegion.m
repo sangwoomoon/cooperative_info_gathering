@@ -47,7 +47,7 @@ switch option
         nPt = length(pt(1,:));
         
         sigma = sqrt(param.Q(1,1)+param.Q(2,2));
-        maxArea = pi*(1*sigma)^2; % maximum area of which radius is 1-sigma
+        maxArea = pi*(1*sigma)^2; % maximum area of which radius is 3-sigma
         region = maxArea*ones(1,nPt);
         
 %         % refine domain: in order to remove the same particle location
@@ -67,7 +67,7 @@ switch option
             end
         end
         
-        % to check its feasibility (circle assumption)
+%         % to check its feasibility (circle assumption)
 %         radius = sqrt(region./pi);
 %         th = 0:2*pi/20:2*pi;
 %         
@@ -79,7 +79,8 @@ switch option
 %             line(xunit,yunit,'color','g');
 %         end
 %         voronoi(pt(1,:),pt(2,:));
-        
+%         axis equal;
+%         
 end
 
 end

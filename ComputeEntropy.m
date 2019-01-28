@@ -7,6 +7,8 @@ function entropy = ComputeEntropy(pdf,pt,param,option)
 region = ComputeParticleRegion(pt,param,option);
 
 nonZeroIdx = pdf > 0; % to prevent from log(0)
+% prob = pdf(squeeze(nonZeroIdx)).*region(squeeze(nonZeroIdx));
+% entropy = -sum(prob.*log(prob));
 entropy = -sum(pdf(nonZeroIdx).*log(pdf(nonZeroIdx)).*region(nonZeroIdx));
 
 end

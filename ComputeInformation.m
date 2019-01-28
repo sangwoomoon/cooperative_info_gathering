@@ -1,11 +1,20 @@
 %-----------------------------------
 % PF-based Mutual information Computation when considering all possible
-% measurements
+% communication scenario
+%
+% FIVE APPROACHES are implemented for analysis
+%
+% 1. pmAll:       particle method considers all measurement/communication awareness possibilities.
+% 2. pmSample:    particle method of which communication is sampled by Pco(Z|Y): motivated by Ryan's approach
+% 3. gaussSample: Gaussian approximation of which communication is sampled by Pco(Z|Y): motivated by Ryan's approach
+% 4. gaussRtilde: Gaussian approximation with modified covariance approach: Maicej's approach
+% 5. gaussAll:    Gaussian with all measurement/communication possibilities: exact when the model is Linear/Gaussian
+%
+% Agent 1 receives information from Agent 2
 %-----------------------------------
-function [HbeforePM,HafterPM,I_PM,  HbeforeTrue,HafterTrue,Itrue] = ComputeInformation(iAgent,iAction,iClock,sim)
+function [pmAll, pmSample, pmSeparate, gaussRtilde, gaussAll] = ComputeInformation(iAgent,iAction,iClock,sim)
 
 planner = sim.planner(iAgent);
-plannerAgent = planner.param.agent;
 plannerClock = planner.param.clock;
 
 bPdfDisp = sim.flagDisp;
@@ -17,169 +26,214 @@ nMeasSet = length(planner.measSet(1,:));
 nCommSet = length(planner.commSet(1,:));
 
 % mutual information from particle method
-HbeforePM = zeros(plannerClock.nT,1);
-HafterPM = zeros(plannerClock.nT,1);
-I_PM = nan(plannerClock.nT,1);
+pmAll.Hbefore = zeros(plannerClock.nT,1);
+pmAll.Hafter = zeros(plannerClock.nT,1);
+pmAll.I = nan(plannerClock.nT,1);
+
+% mutual information from particle method, which considers communication
+% probability and mutual information separatively
+pmSeparate.Hbefore = zeros(plannerClock.nT,1);
+pmSeparate.Hafter = zeros(plannerClock.nT,1);
+pmSeparate.I = nan(plannerClock.nT,1);
 
 % mutual information under Gaussian assumption: exact solution since it
 % considers all communication-aware events
-HbeforeTrue = zeros(plannerClock.nT,1);
-HafterTrue = zeros(plannerClock.nT,1);
-Itrue = nan(plannerClock.nT,1);
+gaussAll.Hbefore = zeros(plannerClock.nT,1);
+gaussAll.Hafter = zeros(plannerClock.nT,1);
+gaussAll.I = nan(plannerClock.nT,1);
 
-% initialization of mutual info by Gaussian assumption with
-% modified sensor noise covariance matrix: what Maicej did
-Imaicej = nan(plannerClock.nT,1);
-
-% initialization of mutual info by Particle Method by sampling events
-% concept of Ryan's approach
-Iryan = nan(plannerClock.nT,1);
-
-% mutual information under Gaussian assumption: communication is sampled by Pco(Z|Y)
-IgaussSample = nan(plannerClock.nT,1);
+if flagComm == 1
+    
+    % initialization of mutual info by Gaussian assumption with
+    % modified sensor noise covariance matrix: what Maicej did
+    gaussRtilde.I = nan(plannerClock.nT,1);
+    
+    % initialization of mutual info by Particle Method by sampling events
+    % concept of Ryan's approach
+    pmSample.I = nan(plannerClock.nT,1);
+    
+end
 %---
 
 
+%---------------------------------------------------------------------
+% APPROACH #4: Sangwoo PM
+%
 % compute information under the all possibilities: particle-method
+% MI = ?[P(MI_i)*MI_i] : weighted sum of elements of MI with respect to probability of the element of communication tree
 for iMeas = 1:nMeasSet
     
     for iComm = 1:nCommSet
         
-        [HbeforeElement,HafterElement] = ...
-            ComputeInformationByParticleMethod(iAgent,iMeas,iComm,iClock,iAction,planner,flagSensor,flagComm,flagPdfCompute,bPdfDisp);
+        [HbeforeElement,HafterElement,commProb] = ...
+            ComputeInformationByParticleMethod(iMeas,iComm,iClock,iAction,planner,flagSensor,flagComm,flagPdfCompute,bPdfDisp);
         
         % entropy and mutual information from particle method
-        HbeforePM = HbeforePM + sum(HbeforeElement,2);
-        HafterPM = HafterPM + sum(HafterElement,2);      
+        pmAll.Hbefore = pmAll.Hbefore + prod(commProb)*sum(HbeforeElement,2);
+        pmAll.Hafter = pmAll.Hafter + prod(commProb)*sum(HafterElement,2);      
         %---
         
     end
      
 end
+%---------------------------------------------------------------------
 
+
+%---------------------------------------------------------------------
+% APPROACH #5: Exact Solution under Linear-Gaussian
+%
 % compute information under the all possibilities: exact information computation under linear-gaussian model
+% MI = ?[P(MI_i)*MI_i] : weighted sum of elements of MI with respect to probability of the element of communication tree
 for iMeas = 1:nMeasSet
     
     for iComm = 1:nCommSet
         
-        [HbeforeElement,HafterElement] = ...
-            ComputeInformationByLinearGaussianCommAware(iAgent,iMeas,iComm,iClock,iAction,planner,bPdfDisp,flagSensor);
+        [HbeforeElement,HafterElement,commProb] = ...
+            ComputeInformationByLinearGaussianCommAware(iMeas,iComm,iClock,iAction,planner,bPdfDisp,flagSensor,flagComm);
         
         % entropy and mutual information under Gaussian Assumption
-        HbeforeTrue = HbeforeTrue + sum(HbeforeElement,2);
-        HafterTrue = HafterTrue + sum(HafterElement,2);        
+        gaussAll.Hbefore = gaussAll.Hbefore + prod(commProb)*sum(HbeforeElement,2);
+        gaussAll.Hafter = gaussAll.Hafter + prod(commProb)*sum(HafterElement,2);        
         %---
         
     end
      
 end
+%---------------------------------------------------------------------
 
-% compute information using
-% Linear-Gaussian Assumption (KF concept): Maicej's work, it does not
-% consider all possibilities of communication event
-%
-% mutual information under Gaussian Assumption
-% Refer "M.Stachura & E.Frew, Communication-Aware
-%  Information-Gathering Experiments with an Unmanned Aircraft System"
-%  to compute communication-aware Entropy
-[HbeforeMaicej,HafterMaicej] = ...
-    ComputeInformationByLinearGaussianSensorCovMatrixApproximation(iAgent,iClock,iAction,planner,flagSensor,flagComm,bPdfDisp);
 
-HbeforeMaicej = sum(HbeforeMaicej,2);
-HafterMaicej = sum(HafterMaicej,2);
 
-% compute information using Paritcle filter-based approach using sampled
-% communcation output prediction, its concept is from what Ryan did
-%
-% Refer "A. Ryan & J. Hedrick, Particle filter based information-theoretic
-% active sensing"
-[HbeforeRyan,HafterRyan] = ...
-    ComputeInformationByParticleMethodSampledCommOutput(iAgent,iMeas,iClock,iAction,planner,flagSensor,flagComm,flagPdfCompute,bPdfDisp);
+if flagComm == 1
+    
+    
+    %---------------------------------------------------------------------
+    % APPROACH #1: Sangwoo PM by computing MI = ?[?*I(X;Y)]
+    %
+    % compute information under the all possibilities: particle-method that
+    % considers measurement and communication separatively
+    % MI = ?[P(MI_i(X;Y))*MI_i(X;Y)] : weighted sum of elements of MI with respect to probability of the element of communication tree
+    for iMeas = 1:nMeasSet
+        
+        for iComm = 1:nCommSet
+            
+            [HbeforeElement,HafterElement,commProb] = ...
+                ComputeInformationByParticleMethodSeparateComm(iMeas,iComm,iClock,iAction,planner,flagSensor,flagComm,flagPdfCompute,bPdfDisp);
+            
+            % entropy and mutual information from particle method
+            pmSeparate.Hbefore = pmSeparate.Hbefore + prod(commProb)*sum(HbeforeElement,2);
+            pmSeparate.Hafter = pmSeparate.Hafter + prod(commProb)*sum(HafterElement,2);
+            %---
+            
+        end
+        
+    end
+    %---------------------------------------------------------------------
 
-HbeforeRyan = sum(HbeforeRyan,2);
-HafterRyan = sum(HafterRyan,2);
+    
+    %---------------------------------------------------------------------
+    % APPROACH #3: modified R matrix by Majcej's expected measurement approximation
+    %
+    % compute information using
+    % Linear-Gaussian Assumption (KF concept): Maicej's work, it does not
+    % consider all possibilities of communication event
+    %
+    % mutual information under Gaussian Assumption
+    % Refer "M.Stachura & E.Frew, Communication-Aware
+    %  Information-Gathering Experiments with an Unmanned Aircraft System"
+    %  to compute communication-aware Entropy
+    [gaussRtilde.Hbefore,gaussRtilde.Hafter] = ...
+        ComputeInformationByLinearGaussianSensorCovMatrixApproximation(iClock,iAction,planner,flagSensor,flagComm,bPdfDisp);
+    
+    gaussRtilde.Hbefore = sum(gaussRtilde.Hbefore,2);
+    gaussRtilde.Hafter = sum(gaussRtilde.Hafter,2);
+    %---------------------------------------------------------------------
 
-% compute information using Gaussian-assumption approach using sampled
-% communcation output prediction, its concept is from what Ryan did
-%
-% Refer "A. Ryan & J. Hedrick, Particle filter based information-theoretic
-% active sensing"
-[HbeforeGaussSample,HafterGaussSample] = ...
-    ComputeInformationByLinearGaussianSampledCommOutput(iAgent,iMeas,iClock,iAction,planner,bPdfDisp,flagSensor);
 
-HbeforeGaussSample = sum(HbeforeGaussSample,2);
-HafterGaussSample = sum(HafterGaussSample,2);
+    %---------------------------------------------------------------------
+    % APPROACH #2: PM with Sampled Communication Output MI = I(X;Z_sample)
+    %
+    % compute information using Paritcle filter-based approach using sampled
+    % communcation output prediction, its concept is from what Ryan did
+    %
+    % Refer "A. Ryan & J. Hedrick, Particle filter based information-theoretic
+    % active sensing"
+    [pmSample.Hbefore,pmSample.Hafter] = ...
+        ComputeInformationByParticleMethodSampledCommOutput(iMeas,iClock,iAction,planner,flagSensor,flagComm,flagPdfCompute,bPdfDisp);
+    
+    pmSample.Hbefore = sum(pmSample.Hbefore,2);
+    pmSample.Hafter = sum(pmSample.Hafter,2);
+    %---------------------------------------------------------------------
 
-% divide by number of all possible events: in order to fit the equation
-nPossibleEvents = nMeasSet*nCommSet;
-
-HbeforePM = HbeforePM/nPossibleEvents;
-HafterPM = HafterPM/nPossibleEvents;
-
-HbeforeTrue = HbeforeTrue/nPossibleEvents;
-HafterTrue = HafterTrue/nPossibleEvents;
+    
+end
 
 % compute cost function, which is I(X_{k:k+t};Z_{k:k+t})
 for iClock = 1:plannerClock.nT
-    Imaicej(iClock) = sum(HbeforeMaicej(1:iClock) - HafterMaicej(1:iClock));
-    I_PM(iClock) = sum(HbeforePM(1:iClock) - HafterPM(1:iClock));
-    Iryan(iClock) = sum(HbeforeRyan(1:iClock) - HafterRyan(1:iClock));
-    IgaussSample(iClock) = sum(HbeforeGaussSample(1:iClock) - HafterGaussSample(1:iClock));
-    Itrue(iClock) = sum(HbeforeTrue(1:iClock) - HafterTrue(1:iClock));
+    pmAll.I(iClock) = sum(pmAll.Hbefore(1:iClock) - pmAll.Hafter(1:iClock));
+    gaussAll.I(iClock) = sum(gaussAll.Hbefore(1:iClock) - gaussAll.Hafter(1:iClock));
+    if flagComm == 1
+        pmSeparate.I(iClock) = sum(pmSeparate.Hbefore(1:iClock) - pmSeparate.Hafter(1:iClock));
+        pmSample.I(iClock) = sum(pmSample.Hbefore(1:iClock) - pmSample.Hafter(1:iClock));
+        gaussRtilde.I(iClock) = sum(gaussRtilde.Hbefore(1:iClock) - gaussRtilde.Hafter(1:iClock));
+    end
 end
 %---
 
-% check entropy
+% make entropy history
 HbeforeIdx = 1:2:2*plannerClock.nT-1;
 HafterIdx = 2:2:2*plannerClock.nT;
 
-H_PM(HbeforeIdx) = HbeforePM;
-H_PM(HafterIdx) = HafterPM;
+pmAll.hist.H(HbeforeIdx) = pmAll.Hbefore;
+pmAll.hist.H(HafterIdx) = pmAll.Hafter;
 
-Hmaicej(HbeforeIdx) = HbeforeMaicej;
-Hmaicej(HafterIdx) = HafterMaicej;
+gaussAll.hist.H(HbeforeIdx) = gaussAll.Hbefore;
+gaussAll.hist.H(HafterIdx) = gaussAll.Hafter;
 
-Hryan(HbeforeIdx) = HbeforeRyan;
-Hryan(HafterIdx) = HafterRyan;
+if flagComm == 1
+    
+    pmSample.hist.H(HbeforeIdx) = pmSample.Hbefore;
+    pmSample.hist.H(HafterIdx) = pmSample.Hafter;
+    
+    gaussRtilde.hist.H(HbeforeIdx) = gaussRtilde.Hbefore;
+    gaussRtilde.hist.H(HafterIdx) = gaussRtilde.Hafter;
+    
+    pmSeparate.hist.H(HbeforeIdx) = pmSeparate.Hbefore;
+    pmSeparate.hist.H(HafterIdx) = pmSeparate.Hafter;
+    
+end
 
-Htrue(HbeforeIdx) = HbeforeTrue;
-Htrue(HafterIdx) = HafterTrue;
-
-HgaussSample(HbeforeIdx) = HbeforeGaussSample;
-HgaussSample(HafterIdx) = HafterGaussSample;
-
+% make time history with respect to entropy change
 tIdx = 1:plannerClock.nT;
 
-t(HbeforeIdx) = tIdx;
-t(HafterIdx) = tIdx;
+pmAll.hist.time(HbeforeIdx) = tIdx;
+pmAll.hist.time(HafterIdx) = tIdx;
 
-% plot the result 
-figure(100)
-plot(t,Hmaicej,'b-','linewidth',2); hold on;
-plot(t,Hryan,'m-','Linewidth',2);
-plot(t,HgaussSample,'c-','Linewidth',2);
-plot(t,H_PM,'r-','Linewidth',2);
-plot(t,Htrue,'g-','Linewidth',2);
-legend('modified cov matrix','PM: sampled comm','Gaussian: sampled comm','PM: all events','true');
-xlabel('t (receding horizon time step)');
-ylabel('entropy');
+gaussAll.hist.time(HbeforeIdx) = tIdx;
+gaussAll.hist.time(HafterIdx) = tIdx;
 
-figure(101)
-plot(Imaicej,'b-','linewidth',2); hold on;
-plot(Iryan,'m-','Linewidth',2);
-plot(IgaussSample,'c-','Linewidth',2);
-plot(I_PM,'r-','Linewidth',2);
-plot(Itrue,'g-','Linewidth',2);
-legend('modified cov matrix','PM: sampled comm','Gaussian: sampled comm','PM: all events','true');
-xlabel('t (receding horizon time step)');
-ylabel('I(X_{k:k+t};Y_{k:k+t})');
+if flagComm == 1
+    
+    pmSample.hist.time(HbeforeIdx) = tIdx;
+    pmSample.hist.time(HafterIdx) = tIdx;
+    
+    gaussRtilde.hist.time(HbeforeIdx) = tIdx;
+    gaussRtilde.hist.time(HafterIdx) = tIdx;
+
+    pmSeparate.hist.time(HbeforeIdx) = tIdx;
+    pmSeparate.hist.time(HafterIdx) = tIdx;
+    
+else
+    pmSample = [];
+    gaussRtilde = [];
+    pmSeparate = [];
+end
 
 end
 
 
 % Particle Method
-function [Hbefore,Hafter] = ...
-    ComputeInformationByParticleMethod(id,iMeas,iComm,iClock,iAction,planner,flagSensor,flagComm,flagPdfCompute,bPdfDisp)
+function [Hbefore,Hafter,commProb] = ...
+    ComputeInformationByParticleMethod(iMeas,iComm,iClock,iAction,planner,flagSensor,flagComm,flagPdfCompute,bPdfDisp)
 
 
 plannerAgent = planner.param.agent;
@@ -195,9 +249,15 @@ nTarget = length(planner.PTset);
 Hbefore = nan(plannerClock.nT,nTarget);
 Hafter = nan(plannerClock.nT,nTarget);
 
+% Communication probability initialization
+commProb = ones(1,nAgent);
+
 for iPlan = 1:plannerClock.nT
     
     for iTarget = 1:nTarget
+        
+        % initialize measurement set as null group
+        planner.y = nan(length(plannerSensor.R(:,1)),nAgent);
         
         % predicted agent state by given planner's action:
         % THE PLANNER ONLY MOVES ITS OWN AGENT ONLY
@@ -219,6 +279,16 @@ for iPlan = 1:plannerClock.nT
         % particle evolution using target dynamics
         planner.PTset(iTarget).pt = UpdateParticle(planner.PTset(iTarget).pt,planner.param,plannerClock.dt);
         
+        % take communication delivery from communication set
+        % BEWARE OF BINARY REPRESENTATION: 0-null | 1-y
+        for iAgent = 1:nAgent
+            if iAgent == planner.id
+                planner.z(iAgent) = 1;
+            else
+                planner.z(iAgent) = planner.commSet(iPlan,iComm);
+            end
+        end
+        
         % take measurement from measurement set
         switch flagSensor
             case 'detection'
@@ -231,16 +301,19 @@ for iPlan = 1:plannerClock.nT
                 % the planner considers all predicted measurements with
                 % respect to all agents, of which other agents' states are delivered from
                 % other agents/predicted by its own agent
-                for iAgent = 1: nAgent
-                    planner.y(:,iAgent) = TakeMeasurement(plannerTarget(iTarget).x,plannerAgent(iAgent).s,planner.param.sensor,flagSensor);
+                %
+                % now, agent 1's delivered measurement from agent 2 is determined by
+                % communication set
+                for iAgent = 2: nAgent
+                    if planner.z(iAgent)
+                        planner.y(:,iAgent) = TakeMeasurement(plannerTarget(iTarget).x,plannerAgent(iAgent).s,planner.param.sensor,flagSensor);
+                    else
+                        planner.y(:,iAgent) = nan(length(plannerSensor.R(:,1)),1);
+                    end
                 end
+                
         end
-        
-        % take communication delivery from communication set
-        % BEWARE OF BINARY REPRESENTATION: 0-null | 1-y
-        for iAgent = 1:nAgent
-            planner.z(iAgent) = planner.commSet(iPlan,iComm);
-        end
+
         
         % weight update: w_{k-1} -> w_k
         % gather agent state info for overall weight computation
@@ -250,8 +323,150 @@ for iPlan = 1:plannerClock.nT
         % probability of measurement update P(X_k|Z_k):
         % HERE IS THE MAJOR DIFFERENCE BY CONSIDERING COMMUNICATION
         % AWARENESS
-        [~,measUpdatePdf] = ...
-            ComputeCommAwareMeasUpdatePDF(targetUpdatePdf,planner.PTset(iTarget).pt,plannerAgent,planner.param,planner.y,planner.z,id,flagComm,flagSensor,flagPdfCompute);
+        [commProbSinglePlan,measUpdatePdf] = ...
+            ComputeCommAwareMeasUpdatePDF(targetUpdatePdf,planner.PTset(iTarget).pt,plannerAgent,planner.param,planner.y,planner.z,planner.id,flagComm,flagSensor,flagPdfCompute);
+        
+        % Entropy computation: H(X_k|Z_k):
+        Hafter(iPlan,iTarget) = ComputeEntropy(measUpdatePdf,planner.PTset(iTarget).pt,planner.param,flagPdfCompute);
+        
+        
+        %-- Plot:: before resampling -----------
+        % Plot P(X_k|y_{k-1}) if needed
+        if bPdfDisp.before == 1
+            figure(iClock+10+iMeas+iTarget),subplot(planner.param.plot.row,planner.param.plot.col,2*(iPlan-1)+1),
+            PlotPDF(targetUpdatePdf,planner.PTset(iTarget).pt,planner.param.pdf,flagPdfCompute);
+            if iPlan == 1
+                title('P(x_t|y_{k+1:t-1})','fontsize',10);
+            end
+            ylabel(['t =',num2str(iPlan+iClock)],'fontsize',12);
+            axis([plannerField.boundary]);
+        end
+        
+        % resample particle if connected
+        % leave particle set if disconnected
+        if planner.z(2)
+            [planner.PTset(iTarget).pt,planner.PTset(iTarget).w] = ...
+                ResampleParticle(planner.PTset(iTarget).pt,planner.PTset(iTarget).w,plannerField);
+        end
+        
+        
+        % Plot P(X_k|y_k) if needed
+        if bPdfDisp.after == 1
+            figure(iClock+10+iMeas+iTarget),subplot(planner.param.plot.row,planner.param.plot.col,2*iPlan),
+            PlotPDF(measUpdatePdf,planner.PTset(iTarget).pt,planner.param.pdf,flagPdfCompute);
+            
+            if iPlan == 1
+                title('P(x_t|y_{k+1:t})','fontsize',10);
+                % legend('PDF','Particle');
+            end
+            axis([plannerField.boundary]);
+        end
+        %----------------------
+        
+    end
+    
+    commProb = commProb.*commProbSinglePlan;
+    
+end
+
+
+end
+
+
+% Particle Method by taking measurement and communication model
+% separatively
+function [Hbefore,Hafter,commProb] = ...
+    ComputeInformationByParticleMethodSeparateComm(iMeas,iComm,iClock,iAction,planner,flagSensor,flagComm,flagPdfCompute,bPdfDisp)
+
+
+plannerAgent = planner.param.agent;
+plannerSensor = planner.param.sensor;
+plannerField = planner.param.field;
+plannerClock = planner.param.clock;
+plannerTarget = planner.param.target;
+
+nAgent = length(plannerAgent);
+nTarget = length(planner.PTset);
+
+% initialization of entropy and mutual info by particle method
+Hbefore = nan(plannerClock.nT,nTarget);
+Hafter = nan(plannerClock.nT,nTarget);
+
+% Communication probability initialization
+commProb = ones(1,nAgent);
+
+for iPlan = 1:plannerClock.nT
+    
+    for iTarget = 1:nTarget
+        
+        % initialize measurement set as null group
+        planner.y = nan(length(plannerSensor.R(:,1)),nAgent);
+        
+        % predicted agent state by given planner's action:
+        % THE PLANNER ONLY MOVES ITS OWN AGENT ONLY
+        plannerAgent(planner.id).s = UpdateAgentState(plannerAgent(planner.id).s,planner.actionSet(iPlan,iAction),plannerClock.dt);
+        
+        % predicted target state by state update to take virtual measurement
+        plannerTarget(iTarget).x = UpdateTargetState(plannerTarget(iTarget).x,planner.param,plannerClock.dt);
+        
+        
+        % Sum of prob. target evolution P(X_k|Y_{k-1})
+        % in order to improve the computation for computing entropy from
+        % the approximated PDF, cylinder approach is developed and can be
+        % compared with discretized domain
+        targetUpdatePdf = ComputePDFMixture(planner.PTset(iTarget).pt,planner.PTset(iTarget).w,planner.param,flagPdfCompute);
+        
+        % Entropy computation: H(X_k|Y_{k-1})
+        Hbefore(iPlan,iTarget) = ComputeEntropy(targetUpdatePdf,planner.PTset(iTarget).pt,planner.param,flagPdfCompute);
+        
+        % particle evolution using target dynamics
+        planner.PTset(iTarget).pt = UpdateParticle(planner.PTset(iTarget).pt,planner.param,plannerClock.dt);
+        
+        % allocate communication probability
+        for iAgent = 1:nAgent
+            if iAgent == planner.id
+                planner.z(iAgent) = 1;
+            else
+                planner.z(iAgent) = planner.commSet(iPlan,iComm);
+            end
+        end
+        
+        % take measurement from measurement set
+        switch flagSensor
+            case 'detection'
+                % take measurement from measurement set
+                planner.y = planner.measSet(iPlan,iMeas);
+            otherwise
+                % for other measurements: uses target or agent states with
+                % parameters given by sensor/planner class
+                
+                % the planner considers all predicted measurements with
+                % respect to all agents, of which other agents' states are delivered from
+                % other agents/predicted by its own agent
+                %
+                % now, agent 1's delivered measurement from agent 2 is determined by
+                % communication set
+                %
+                % since the mutual information does not consider
+                % communication (I = I(X;Y)), measurements are always
+                % taken regardless of Z.
+                for iAgent = 2: nAgent
+                    planner.y(:,iAgent) = TakeMeasurement(plannerTarget(iTarget).x,plannerAgent(iAgent).s,planner.param.sensor,flagSensor);
+                end
+                
+        end
+
+        
+        % weight update: w_{k-1} -> w_k
+        % gather agent state info for overall weight computation
+        planner.PTset(iTarget).w = UpdateParticleWeight(planner.y,planner.PTset(iTarget).pt,...
+            plannerAgent,plannerSensor,flagSensor);
+        
+        % probability of measurement update P(X_k|Y_k):
+        % HERE IS THE MAJOR DIFFERENCE BY CONSIDERING COMMUNICATION
+        % AWARENESS
+        [commProbSinglePlan,measUpdatePdf] = ...
+            ComputeCommAwareMeasUpdatePDF(targetUpdatePdf,planner.PTset(iTarget).pt,plannerAgent,planner.param,planner.y,planner.z,planner.id,flagComm,flagSensor,flagPdfCompute);
         
         % Entropy computation: H(X_k|Z_k):
         Hafter(iPlan,iTarget) = ComputeEntropy(measUpdatePdf,planner.PTset(iTarget).pt,planner.param,flagPdfCompute);
@@ -289,6 +504,8 @@ for iPlan = 1:plannerClock.nT
         
     end
     
+    commProb = commProb.*commProbSinglePlan;
+    
 end
 
 
@@ -298,7 +515,7 @@ end
 % Sampled Concept of Ryan's approach: sample communication output
 % z_sampled ~ P_co(z|y)
 function [Hbefore,Hafter] = ...
-    ComputeInformationByParticleMethodSampledCommOutput(id,iMeas,iClock,iAction,planner,flagSensor,flagComm,flagPdfCompute,bPdfDisp)
+    ComputeInformationByParticleMethodSampledCommOutput(iMeas,iClock,iAction,planner,flagSensor,flagComm,flagPdfCompute,bPdfDisp)
 
 
 plannerAgent = planner.param.agent;
@@ -321,6 +538,9 @@ for iPlan = 1:plannerClock.nT
     
     for iTarget = 1:nTarget
         
+        % initialize measurement set as null group
+        planner.y = nan(length(plannerSensor.R(:,1)),nAgent);
+        
         % predicted agent state by given planner's action:
         % THE PLANNER ONLY MOVES ITS OWN AGENT ONLY
         plannerAgent(planner.id).s = UpdateAgentState(plannerAgent(planner.id).s,planner.actionSet(iPlan,iAction),plannerClock.dt);
@@ -341,6 +561,12 @@ for iPlan = 1:plannerClock.nT
         % particle evolution using target dynamics
         planner.PTset(iTarget).pt = UpdateParticle(planner.PTset(iTarget).pt,planner.param,plannerClock.dt);
         
+        % sample z based on P_co(z|y)
+        for iAgent = 1:nAgent
+            beta(iAgent) = ComputeCommProb(plannerAgent(planner.id).s,plannerAgent(iAgent).s);
+            planner.z(iAgent) = binornd(1,beta(iAgent));
+        end
+
         % take measurement from measurement set
         switch flagSensor
             case 'detection'
@@ -353,17 +579,19 @@ for iPlan = 1:plannerClock.nT
                 % the planner considers all predicted measurements with
                 % respect to all agents, of which other agents' states are delivered from
                 % other agents/predicted by its own agent
-                for iAgent = 1: nAgent
-                    planner.y(:,iAgent) = TakeMeasurement(plannerTarget(iTarget).x,plannerAgent(iAgent).s,planner.param.sensor,flagSensor);
+                %
+                % now, agent 1's delivered measurement from agent 2 is determined by
+                % communication set
+                for iAgent = 2: nAgent
+                    if planner.z(iAgent)
+                        planner.y(:,iAgent) = TakeMeasurement(plannerTarget(iTarget).x,plannerAgent(iAgent).s,planner.param.sensor,flagSensor);
+                    else
+                        planner.y(:,iAgent) = nan(length(plannerSensor.R(:,1)),1);
+                    end
                 end
+                
         end
-        
-        % sample z based on P_co(z|y)
-        for iAgent = 1:nAgent
-            beta(iAgent) = ComputeCommProb(plannerAgent(id).s,plannerAgent(iAgent).s);
-            planner.z(iAgent) = binornd(1,beta(iAgent));
-        end
-        
+                
         % weight update: w_{k-1} -> w_k
         % gather agent state info for overall weight computation
         planner.PTset(iTarget).w = UpdateParticleWeight(planner.y,planner.PTset(iTarget).pt,...
@@ -373,7 +601,7 @@ for iPlan = 1:plannerClock.nT
         % HERE IS THE MAJOR DIFFERENCE BY CONSIDERING COMMUNICATION
         % AWARENESS
         [~,measUpdatePdf] = ...
-            ComputeCommAwareMeasUpdatePDF(targetUpdatePdf,planner.PTset(iTarget).pt,plannerAgent,planner.param,planner.y,planner.z,id,flagComm,flagSensor,flagPdfCompute);
+            ComputeCommAwareMeasUpdatePDF(targetUpdatePdf,planner.PTset(iTarget).pt,plannerAgent,planner.param,planner.y,planner.z,planner.id,flagComm,flagSensor,flagPdfCompute);
         
         % Entropy computation: H(X_k|Z_k):
         Hafter(iPlan,iTarget) = ComputeEntropy(measUpdatePdf,planner.PTset(iTarget).pt,planner.param,flagPdfCompute);
@@ -391,9 +619,12 @@ for iPlan = 1:plannerClock.nT
             axis([plannerField.boundary]);
         end
         
-        % resample particle
-        [planner.PTset(iTarget).pt,planner.PTset(iTarget).w] = ...
-            ResampleParticle(planner.PTset(iTarget).pt,planner.PTset(iTarget).w,plannerField);
+        % resample particle when connected
+        % leave particle set when disconnected
+        if planner.z(2)
+            [planner.PTset(iTarget).pt,planner.PTset(iTarget).w] = ...
+                ResampleParticle(planner.PTset(iTarget).pt,planner.PTset(iTarget).w,plannerField);
+        end
         
         
         % Plot P(X_k|y_k) if needed
@@ -419,7 +650,7 @@ end
 
 % Maicej's approach: modify measurement covariance matrix by beta
 function [Hbefore,Hafter] = ...
-    ComputeInformationByLinearGaussianSensorCovMatrixApproximation(id,iClock,iAction,planner,flagSensor,flagComm,bPdfDisp)
+    ComputeInformationByLinearGaussianSensorCovMatrixApproximation(iClock,iAction,planner,flagSensor,flagComm,bPdfDisp)
 
 plannerClock = planner.param.clock;
 
@@ -439,7 +670,6 @@ HafterElement = nan(nPlan,nTarget);
 for iTarget = 1:nTarget
 
     R = planner.param.sensor.R;
-    H = planner.param.sensor.H;
     
     xhat = planner.PTset(iTarget).xhat;
     Phat = planner.PTset(iTarget).Phat;
@@ -453,11 +683,6 @@ for iTarget = 1:nTarget
         % predicted agent state by given planner's action:
         % THE PLANNER ONLY MOVES ITS OWN AGENT ONLY
         plannerAgent(planner.id).s = UpdateAgentState(plannerAgent(planner.id).s,planner.actionSet(iPlan,iAction),plannerClock.dt);
-    
-        % take mearurement prediction based on the estimator
-        for iAgent = 1: nAgent
-            planner.y(:,iAgent) = TakeMeasurement(xhat,plannerAgent(iAgent).s,planner.param.sensor,flagSensor);
-        end
         
         % state update
         xhat = F*xhat;
@@ -473,20 +698,38 @@ for iTarget = 1:nTarget
         % compute entropy before taking measurement
         HbeforeElement(iPlan,iTarget) = nState/2 + nState/2*log(2*pi) + 1/2*log(det(Phat));
         
-        % measurement update
-        for iAgent = 1:nAgent
+        
+        % take mearurement prediction based on the estimator and update
+        for iAgent = 2: nAgent
             % when the planner consider communication, then the mofified noise
             % covariance (from M.Stachura & E.Frew, Communication-Aware
             % Information-Gathering Experiments with an Unmanned Aircraft System)
             % is computed
             if flagComm == 1
-                beta = ComputeCommProb(plannerAgent(id).s,plannerAgent(iAgent).s);
-                R = planner.param.sensor.R/beta;
+                beta = ComputeCommProb(plannerAgent(planner.id).s,plannerAgent(iAgent).s);
+                paramSensor.R = planner.param.sensor.R/beta;
+                R = paramSensor.R;
+                % sample measurement prediction based on modified R
+                planner.y(:,iAgent) = TakeMeasurement(xhat,plannerAgent(iAgent).s,paramSensor,flagSensor);
+            else
+                % sample measurement prediction based on planner's R
+                planner.y(:,iAgent) = TakeMeasurement(xhat,plannerAgent(iAgent).s,planner.param.sensor,flagSensor);                
             end
-            
+                   
+            % measurement update
+
+            % take linearized measurement matrix
+            H = ComputeMeasurementMatrix(xhat,plannerAgent(iAgent).s,flagSensor);
+            % make zero noise cov matrix to get measurement residual
+            idealSensorParam.R = zeros(size(planner.param.sensor.R));
             K = Phat*H'*(R+H*Phat*H')^(-1);
-            xhat = xhat + K*(planner.y(:,iAgent) - H*xhat);
-            Phat = (eye(nState)-K*H)*Phat*(eye(nState)-K*H)' + K*R*K';
+            xhat = xhat + K*(planner.y(:,iAgent) - TakeMeasurement(xhat,plannerAgent(iAgent).s,idealSensorParam,flagSensor));
+            switch flagSensor
+                case 'PosLinear'
+                    Phat = (eye(nState)-K*H)*Phat*(eye(nState)-K*H)' + K*R*K';
+                case 'range_bear'
+                    Phat = (eye(nState)-K*H)*Phat;
+            end
         end
         
         % plotting distribution: after
@@ -512,11 +755,10 @@ end
 
 % exact approach: consider all posssible events for communication-awareness
 % under linear-Gaussian distribution
-function [Hbefore,Hafter] = ...
-    ComputeInformationByLinearGaussianCommAware(id,iMeas,iComm,iClock,iAction,planner,bPdfDisp,flagSensor)
+function [Hbefore,Hafter,commProb] = ...
+    ComputeInformationByLinearGaussianCommAware(iMeas,iComm,iClock,iAction,planner,bPdfDisp,flagSensor,flagComm)
 
 plannerClock = planner.param.clock;
-plannerTarget = planner.param.target;
 
 nAgent = length(planner.param.agent);
 nTarget = length(planner.PTset);
@@ -529,11 +771,12 @@ Q = planner.param.Q;
 Hbefore = nan(plannerClock.nT,nTarget);
 Hafter = nan(plannerClock.nT,nTarget);
 
+% overall communication probability initialization
+commProb = ones(1,nAgent);
 
 for iTarget = 1:nTarget
     
     R = planner.param.sensor.R;
-    H = planner.param.sensor.H;
     
     xhat = planner.PTset(iTarget).xhat;
     Phat = planner.PTset(iTarget).Phat;
@@ -545,56 +788,75 @@ for iTarget = 1:nTarget
     
     for iPlan = 1:plannerClock.nT
         
+        % communication probability for single planning step initialization
+        commProbSinglePlan = ones(1,nAgent);
+        % sampled measurement prediction initialization
+        planner.y = nan(length(R(:,1)),nAgent);
+        
         % predicted agent state by given planner's action:
         % THE PLANNER ONLY MOVES ITS OWN AGENT ONLY
         plannerAgent(planner.id).s = UpdateAgentState(plannerAgent(planner.id).s,planner.actionSet(iPlan,iAction),plannerClock.dt);
+                
+        % state update
+        xhat = F*xhat;
+        Phat = F*Phat*F' + Q;
         
-        % predicted target state by state update to take virtual measurement
-        plannerTarget(iTarget).x = UpdateTargetState(plannerTarget(iTarget).x,planner.param,plannerClock.dt);
+        % plotting distribution: before taking measurement prediction
+        if bPdfDisp.before == 1
+            figure(iClock+10+iMeas+iTarget),subplot(planner.param.plot.row,planner.param.plot.col,2*(iPlan-1)+1),
+            PlotGaussianEllipsoid(xhat,Phat);
+            axis([plannerField.boundary]);
+        end
         
-        % take measurement prediction
-        for iAgent = 1: nAgent
-            planner.y(:,iAgent) = TakeMeasurement(xhat,plannerAgent(iAgent).s,planner.param.sensor,flagSensor);
+        % compute entropy before taking measurement
+        Hbefore(iPlan,iTarget) = nState/2 + nState/2*log(2*pi) + 1/2*log(det(Phat));
+        
+        % AGENT 1 JUST USES THE INFORMATION FROM OTHER AGENTS!
+        for iAgent = 2: nAgent
             
             % take communication delivery from communication set
             % BEWARE OF BINARY REPRESENTATION: 0-null | 1-y
-            planner.z(iAgent) = planner.commSet(iPlan,iComm);
-        end
-        
-
-        
-        % state update
-        xhat = F*xhat;
-        Phat = F*Phat*F' + Q;
-        
-        % plotting distribution: before taking measurement prediction
-        if bPdfDisp.before == 1
-            figure(iClock+10+iMeas+iTarget),subplot(planner.param.plot.row,planner.param.plot.col,2*(iPlan-1)+1),
-            PlotGaussianEllipsoid(xhat,Phat);
-            axis([plannerField.boundary]);
-        end
-        
-        % compute entropy before taking measurement
-        Hbefore(iPlan,iTarget) = nState/2 + nState/2*log(2*pi) + 1/2*log(det(Phat));
-        
-        % measurement update
-        for iAgent = 1:nAgent
-            
-            % agent itself does not consider the communication condition for its
-            % own measurement update
-            if iAgent == id
-                K = Phat*H'*(R+H*Phat*H')^(-1);
-                xhat = xhat + K*(planner.y(:,iAgent) - H*xhat);
-                Phat = (eye(nState)-K*H)*Phat*(eye(nState)-K*H)' + K*R*K';
+            if flagComm
+                if iAgent == planner.id
+                    planner.z(iAgent) = 1;
+                else
+                    planner.z(iAgent) = planner.commSet(iPlan,iComm);
+                end
+                
+                % take measurement/communication prediction if connected
+                if planner.z(iAgent)
+                    planner.y(:,iAgent) = TakeMeasurement(xhat,plannerAgent(iAgent).s,planner.param.sensor,flagSensor);
+                    commProbSinglePlan(iAgent) = ComputeCommProb(plannerAgent(planner.id).s,plannerAgent(iAgent).s);
+                else
+                    planner.y(:,iAgent) = nan(length(R(:,1)),1);
+                    commProbSinglePlan(iAgent) = 1 - ComputeCommProb(plannerAgent(planner.id).s,plannerAgent(iAgent).s);
+                end
+                
             else
-                % when the planner consider communication, it depends on given
-                % communication output
-                if planner.z(iAgent) == 1
-                    K = Phat*H'*(R+H*Phat*H')^(-1);
-                    xhat = xhat + K*(planner.y(:,iAgent) - H*xhat);
-                    Phat = (eye(nState)-K*H)*Phat*(eye(nState)-K*H)' + K*R*K';
+                planner.z(iAgent) = 1;
+                planner.y(:,iAgent) = TakeMeasurement(xhat,plannerAgent(iAgent).s,planner.param.sensor,flagSensor);
+                commProbSinglePlan(iAgent) = 1;
+            end
+        
+            % measurement update
+            
+            % when the planner consider communication, it depends on given
+            % communication output
+            if planner.z(iAgent) == 1
+                % take linearized measurement matrix
+                H = ComputeMeasurementMatrix(xhat,plannerAgent(iAgent).s,flagSensor);
+                % make zero noise cov matrix to get measurement residual
+                idealSensorParam.R = zeros(size(planner.param.sensor.R));
+                K = Phat*H'*(R+H*Phat*H')^(-1);
+                xhat = xhat + K*(planner.y(:,iAgent) - TakeMeasurement(xhat,plannerAgent(iAgent).s,idealSensorParam,flagSensor));
+                switch flagSensor
+                    case 'PosLinear'
+                        Phat = (eye(nState)-K*H)*Phat*(eye(nState)-K*H)' + K*R*K';
+                    case 'range_bear'
+                        Phat = (eye(nState)-K*H)*Phat;
                 end
             end
+            
         end
         
         % plotting distribution: after
@@ -608,116 +870,15 @@ for iTarget = 1:nTarget
         Hafter(iPlan,iTarget) = nState/2 + nState/2*log(2*pi) + 1/2*log(det(Phat));
         % Hafter = 1/2*log((2*pi*exp(1))^nState*det(Phat));
         
+        % computation of commProb does not have to do with respect to
+        % targets.
+        if iTarget == 1
+           commProb = commProb.*commProbSinglePlan; 
+        end
+        
     end
     
 end
 
 end
 
-
-% Gaussian approximation with sampled comm output z~Pco(z|y)
-function [Hbefore,Hafter] = ...
-    ComputeInformationByLinearGaussianSampledCommOutput(id,iMeas,iClock,iAction,planner,bPdfDisp,flagSensor)
-
-plannerClock = planner.param.clock;
-plannerTarget = planner.param.target;
-
-nTarget = length(planner.PTset);
-nAgent = length(planner.param.agent);
-
-F = planner.param.F;
-Q = planner.param.Q;
-
-% initialization of entropy and mutual info by Gaussian assumption with all
-% possible communication-aware events: exact solution
-Hbefore = nan(plannerClock.nT,nTarget);
-Hafter = nan(plannerClock.nT,nTarget);
-
-% initialization of beta probability
-beta = nan(1,nAgent);
-    
-for iTarget = 1:nTarget
-
-    plannerAgent = planner.param.agent;
-    
-    R = planner.param.sensor.R;
-    H = planner.param.sensor.H;
-    
-    xhat = planner.PTset(iTarget).xhat;
-    Phat = planner.PTset(iTarget).Phat;
-    
-    nState = length(xhat);
-    
-    plannerField = planner.param.field;
-    
-    
-    for iPlan = 1:plannerClock.nT
-        
-        % predicted agent state by given planner's action:
-        % THE PLANNER ONLY MOVES ITS OWN AGENT ONLY
-        plannerAgent(planner.id).s = UpdateAgentState(plannerAgent(planner.id).s,planner.actionSet(iPlan,iAction),plannerClock.dt);
-        
-        % predicted target state by state update to take virtual measurement
-        plannerTarget(iTarget).x = UpdateTargetState(plannerTarget(iTarget).x,planner.param,plannerClock.dt);
-        
-        % take measurement prediction
-        for iAgent = 1: nAgent
-            planner.y(:,iAgent) = TakeMeasurement(xhat,plannerAgent(iAgent).s,planner.param.sensor,flagSensor);
-            
-            % take communication delivery sampled by Pco(z|y)
-            % BEWARE OF BINARY REPRESENTATION: 0-null | 1-y
-            beta(iAgent) = ComputeCommProb(plannerAgent(id).s,plannerAgent(iAgent).s);
-            planner.z(iAgent) = binornd(1,beta(iAgent));
-        end
-        
-        
-        % state update
-        xhat = F*xhat;
-        Phat = F*Phat*F' + Q;
-        
-        % plotting distribution: before taking measurement prediction
-        if bPdfDisp.before == 1
-            figure(iClock+10+iMeas+iTarget),subplot(planner.param.plot.row,planner.param.plot.col,2*(iPlan-1)+1),
-            PlotGaussianEllipsoid(xhat,Phat);
-            axis([plannerField.boundary]);
-        end
-        
-        % compute entropy before taking measurement
-        Hbefore(iPlan,iTarget) = nState/2 + nState/2*log(2*pi) + 1/2*log(det(Phat));
-        
-        % measurement update
-        for iAgent = 1:nAgent
-            
-            % agent itself does not consider the communication condition for its
-            % own measurement update
-            if iAgent == id
-                K = Phat*H'*(R+H*Phat*H')^(-1);
-                xhat = xhat + K*(planner.y(:,iAgent) - H*xhat);
-                Phat = (eye(nState)-K*H)*Phat*(eye(nState)-K*H)' + K*R*K';
-            else
-                % when the planner consider communication, it depends on given
-                % communication output
-                if planner.z(iAgent) == 1
-                    K = Phat*H'*(R+H*Phat*H')^(-1);
-                    xhat = xhat + K*(planner.y(:,iAgent) - H*xhat);
-                    Phat = (eye(nState)-K*H)*Phat*(eye(nState)-K*H)' + K*R*K';
-                end
-            end
-        end
-        
-        % plotting distribution: after
-        if bPdfDisp.after == 1
-            figure(iClock+10+iMeas+iTarget),subplot(planner.param.plot.row,planner.param.plot.col,2*iPlan),
-            PlotGaussianEllipsoid(xhat,Phat);
-            axis([plannerField.boundary]);
-        end
-        
-        % compute entropy after taking measurement
-        Hafter(iPlan,iTarget) = nState/2 + nState/2*log(2*pi) + 1/2*log(det(Phat));
-        % Hafter = 1/2*log((2*pi*exp(1))^nState*det(Phat));
-        
-    end
-    
-end
-
-end

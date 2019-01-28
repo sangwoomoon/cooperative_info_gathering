@@ -10,14 +10,15 @@ switch option
         switch flagSensor
             case 'PosLinear'
                 pdf = LinearSensorProb(meas,paramPdf.refPt,paramSensor);
-                pdfSizeTemp = size(paramPdf.refPt);
-                pdfSize = [1 pdfSizeTemp(2:end)];
-                pdf = reshape(pdf,pdfSize);
             case 'range_bear'
-                
+                pdf = RangeBearProb(meas,paramAgent,paramPdf.refPt,paramSensor);
             case 'detection'
                 pdf = BinarySensorProb(meas,paramAgent,paramPdf.refPt,paramSensor);
         end
+        
+        pdfSizeTemp = size(paramPdf.refPt);
+        pdfSize = [1 pdfSizeTemp(2:end)];
+        pdf = reshape(pdf,pdfSize);
         
     case 'cylinder'
         
@@ -36,7 +37,7 @@ switch option
             case 'PosLinear'
                 pdf = LinearSensorProb(meas,pt,paramSensor);
             case 'range_bear'
-                
+                pdf = RangeBearProb(meas,paramAgent,paramPdf.refPt,paramSensor);                
             case 'detection'
                 pdf = BinarySensorProb(meas,paramAgent,pt,paramSensor);
         end

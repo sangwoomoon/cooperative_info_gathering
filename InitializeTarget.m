@@ -1,7 +1,9 @@
 function target = InitializeTarget(ID, sim)
 
 flagPlot = sim.flagPlot;
-targetID = sim.plot.targetID;
+if flagPlot
+    targetID = sim.plot.targetID;
+end
 field = sim.field;
 property = sim.flagTarget;
 

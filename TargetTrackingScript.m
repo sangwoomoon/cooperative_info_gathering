@@ -86,8 +86,9 @@ for iSim = 1:nSim
     % sensor structure
     for iAgent = 1:sim(iSim).nAgent
         for iTarget = 1:sim(iSim).nTarget
-            sim(iSim).sensor(iAgent,iTarget) = InitializeSensor(sim(iSim),iAgent,iTarget,   40,    0.9,  sim(iSim).agent(iAgent), sim(iSim).target(iTarget), diag([20^2,20^2,20^2]'));
-                                                                                          % range | beta |                                                           R
+            sim(iSim).sensor(iAgent,iTarget) = ...
+                InitializeSensor(sim(iSim),iAgent,iTarget,   40,    0.9,  sim(iSim).agent(iAgent), sim(iSim).target(iTarget), diag([20^2,20^2,20^2]'), diag([5^2,(pi/18)^2]') );
+                                                          % range | beta |                                                           R              |       R_rangebear
         end  
     end
     %----------------------
@@ -186,11 +187,13 @@ for iSim = 1:nSim
                             %---------------------------------------------------------------------------------------------------------
                             % Mutual Information computation:
                             %
-                            % four approaches are implemented
+                            % FIVE APPROACHES are implemented
+                            %
                             % 1. particle method considers all measurement/communication awareness possibilities.
                             % 2. particle method of which communication is sampled by Pco(Z|Y): motivated by Ryan's approach
-                            % 3. Gaussian approximation with modified covariance approach: Maicej's approach
-                            % 4. Gaussian with all measurement/communication possibilities: exact when the model is Linear/Gaussian
+                            % 3. Gaussian approximation of which communication is sampled by Pco(Z|Y): motivated by Ryan's approach
+                            % 4. Gaussian approximation with modified covariance approach: Maicej's approach
+                            % 5. Gaussian with all measurement/communication possibilities: exact when the model is Linear/Gaussian
                             %
                             [sim(iSim).planner(iAgent).candidate.Hbefore(:,iAction),sim(iSim).planner(iAgent).candidate.Hafter(:,iAction),sim(iSim).planner(iAgent).candidate.I(iAction),...
                                 sim(iSim).planner(iAgent).candidate.HbeforeRef(:,iAction),sim(iSim).planner(iAgent).candidate.HafterRef(:,iAction),sim(iSim).planner(iAgent).candidate.IRef(iAction)] = ...

@@ -20,14 +20,14 @@ planner.param.clock.nT = nT; % planning horizon
 %         planner(iPlanner).param.sA = 3; % sampled action
 
 % action profile setting
-[planner.action,planner.actionNum,planner.actionSetNum,planner.actionSet] = GenerateOutcomeProfile(20*D2R,planner.param.clock.nT);
+[planner.action,planner.actionNum,planner.actionSetNum,planner.actionSet] = GenerateOutcomeProfile(0*D2R,planner.param.clock.nT);
 
 % measurement profile setting
 switch flagSensor
     case 'PosLinear'
         [planner.meas,planner.measNum,planner.measSetNum,planner.measSet] = GenerateOutcomeProfile(1,planner.param.clock.nT);
     case 'range_bear'
-        
+        [planner.meas,planner.measNum,planner.measSetNum,planner.measSet] = GenerateOutcomeProfile(1,planner.param.clock.nT);        
     case 'detection'
         [planner.meas,planner.measNum,planner.measSetNum,planner.measSet] = GenerateOutcomeProfile([0 1],planner.param.clock.nT);        
 end
@@ -121,7 +121,7 @@ switch flagSensor
         planner.param.sensor.H = sensor(iAgent,iTarget).param.H;
         % 
     case 'range_bear'
-        
+        planner.param.sensor.R = sensor(iAgent,iTarget).param.R;
     case 'detection'        
         planner.param.sensor.regionRadius = sensor(iAgent,iTarget).param.regionRadius;
         planner.param.sensor.detectBeta = sensor(iAgent,iTarget).param.detectBeta;

@@ -8,6 +8,7 @@ flagSensor = sim.flagSensor;
 
 nTarget = sim.nTarget;
 
+agent = sim.agent(iAgent);
 target = sim.target(iTarget);
 field = sim.field;
 sensor = sim.sensor(iAgent,iTarget);
@@ -16,12 +17,12 @@ dimension = length(target.x);
 switch flagFilter
     case 'KF'
         
-        filter.param.F = target.param.F;
-        filter.param.R = sensor.param.R;
-        filter.param.H = sensor.param.H;
-        
         filter.xhat = xhat;
         filter.nState = length(xhat);
+        
+        filter.param.F = ComputeStateTransitionMatrix(xhat,sim.flagTarget);
+        filter.param.H = ComputeMeasurementMatrix(xhat,agent.s,flagSensor);
+        filter.param.R = sensor.param.R;
         
         switch dimension
             case 2 % 2D
@@ -92,6 +93,57 @@ switch flagFilter
         end
         
     case 'EKF'
+        
+        filter.xhat = xhat;
+        filter.nState = length(xhat);
+        
+        filter.param.F = ComputeStateTransitionMatrix(xhat,sim.flagTarget);
+        filter.param.H = ComputeMeasurementMatrix(xhat,agent.s,flagSensor);
+        filter.param.R = sensor.param.R;
+        
+        % assume the filter is under 2D space
+        filter.param.Q = Q(1:2,1:2);
+        filter.Phat = Phat(1:2,1:2);
+        
+        % filter display
+        if flagPlot
+            
+            % plotting parameter setting
+            if nTarget == 1
+                filter.plot.location.col = 1;
+            else
+                filter.plot.location.col = 2;
+            end
+            filter.plot.location.row = ceil(sim.nTarget/filter.plot.location.col);
+            filter.plot.location.num = iTarget;
+            
+            % ellipsoid plot setting
+            % AGENT 1 ONLY VISUALIZES PARTICLE BECAUSE OF HUGE PLOTTING
+            % SPACE!
+            if iAgent == 1
+                figure(1+iAgent)
+                subplot(filter.plot.location.col,...
+                    filter.plot.location.row,...
+                    filter.plot.location.num),
+                
+                % assume the filter is under 2D space
+                set(gca,'xlim',[field.boundary(1),field.boundary(2)],...
+                    'ylim',[field.boundary(3),field.boundary(4)])
+                xlabel('East [m]'); ylabel('North [m]'); axis equal; hold on;
+                
+                % actual target plot setting for comparison
+                filter.plot.targetPos = ...
+                    plot(target.x(1),target.x(2),...
+                    target.plot.marker,'LineWidth',2,'color',target.plot.clr);
+                filter.plot.targetId = ...
+                    text(target.x(1),target.x(2),...
+                    sim.plot.targetID(iTarget));
+                
+                % ellipsoid plot
+                filter.plot.ellipsoid = PlotGaussianEllipsoid(filter.xhat', filter.Phat);
+                
+            end
+        end
         
     case 'UKF'
         

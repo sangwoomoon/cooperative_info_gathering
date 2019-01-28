@@ -6,43 +6,62 @@
 %
 %--------------------------------------------------------------------------------
 
-function [likelihoodPdf,measUpdatePdf] = ...
+function [commProb,measUpdatePdf] = ...
     ComputeCommAwareMeasUpdatePDF(targetUpdatePdf,pt,plannerAgent,param,meas,commStatus,id,flagComm,flagSensor,flagPdfCompute)
 
 nAgent = length(plannerAgent);
 
 % probability of communication-aware measurement correction P(z_k|X_k):
 
-% 0-1. PDF initialization
+% PDF initialization
 measUpdatePdf = targetUpdatePdf;
 
-for iAgent = 1:nAgent
+% beta initialization
+commProb = ones(1,nAgent);
+
+% measurement update starts from agent 2 since agent 1 just receives
+% information from other agents
+for iAgent = 2:nAgent
     
-    % take likelihood PDF
-    likelihoodPdf = ComputeLikelihoodPDF(meas(:,iAgent),pt,plannerAgent(iAgent),param.sensor,param.pdf,flagSensor,flagPdfCompute);
-    
-    % consider communication awareness
+    % considering communication-aware events
     if flagComm
-        % own agent automatically takes measurement update regardless
-        % of the communication
-        if iAgent == id
-            % P(z_t|x_t) = P_co(z_t|y_t)P_se(y_t|x_t)
-            measUpdatePdf = measUpdatePdf.*likelihoodPdf;
-        else
-            beta = ComputeCommProb(plannerAgent(id).s,plannerAgent(iAgent).s);
-            
-            if commStatus(iAgent) % when connected
-                measUpdatePdf = measUpdatePdf.*beta.*likelihoodPdf;
-            else % when disconnected
-                measUpdatePdf = measUpdatePdf.*(1-beta);
-            end
+        
+        beta = ComputeCommProb(plannerAgent(id).s,plannerAgent(iAgent).s);
+        
+        if commStatus(iAgent) % when connected
+            commProb(iAgent) = beta;
+            likelihoodPdf = ComputeLikelihoodPDF(meas(:,iAgent),pt,plannerAgent(iAgent),param.sensor,param.pdf,flagSensor,flagPdfCompute);
+            measUpdatePdf = measUpdatePdf.*commProb(iAgent).*likelihoodPdf;
+        else % when disconnected
+            commProb(iAgent) = 1 - beta;
+            measUpdatePdf = measUpdatePdf.*commProb(iAgent);
         end
+        
+    % when the communication is separatively considered from the measurements
+    % : output is real commProb with H(X|Y).
+    elseif flagComm == 2
+        
+        beta = ComputeCommProb(plannerAgent(id).s,plannerAgent(iAgent).s);
+
+        if commStatus(iAgent) % when connected
+            commProb(iAgent) = beta;            
+        else
+            commProb(iAgent) = 1 - beta;            
+        end
+        
+        % take measurement update regardless of the communication status
+        likelihoodPdf = ComputeLikelihoodPDF(meas(:,iAgent),pt,plannerAgent(iAgent),param.sensor,param.pdf,flagSensor,flagPdfCompute);
+        measUpdatePdf = measUpdatePdf.*likelihoodPdf;        
         
     % under perfect communication
     else
-        % P(z_t|x_t) = P_co(z_t|y_t)P_se(y_t|x_t)
+        
+        commProb(iAgent) = 1;
+        likelihoodPdf = ComputeLikelihoodPDF(meas(:,iAgent),pt,plannerAgent(iAgent),param.sensor,param.pdf,flagSensor,flagPdfCompute);
         measUpdatePdf = measUpdatePdf.*likelihoodPdf;
+        
     end
+
     
 end
 
