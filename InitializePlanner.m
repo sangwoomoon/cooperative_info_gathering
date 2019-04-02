@@ -1,4 +1,4 @@
-function planner = InitializePlanner(iAgent,sim, dt, nT, nPt )
+function planner = InitializePlanner(iAgent,sim, dt, nT, nPt, dRefPt )
 
 D2R = pi/180;
 
@@ -102,7 +102,7 @@ planner.hist.HbeforeRef = nan(planner.param.clock.nT,1);
 planner.hist.HafterRef = nan(planner.param.clock.nT,1);
 
 % pdf parameter initialization
-planner.param.pdf.dRefPt = 10;
+planner.param.pdf.dRefPt = dRefPt;
 [planner.param.pdf.refPt(1,:,:), planner.param.pdf.refPt(2,:,:)] = ...
     meshgrid(field.boundary(1):planner.param.pdf.dRefPt:field.boundary(2),...
     field.boundary(3):planner.param.pdf.dRefPt:field.boundary(4));

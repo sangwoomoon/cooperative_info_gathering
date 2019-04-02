@@ -26,10 +26,12 @@ clear;
 format compact;
 hold on;
 
-nSim = 1; % for Monte-Carlo approach with fixed independent condition
+nSim = 100; % for Monte-Carlo approach with fixed independent condition
 nPt = [100 500 1000 2000];
-dist = [0 200 400 600];
-nT = [1 2 3 4 5];
+dist = [200 400 600];
+nT = [1 3 5 10];
+nA = [2 3 5 10];
+dRefPt = [1 5 10 25 50];
 
 flagCondition  = 'nT';
 
@@ -41,6 +43,10 @@ switch flagCondition
         mSim = length(nT);
     case 'dist'
         mSim = length(dist);
+    case 'nA'
+        mSim = length(nA);
+    case 'dRefPt'
+        mSim = length(dRefPt);
     otherwise
         mSim = 1;
 end
@@ -55,12 +61,12 @@ for jSim = 1:mSim
         %   sim setting
         %-------------------------------
         
-        rng(RandSeed);
+        % rng(RandSeed);
         
         %----------------------
         % simulation structure
         % in order to allocate as the array of simulation
-        sim(jSim,iSim) = InitializeSim(   2,       1,     'MI',       1,       'uniform',        0,         0,     'Pos',  'unicycle', 'PosLinear',   'KF'    );
+        sim(jSim,iSim) = InitializeSim(   2,       1,     'MI',       0,       'uniform',        0,         0,     'Pos',  'unicycle', 'range_bear',   'KF'    );
                                      % nAgent | nTarget | flagDM | flagComm | flagPdfCompute | flagLog | flagPlot | target |  agent     | sensor   | filter
         
         % flagDM         ||   'random': random decision | 'MI': mutual information-based decision | 'mean': particle mean following
@@ -84,10 +90,13 @@ for jSim = 1:mSim
             fprintf('\njSim = %d, distance = %d\n',jSim,dist(jSim));
         case 'nT'
             % with respect to nT
-            fprintf('\njSim = %d, nPt = %d\n',jSim,nT(jSim));
+            fprintf('\njSim = %d, nT = %d\n',jSim,nT(jSim));
         case 'nPt'
             % with respect to nPt
             fprintf('\njSim = %d, nPt = %d\n',jSim,nPt(jSim));
+        case 'dRefPt'
+            % with respect to nDpdf
+            fprintf('\njSim = %d, dRefPt = %d\n',jSim,dRefPt(jSim));
     end
     
     for iSim = 1:nSim
@@ -116,7 +125,12 @@ for jSim = 1:mSim
         
         % parameters fleet of agent for initial positioning
         for iAgent = 1:sim(jSim,iSim).nAgent
-            sim(jSim,iSim).agent(iAgent) = InitializeAgent(iAgent, sim(jSim,iSim), 10);
+            switch flagCondition
+                case 'dist'
+                    sim(jSim,iSim).agent(iAgent) = InitializeAgent(iAgent, sim(jSim,iSim), 0, dist(jSim));
+                otherwise
+                    sim(jSim,iSim).agent(iAgent) = InitializeAgent(iAgent, sim(jSim,iSim), 0, 0);                    
+            end
         end
         %----------------------
         
@@ -164,16 +178,19 @@ for jSim = 1:mSim
             
             switch flagCondition
                 case 'nPt'
-                    sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 3,  nT(3),  nPt(jSim) );
-                                                                                            % dt | nT |     nPt
+                    sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 3,  nT(3),  nPt(jSim), dRefPt(3) );
+                                                                                            % dt | nT |     nPt    | dRefPt
+                case 'dRefPt'
+                    sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 3,  nT(3),  nPt(1),    dRefPt(jSim) );
+                                                                                            % dt | nT |     nPt    | dRefPt
                 otherwise
                     switch flagCondition
                         case 'nT'
-                            sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 3,  nT(jSim),  nPt(1) );
-                                                                                                   % dt |     nT   | nPt
+                            sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 3,  nT(jSim),  nPt(1), dRefPt(3) );
+                                                                                                   % dt |     nT   | nPt   | dRefPt
                         otherwise
-                            sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 3,  nT(3),  nPt(1) );
-                                                                                                   % dt |   nT |    nPt
+                            sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 3,  nT(3),  nPt(1), dRefPt(3) );
+                                                                                                   % dt |   nT |    nPt | dRefPt
                     end
             end
         end
@@ -226,7 +243,7 @@ for jSim = 1:mSim
                 
                 % plot the information profile when the simulation does not
                 % take Monte-Carlo process
-                if nSim == 1
+                if nSim == 1 && iAgent == 1
                     PlotInformation(sim(jSim,iSim).planner(iAgent),sim(jSim,iSim).flagSensor,sim(jSim,iSim).flagComm,jSim);
                 end
                 

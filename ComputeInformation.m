@@ -89,7 +89,7 @@ for iMeas = 1:nMeasSet
     for iComm = 1:nCommSet
         
         [HbeforeElement,HafterElement,commProb] = ...
-            ComputeInformationByLinearGaussianCommAware(iMeas,iComm,iClock,iAction,planner,bPdfDisp,flagSensor,flagComm);
+            ComputeInformationByGaussianCommAware(iMeas,iComm,iClock,iAction,planner,bPdfDisp,flagSensor,flagComm);
         
         % entropy and mutual information under Gaussian Assumption
         gaussAll.Hbefore = gaussAll.Hbefore + prod(commProb)*sum(HbeforeElement,2);
@@ -110,7 +110,7 @@ if flagComm == 1
     % APPROACH #1: Sangwoo PM by computing MI = ?[?*I(X;Y)]
     %
     % compute information under the all possibilities: particle-method that
-    % considers measurement and communication separatively
+    % considers measurement and communication separately
     % MI = ?[P(MI_i(X;Y))*MI_i(X;Y)] : weighted sum of elements of MI with respect to probability of the element of communication tree
     for iMeas = 1:nMeasSet
         
@@ -142,7 +142,7 @@ if flagComm == 1
     %  Information-Gathering Experiments with an Unmanned Aircraft System"
     %  to compute communication-aware Entropy
     [gaussRtilde.Hbefore,gaussRtilde.Hafter] = ...
-        ComputeInformationByLinearGaussianSensorCovMatrixApproximation(iClock,iAction,planner,flagSensor,flagComm,bPdfDisp);
+        ComputeInformationByCovMatrixApproximation(iClock,iAction,planner,flagSensor,flagComm,bPdfDisp);
     
     gaussRtilde.Hbefore = sum(gaussRtilde.Hbefore,2);
     gaussRtilde.Hafter = sum(gaussRtilde.Hafter,2);
@@ -650,7 +650,7 @@ end
 
 % Maicej's approach: modify measurement covariance matrix by beta
 function [Hbefore,Hafter] = ...
-    ComputeInformationByLinearGaussianSensorCovMatrixApproximation(iClock,iAction,planner,flagSensor,flagComm,bPdfDisp)
+    ComputeInformationByCovMatrixApproximation(iClock,iAction,planner,flagSensor,flagComm,bPdfDisp)
 
 plannerClock = planner.param.clock;
 
@@ -756,7 +756,7 @@ end
 % exact approach: consider all posssible events for communication-awareness
 % under linear-Gaussian distribution
 function [Hbefore,Hafter,commProb] = ...
-    ComputeInformationByLinearGaussianCommAware(iMeas,iComm,iClock,iAction,planner,bPdfDisp,flagSensor,flagComm)
+    ComputeInformationByGaussianCommAware(iMeas,iComm,iClock,iAction,planner,bPdfDisp,flagSensor,flagComm)
 
 plannerClock = planner.param.clock;
 
