@@ -157,8 +157,23 @@ if flagComm == 1
     %
     % Refer "A. Ryan & J. Hedrick, Particle filter based information-theoretic
     % active sensing"
-    [pmSample.Hbefore,pmSample.Hafter] = ...
-        ComputeInformationByParticleMethodSampledCommOutput(iMeas,iClock,iAction,planner,flagSensor,flagComm,flagPdfCompute,bPdfDisp);
+    
+    % initialization
+    pmSample.Hbefore = 0;
+    pmSample.Hafter = 0;
+    nSample = 100; % 100 MC-based sampled approach
+    
+    % take nSample smpling procedure 
+    for iSample = 1 : nSample
+        [Hbefore,Hafter] = ...
+            ComputeInformationByParticleMethodSampledCommOutput(iMeas,iClock,iAction,planner,flagSensor,flagComm,flagPdfCompute,bPdfDisp);
+        pmSample.Hbefore = pmSample.Hbefore + Hbefore;
+        pmSample.Hafter = pmSample.Hafter + Hafter;
+    end
+    
+    % take average procedure wrt nSample
+    pmSample.Hbefore = pmSample.Hbefore/nSample;
+    pmSample.Hafter = pmSample.Hafter/nSample;
     
     pmSample.Hbefore = sum(pmSample.Hbefore,2);
     pmSample.Hafter = sum(pmSample.Hafter,2);
@@ -282,11 +297,7 @@ for iPlan = 1:plannerClock.nT
         % take communication delivery from communication set
         % BEWARE OF BINARY REPRESENTATION: 0-null | 1-y
         for iAgent = 1:nAgent
-            if iAgent == planner.id
-                planner.z(iAgent) = 1;
-            else
-                planner.z(iAgent) = planner.commSet(iPlan,iComm);
-            end
+            planner.z(iAgent) = planner.commSet(nAgent*(iPlan-1)+iAgent,iComm);
         end
         
         % take measurement from measurement set
@@ -424,11 +435,7 @@ for iPlan = 1:plannerClock.nT
         
         % allocate communication probability
         for iAgent = 1:nAgent
-            if iAgent == planner.id
-                planner.z(iAgent) = 1;
-            else
-                planner.z(iAgent) = planner.commSet(iPlan,iComm);
-            end
+            planner.z(iAgent) = planner.commSet(nAgent*(iPlan-1)+iAgent,iComm);
         end
         
         % take measurement from measurement set
@@ -812,16 +819,23 @@ for iTarget = 1:nTarget
         Hbefore(iPlan,iTarget) = nState/2 + nState/2*log(2*pi) + 1/2*log(det(Phat));
         
         % AGENT 1 JUST USES THE INFORMATION FROM OTHER AGENTS!
+        
+        % trivial case (ad-hoc implementation): set communication probability of
+        % its ownship communication situation. This is because of the simulation situation that the agent 1 does not
+        % take measurement itself.
+        planner.z(1) = planner.commSet(nAgent*(iPlan-1)+1,iComm);
+        if planner.z(1) == 1
+            commProbSinglePlan(1) = 1;
+        else
+            commProbSinglePlan(1) = 0;
+        end
+        
         for iAgent = 2: nAgent
             
             % take communication delivery from communication set
             % BEWARE OF BINARY REPRESENTATION: 0-null | 1-y
             if flagComm
-                if iAgent == planner.id
-                    planner.z(iAgent) = 1;
-                else
-                    planner.z(iAgent) = planner.commSet(iPlan,iComm);
-                end
+                planner.z(iAgent) = planner.commSet(nAgent*(iPlan-1)+iAgent,iComm);
                 
                 % take measurement/communication prediction if connected
                 if planner.z(iAgent)

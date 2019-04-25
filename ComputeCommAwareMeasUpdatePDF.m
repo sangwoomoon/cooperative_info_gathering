@@ -21,6 +21,16 @@ commProb = ones(1,nAgent);
 
 % measurement update starts from agent 2 since agent 1 just receives
 % information from other agents
+
+% trivial case (ad-hoc implementation): set communication probability of
+% its ownship communication situation. This is because of the simulation situation that the agent 1 does not
+% take measurement itself.
+if commStatus(1) == 1
+    commProb(1) = 1;
+else
+    commProb(1) = 0;
+end
+
 for iAgent = 2:nAgent
     
     % considering communication-aware events

@@ -33,10 +33,15 @@ switch flagSensor
 end
 
 % communication profile setting
+
+% commSet structure
+% row: firstly take sub-group of which # of row is nAgent -> take
+% element that represents specific condition wrt receding time and
+% agent
 if flagComm
-    [planner.comm,planner.commNum,planner.commSetNum,planner.commSet] = GenerateOutcomeProfile([0 1],planner.param.clock.nT);
+    [planner.comm,planner.commNum,planner.commSetNum,planner.commSet] = GenerateOutcomeProfile([0 1],planner.param.clock.nT*nAgent);
 else
-    [planner.comm,planner.commNum,planner.commSetNum,planner.commSet] = GenerateOutcomeProfile(1,planner.param.clock.nT);
+    [planner.comm,planner.commNum,planner.commSetNum,planner.commSet] = GenerateOutcomeProfile(1,planner.param.clock.nT*nAgent);
 end
 
 
