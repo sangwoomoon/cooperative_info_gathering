@@ -10,6 +10,9 @@ if sim(1,1).flagComm
     pmSeparateCost = nan(mSim,nSim);
     gaussRtildeCost = nan(mSim,nSim);
     gaussAllCost = nan(mSim,nSim);
+    
+    pmAllTime = nan(mSim,nSim);
+    pmSampleTime = nan(mSim,nSim);
 end
 
 
@@ -27,12 +30,12 @@ switch sim(1,1).flagSensor
         % retrieve necessary data and plot results
         for jSim = 1:mSim
             for iSim = 1:nSim
-                pmAllCost(jSim,iSim) = sim(jSim,iSim).planner(1).pmAll.I(end);
-                gaussAllCost(jSim,iSim) = sim(jSim,iSim).planner(1).gaussAll.I(end);
+                pmAllCost(jSim,iSim) = sum(sim(jSim,iSim).planner(1).pmAll.I);
+                gaussAllCost(jSim,iSim) = sum(sim(jSim,iSim).planner(1).gaussAll.I);
                 if sim(jSim,iSim).flagComm
-                    pmSeparateCost(jSim,iSim) = sim(jSim,iSim).planner(1).pmSeparate.I(end);
-                    gaussRtildeCost(jSim,iSim) = sim(jSim,iSim).planner(1).gaussRtilde.I(end);
-                    pmSampleCost(jSim,iSim) = sim(jSim,iSim).planner(1).pmSample.I(end);
+                    pmSeparateCost(jSim,iSim) = sum(sim(jSim,iSim).planner(1).pmSeparate.I);
+                    gaussRtildeCost(jSim,iSim) = sum(sim(jSim,iSim).planner(1).gaussRtilde.I);
+                    pmSampleCost(jSim,iSim) = sum(sim(jSim,iSim).planner(1).pmSample.I);
                 end
             end
             
@@ -210,5 +213,27 @@ switch sim(1,1).flagSensor
         end
         
 end
+
+% compute average computation time and display in command window
+
+for jSim = 1:mSim
+    for iSim = 1:nSim
+        pmAllTime(jSim,iSim) = sim(jSim,iSim).planner(1).pmAll.time;
+        if sim(jSim,iSim).flagComm
+            pmSampleTime(jSim,iSim) = sim(jSim,iSim).planner(1).pmSample.time;
+        end
+    end
+    
+    pmAllTimeAvg = mean(pmAllTime,2);
+    if sim(jSim,iSim).flagComm
+        pmSampleTimeAvg = mean(pmSampleTime,2);
+        fprintf('%s = %d\t Exact: %3.3f\t Sampled: %3.3f\n', flagCondition, subLabel(jSim), pmAllTimeAvg(jSim), pmSampleTimeAvg(jSim));
+    else
+        fprintf('%s = %d\t Exact: %3.3f\n', flagCondition, subLabel(jSim), pmAllTimeAvg(jSim));
+    end
+end
+    
+
+
 
 end

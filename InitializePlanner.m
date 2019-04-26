@@ -39,9 +39,9 @@ end
 % element that represents specific condition wrt receding time and
 % agent
 if flagComm
-    [planner.comm,planner.commNum,planner.commSetNum,planner.commSet] = GenerateOutcomeProfile([0 1],planner.param.clock.nT*nAgent);
+    [planner.comm,planner.commNum,planner.commSetNum,planner.commSet] = GenerateOutcomeProfile([0 1],planner.param.clock.nT*(nAgent-1));
 else
-    [planner.comm,planner.commNum,planner.commSetNum,planner.commSet] = GenerateOutcomeProfile(1,planner.param.clock.nT*nAgent);
+    [planner.comm,planner.commNum,planner.commSetNum,planner.commSet] = GenerateOutcomeProfile(1,planner.param.clock.nT*(nAgent-1));
 end
 
 

@@ -61,6 +61,9 @@ end
 %
 % compute information under the all possibilities: particle-method
 % MI = ?[P(MI_i)*MI_i] : weighted sum of elements of MI with respect to probability of the element of communication tree
+
+tic;
+
 for iMeas = 1:nMeasSet
     
     for iComm = 1:nCommSet
@@ -76,6 +79,8 @@ for iMeas = 1:nMeasSet
     end
      
 end
+
+pmAll.time = toc;
 %---------------------------------------------------------------------
 
 
@@ -158,10 +163,12 @@ if flagComm == 1
     % Refer "A. Ryan & J. Hedrick, Particle filter based information-theoretic
     % active sensing"
     
+    tic;
+    
     % initialization
     pmSample.Hbefore = 0;
     pmSample.Hafter = 0;
-    nSample = 100; % 100 MC-based sampled approach
+    nSample = 10; % MC-based sampled approach
     
     % take nSample smpling procedure 
     for iSample = 1 : nSample
@@ -177,6 +184,8 @@ if flagComm == 1
     
     pmSample.Hbefore = sum(pmSample.Hbefore,2);
     pmSample.Hafter = sum(pmSample.Hafter,2);
+    
+    pmSample.time = toc;
     %---------------------------------------------------------------------
 
     
@@ -269,18 +278,17 @@ commProb = ones(1,nAgent);
 
 for iPlan = 1:plannerClock.nT
     
+    % predicted agent state by given planner's action:
+    % THE PLANNER ONLY MOVES ITS OWN AGENT ONLY
+    plannerAgent(planner.id).s = UpdateAgentState(plannerAgent(planner.id).s,planner.actionSet(iPlan,iAction),plannerClock.dt);
+    
     for iTarget = 1:nTarget
         
         % initialize measurement set as null group
         planner.y = nan(length(plannerSensor.R(:,1)),nAgent);
         
-        % predicted agent state by given planner's action:
-        % THE PLANNER ONLY MOVES ITS OWN AGENT ONLY
-        plannerAgent(planner.id).s = UpdateAgentState(plannerAgent(planner.id).s,planner.actionSet(iPlan,iAction),plannerClock.dt);
-        
         % predicted target state by state update to take virtual measurement
         plannerTarget(iTarget).x = UpdateTargetState(plannerTarget(iTarget).x,planner.param,plannerClock.dt);
-        
         
         % Sum of prob. target evolution P(X_k|Z_{k-1})
         % in order to improve the computation for computing entropy from
@@ -296,8 +304,14 @@ for iPlan = 1:plannerClock.nT
         
         % take communication delivery from communication set
         % BEWARE OF BINARY REPRESENTATION: 0-null | 1-y
+        ptAgent = 1;
         for iAgent = 1:nAgent
-            planner.z(iAgent) = planner.commSet(nAgent*(iPlan-1)+iAgent,iComm);
+            if iAgent == planner.id
+                planner.z(iAgent) = 1;
+            else
+                planner.z(iAgent) = planner.commSet((nAgent-1)*(iPlan-1)+ptAgent,iComm);
+                ptAgent = ptAgent + 1;
+            end
         end
         
         % take measurement from measurement set
@@ -408,14 +422,14 @@ commProb = ones(1,nAgent);
 
 for iPlan = 1:plannerClock.nT
     
+    % predicted agent state by given planner's action:
+    % THE PLANNER ONLY MOVES ITS OWN AGENT ONLY
+    plannerAgent(planner.id).s = UpdateAgentState(plannerAgent(planner.id).s,planner.actionSet(iPlan,iAction),plannerClock.dt);
+    
     for iTarget = 1:nTarget
         
         % initialize measurement set as null group
         planner.y = nan(length(plannerSensor.R(:,1)),nAgent);
-        
-        % predicted agent state by given planner's action:
-        % THE PLANNER ONLY MOVES ITS OWN AGENT ONLY
-        plannerAgent(planner.id).s = UpdateAgentState(plannerAgent(planner.id).s,planner.actionSet(iPlan,iAction),plannerClock.dt);
         
         % predicted target state by state update to take virtual measurement
         plannerTarget(iTarget).x = UpdateTargetState(plannerTarget(iTarget).x,planner.param,plannerClock.dt);
@@ -434,8 +448,14 @@ for iPlan = 1:plannerClock.nT
         planner.PTset(iTarget).pt = UpdateParticle(planner.PTset(iTarget).pt,planner.param,plannerClock.dt);
         
         % allocate communication probability
+        ptAgent = 1;
         for iAgent = 1:nAgent
-            planner.z(iAgent) = planner.commSet(nAgent*(iPlan-1)+iAgent,iComm);
+            if iAgent == planner.id
+                planner.z(iAgent) = 1;
+            else
+                planner.z(iAgent) = planner.commSet((nAgent-1)*(iPlan-1)+ptAgent,iComm);
+                ptAgent = ptAgent + 1;
+            end
         end
         
         % take measurement from measurement set
@@ -543,14 +563,14 @@ beta = nan(1,nAgent);
 
 for iPlan = 1:plannerClock.nT
     
+    % predicted agent state by given planner's action:
+    % THE PLANNER ONLY MOVES ITS OWN AGENT ONLY
+    plannerAgent(planner.id).s = UpdateAgentState(plannerAgent(planner.id).s,planner.actionSet(iPlan,iAction),plannerClock.dt);
+    
     for iTarget = 1:nTarget
         
         % initialize measurement set as null group
         planner.y = nan(length(plannerSensor.R(:,1)),nAgent);
-        
-        % predicted agent state by given planner's action:
-        % THE PLANNER ONLY MOVES ITS OWN AGENT ONLY
-        plannerAgent(planner.id).s = UpdateAgentState(plannerAgent(planner.id).s,planner.actionSet(iPlan,iAction),plannerClock.dt);
         
         % predicted target state by state update to take virtual measurement
         plannerTarget(iTarget).x = UpdateTargetState(plannerTarget(iTarget).x,planner.param,plannerClock.dt);
@@ -823,19 +843,20 @@ for iTarget = 1:nTarget
         % trivial case (ad-hoc implementation): set communication probability of
         % its ownship communication situation. This is because of the simulation situation that the agent 1 does not
         % take measurement itself.
-        planner.z(1) = planner.commSet(nAgent*(iPlan-1)+1,iComm);
-        if planner.z(1) == 1
-            commProbSinglePlan(1) = 1;
-        else
-            commProbSinglePlan(1) = 0;
-        end
+        planner.z(planner.id) = 1;
+        commProbSinglePlan(planner.id) = planner.z(planner.id);
         
+        ptAgent = 1;
         for iAgent = 2: nAgent
             
             % take communication delivery from communication set
             % BEWARE OF BINARY REPRESENTATION: 0-null | 1-y
             if flagComm
-                planner.z(iAgent) = planner.commSet(nAgent*(iPlan-1)+iAgent,iComm);
+                
+                if iAgent ~= planner.id
+                    planner.z(iAgent) = planner.commSet((nAgent-1)*(iPlan-1)+ptAgent,iComm);
+                    ptAgent = ptAgent + 1;
+                end
                 
                 % take measurement/communication prediction if connected
                 if planner.z(iAgent)
