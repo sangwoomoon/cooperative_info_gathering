@@ -26,13 +26,13 @@ clear;
 format compact;
 hold on;
 
-nSim = 5; % for Monte-Carlo approach with fixed independent condition
+nSim = 20; % for Monte-Carlo approach with fixed independent condition
 nPt = [100 500 1000 2000];
 dist = [200 400 600];
-nT = [1 3 5];
+nT = [1];
 nA = [2 3 5 10];
 dRefPt = [1 5 10 25 50];
-nSample = [1 10 100];
+nSample = [1 100 500 1000];
 
 flagCondition  = 'nT';
 
@@ -69,7 +69,7 @@ for jSim = 1:mSim
         %----------------------
         % simulation structure
         % in order to allocate as the array of simulation
-        sim(jSim,iSim) = InitializeSim(   3,       1,     'MI',       1,       'uniform',        0,         0,     'Pos',  'unicycle', 'PosLinear',   'KF'    );
+        sim(jSim,iSim) = InitializeSim(   4,       2,     'MI',       1,       'uniform',        0,         0,     'Pos',  'unicycle', 'PosLinear',   'KF'    );
                                      % nAgent | nTarget | flagDM | flagComm | flagPdfCompute | flagLog | flagPlot | target |  agent     | sensor   | filter
         
         % flagDM         ||   'random': random decision | 'MI': mutual information-based decision | 'mean': particle mean following
@@ -100,6 +100,9 @@ for jSim = 1:mSim
         case 'dRefPt'
             % with respect to nDpdf
             fprintf('\njSim = %d, dRefPt = %d\n',jSim,dRefPt(jSim));
+        case 'nSample'
+            % with respect to nSample
+            fprintf('\njSim = %d, nSample = %d\n',jSim,nSample(jSim));
     end
     
     for iSim = 1:nSim
@@ -181,19 +184,22 @@ for jSim = 1:mSim
             
             switch flagCondition
                 case 'nPt'
-                    sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 3,  nT(3),  nPt(jSim), dRefPt(3) );
-                                                                                            % dt | nT |     nPt    | dRefPt
+                    sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 3,  nT(2),  nPt(jSim), dRefPt(4), 100 );
+                                                                                            % dt | nT |     nPt    | dRefPt   | nSample
                 case 'dRefPt'
-                    sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 3,  nT(3),  nPt(1),    dRefPt(jSim) );
-                                                                                            % dt | nT |     nPt    | dRefPt
+                    sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 3,  nT(2),  nPt(1),    dRefPt(jSim), 100 );
+                                                                                            % dt | nT |     nPt    | dRefPt      | nSample
+                case 'nSample'
+                    sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 3,  nT(2),  nPt(1),    dRefPt(4), nSample(jSim) );
+                                                                                            % dt | nT |     nPt    | dRefPt      | nSample              
                 otherwise
                     switch flagCondition
                         case 'nT'
-                            sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 3,  nT(jSim),  nPt(1), dRefPt(3) );
-                                                                                                   % dt |     nT   | nPt   | dRefPt
+                            sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 3,  nT(jSim),  nPt(1), dRefPt(4), 100 );
+                                                                                                   % dt |     nT   | nPt   | dRefPt   | nSample
                         otherwise
-                            sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 3,  nT(2),  nPt(1), dRefPt(3) );
-                                                                                                   % dt |   nT |    nPt | dRefPt
+                            sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 3,  nT(2),  nPt(1), dRefPt(4), 100 );
+                                                                                                   % dt |   nT |    nPt | dRefPt   | nSample
                     end
             end
         end
@@ -213,7 +219,7 @@ for jSim = 1:mSim
             % compute future information with respect to action profiles
             % distributed scheme to each agent:
             % COMPUTED INFORMATION IS DIFFERENT WITH RESPECT TO AGENT
-            for iAgent = 1:sim(jSim,iSim).nAgent
+            for iAgent = 1:1 % sim(jSim,iSim).nAgent
                 
                 iAction = 1; % this script does not consider action candidate: only one action profile
                 %---------------------------------------------------------------------------------------------------------

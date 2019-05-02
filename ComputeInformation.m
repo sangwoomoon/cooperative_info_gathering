@@ -168,7 +168,7 @@ if flagComm == 1
     % initialization
     pmSample.Hbefore = 0;
     pmSample.Hafter = 0;
-    nSample = 10; % MC-based sampled approach
+    nSample = planner.param.nSample; % MC-based sampled approach
     
     % take nSample smpling procedure 
     for iSample = 1 : nSample

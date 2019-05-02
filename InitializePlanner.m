@@ -1,4 +1,4 @@
-function planner = InitializePlanner(iAgent,sim, dt, nT, nPt, dRefPt )
+function planner = InitializePlanner(iAgent,sim, dt, nT, nPt, dRefPt, nSample )
 
 D2R = pi/180;
 
@@ -17,6 +17,7 @@ planner.id = iAgent;
 
 planner.param.clock.dt = dt; % planning time-step horizon
 planner.param.clock.nT = nT; % planning horizon
+planner.param.nSample = nSample; % sampled specific measurements set
 %         planner(iPlanner).param.sA = 3; % sampled action
 
 % action profile setting

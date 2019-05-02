@@ -58,6 +58,7 @@ switch sim(1,1).flagSensor
                     else
                         subTitleInfo(2) = sim(jSim,1).planner(1).param.pdf.dRefPt; % dRefPt
                     end
+                    subTitleInfo(3) = sim(jSim,1).planner(1).param.nSample; % nSample (\zeta)
                     label{jSim} = num2str(subLabel(jSim));
                 case 'nT'
                     subLabel(jSim) = sim(jSim,1).planner(1).param.clock.nT;
@@ -67,17 +68,30 @@ switch sim(1,1).flagSensor
                     else
                         subTitleInfo(2) = sim(jSim,1).planner(1).param.pdf.dRefPt; % dRefPt
                     end
+                    subTitleInfo(3) = sim(jSim,1).planner(1).param.nSample; % nSample (\zeta)
                     label{jSim} = num2str(subLabel(jSim));
                 case 'dRefPt'
                     subLabel(jSim) = sim(jSim,1).planner(1).param.pdf.dRefPt;
                     subTitleInfo(1) = sim(jSim,1).planner(1).param.clock.nT; % receding horizon
                     subTitleInfo(2) = sim(jSim,1).planner(1).PTset(1).nPt; % particle number
+                    subTitleInfo(3) = sim(jSim,1).planner(1).param.nSample; % nSample (\zeta)
                     label{jSim} = num2str(subLabel(jSim));
                 case 'dist'
                     subLabel(jSim) = ComputeCommProb(sim(jSim,1).agent(1).s,sim(jSim,1).agent(2).s);
                     subTitleInfo(1) = sim(jSim,1).planner(1).param.clock.nT; % receding horizon
                     subTitleInfo(2) = sim(jSim,1).planner(1).PTset(1).nPt; % particle number
+                    subTitleInfo(3) = sim(jSim,1).planner(1).param.nSample; % nSample (\zeta)
                     label{jSim} = num2str(subLabel(jSim),'%1.3f');
+                case 'nSample'
+                    subLabel(jSim) = sim(jSim,1).planner(1).param.nSample;
+                    subTitleInfo(1) = sim(jSim,1).planner(1).param.clock.nT; % receding horizon
+                    if sim(1,1).flagComm
+                        subTitleInfo(2) = ComputeCommProb(sim(jSim,1).agent(1).s,sim(jSim,1).agent(2).s); % beta
+                    else
+                        subTitleInfo(2) = sim(jSim,1).planner(1).param.pdf.dRefPt; % dRefPt
+                    end
+                    subTitleInfo(3) = sim(jSim,1).planner(1).PTset(1).nPt; % particle number
+                    label{jSim} = num2str(subLabel(jSim));
             end
         end
         
@@ -86,25 +100,32 @@ switch sim(1,1).flagSensor
         set(gca,'xticklabel',label)
         switch flagCondition
             case 'nPt'
-                xlabel('number of particles (N_p)');
+                xlabel('number of particles (n_p)');
                 if sim(1,1).flagComm
-                    title(['T=',num2str(subTitleInfo(1)),', \beta=',num2str(subTitleInfo(2))]);
+                    title(['T=',num2str(subTitleInfo(1)),', \beta=',num2str(subTitleInfo(2)), ', n_s=',num2str(subTitleInfo(3))]);
                 else
-                    title(['T=',num2str(subTitleInfo(1)),', \Deltax^q=',num2str(subTitleInfo(2))]);
+                    title(['T=',num2str(subTitleInfo(1)),', \Deltax^q=',num2str(subTitleInfo(2)), ', n_s=',num2str(subTitleInfo(3))]);
                 end
             case 'nT'
                 xlabel('number of receding horizon (T)');
                 if sim(1,1).flagComm
-                    title(['N_p=',num2str(subTitleInfo(1)),', \beta=',num2str(subTitleInfo(2))]);
+                    title(['n_p=',num2str(subTitleInfo(1)),', \beta=',num2str(subTitleInfo(2)), ', n_s=',num2str(subTitleInfo(3))]);
                 else
-                    title(['N_p=',num2str(subTitleInfo(1)),', \Deltax^q=',num2str(subTitleInfo(2))]);                    
+                    title(['n_p=',num2str(subTitleInfo(1)),', \Deltax^q=',num2str(subTitleInfo(2)), ', n_s=',num2str(subTitleInfo(3))]);                    
                 end
             case 'dist'
                 xlabel('probability of delivery (\beta)');
-                title(['T=',num2str(subTitleInfo(1)),', N_p=',num2str(subTitleInfo(2))]);
+                title(['T=',num2str(subTitleInfo(1)),', n_p=',num2str(subTitleInfo(2)), ', n_s=',num2str(subTitleInfo(3))]);
             case 'dRefPt'
                 xlabel('length of cell of discretized domain [m]');
-                title(['T=',num2str(subTitleInfo(1)),', N_p=',num2str(subTitleInfo(2))]);
+                title(['T=',num2str(subTitleInfo(1)),', n_p=',num2str(subTitleInfo(2)), ', n_s=',num2str(subTitleInfo(3))]);
+            case 'nSample'
+                xlabel('number of \zeta (n_s)');
+                if sim(1,1).flagComm
+                    title(['T=',num2str(subTitleInfo(1)),', \beta=',num2str(subTitleInfo(2)), ', n_p=',num2str(subTitleInfo(3))]);
+                else
+                    title(['T=',num2str(subTitleInfo(1)),', \Deltax^q=',num2str(subTitleInfo(2)), ', n_p=',num2str(subTitleInfo(3))]);                    
+                end
         end
         
         ylabel('percentage of RMS error of I(X_{k+1:k+T};Z_{k+1:k+T})');
@@ -147,6 +168,7 @@ switch sim(1,1).flagSensor
                 costRMS(5,jSim) = rms(gaussRtildeCost(jSim,:));
             end
             
+            % label
             switch flagCondition
                 case 'nPt'
                     subLabel(jSim) = sim(jSim,1).planner(1).PTset.nPt;
@@ -156,6 +178,7 @@ switch sim(1,1).flagSensor
                     else
                         subTitleInfo(2) = sim(jSim,1).planner(1).param.pdf.dRefPt; % dRefPt
                     end
+                    subTitleInfo(3) = sim(jSim,1).planner(1).param.nSample; % nSample (\zeta)
                     label{jSim} = num2str(subLabel(jSim));
                 case 'nT'
                     subLabel(jSim) = sim(jSim,1).planner(1).param.clock.nT;
@@ -165,17 +188,30 @@ switch sim(1,1).flagSensor
                     else
                         subTitleInfo(2) = sim(jSim,1).planner(1).param.pdf.dRefPt; % dRefPt
                     end
+                    subTitleInfo(3) = sim(jSim,1).planner(1).param.nSample; % nSample (\zeta)
                     label{jSim} = num2str(subLabel(jSim));
                 case 'dRefPt'
                     subLabel(jSim) = sim(jSim,1).planner(1).param.pdf.dRefPt;
                     subTitleInfo(1) = sim(jSim,1).planner(1).param.clock.nT; % receding horizon
                     subTitleInfo(2) = sim(jSim,1).planner(1).PTset(1).nPt; % particle number
+                    subTitleInfo(3) = sim(jSim,1).planner(1).param.nSample; % nSample (\zeta)
                     label{jSim} = num2str(subLabel(jSim));
                 case 'dist'
                     subLabel(jSim) = ComputeCommProb(sim(jSim,1).agent(1).s,sim(jSim,1).agent(2).s);
                     subTitleInfo(1) = sim(jSim,1).planner(1).param.clock.nT; % receding horizon
                     subTitleInfo(2) = sim(jSim,1).planner(1).PTset(1).nPt; % particle number
+                    subTitleInfo(3) = sim(jSim,1).planner(1).param.nSample; % nSample (\zeta)
                     label{jSim} = num2str(subLabel(jSim),'%1.3f');
+                case 'nSample'
+                    subLabel(jSim) = sim(jSim,1).planner(1).param.nSample;
+                    subTitleInfo(1) = sim(jSim,1).planner(1).param.clock.nT; % receding horizon
+                    if sim(1,1).flagComm
+                        subTitleInfo(2) = ComputeCommProb(sim(jSim,1).agent(1).s,sim(jSim,1).agent(2).s); % beta
+                    else
+                        subTitleInfo(2) = sim(jSim,1).planner(1).param.pdf.dRefPt; % dRefPt
+                    end
+                    subTitleInfo(3) = sim(jSim,1).planner(1).PTset(1).nPt; % particle number
+                    label{jSim} = num2str(subLabel(jSim));
             end
         end
         
@@ -184,25 +220,32 @@ switch sim(1,1).flagSensor
         set(gca,'xticklabel',label)
         switch flagCondition
             case 'nPt'
-                xlabel('number of particles (N_p)');
+                xlabel('number of particles (n_p)');
                 if sim(1,1).flagComm
-                    title(['T=',num2str(subTitleInfo(1)),', \beta=',num2str(subTitleInfo(2))]);
+                    title(['T=',num2str(subTitleInfo(1)),', \beta=',num2str(subTitleInfo(2)), ', n_s=',num2str(subTitleInfo(3))]);
                 else
-                    title(['T=',num2str(subTitleInfo(1)),', \Deltax^q=',num2str(subTitleInfo(2))]);
+                    title(['T=',num2str(subTitleInfo(1)),', \Deltax^q=',num2str(subTitleInfo(2)), ', n_s=',num2str(subTitleInfo(3))]);
                 end
             case 'nT'
                 xlabel('number of receding horizon (T)');
                 if sim(1,1).flagComm
-                    title(['N_p=',num2str(subTitleInfo(1)),', \beta=',num2str(subTitleInfo(2))]);
+                    title(['n_p=',num2str(subTitleInfo(1)),', \beta=',num2str(subTitleInfo(2)), ', n_s=',num2str(subTitleInfo(3))]);
                 else
-                    title(['N_p=',num2str(subTitleInfo(1)),', \Deltax^q=',num2str(subTitleInfo(2))]);                    
+                    title(['n_p=',num2str(subTitleInfo(1)),', \Deltax^q=',num2str(subTitleInfo(2)), ', n_s=',num2str(subTitleInfo(3))]);                    
                 end
             case 'dist'
                 xlabel('probability of delivery (\beta)');
-                title(['T=',num2str(subTitleInfo(1)),', N_p=',num2str(subTitleInfo(2))]);
+                title(['T=',num2str(subTitleInfo(1)),', n_p=',num2str(subTitleInfo(2)), ', n_s=',num2str(subTitleInfo(3))]);
             case 'dRefPt'
                 xlabel('length of cell of discretized domain [m]');
-                title(['T=',num2str(subTitleInfo(1)),', N_p=',num2str(subTitleInfo(2))]);
+                title(['T=',num2str(subTitleInfo(1)),', n_p=',num2str(subTitleInfo(2)), ', n_s=',num2str(subTitleInfo(3))]);
+            case 'nSample'
+                xlabel('number of \zeta (n_s)');
+                if sim(1,1).flagComm
+                    title(['T=',num2str(subTitleInfo(1)),', \beta=',num2str(subTitleInfo(2)), ', n_p=',num2str(subTitleInfo(3))]);
+                else
+                    title(['T=',num2str(subTitleInfo(1)),', \Deltax^q=',num2str(subTitleInfo(2)), ', n_p=',num2str(subTitleInfo(3))]);                    
+                end
         end
         
         ylabel('RMS of I(X_{k+1:k+T};Z_{k+1:k+T})');
