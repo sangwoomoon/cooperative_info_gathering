@@ -10,7 +10,6 @@
 % 4. gaussRtilde: Gaussian approximation with modified covariance approach: Maicej's approach
 % 5. gaussAll:    Gaussian with all measurement/communication possibilities: exact when the model is Linear/Gaussian
 %
-% Agent 1 receives information from Agent 2
 %-----------------------------------
 function [pmAll, pmSample, pmSeparate, gaussRtilde, gaussAll] = ComputeInformation(iAgent,iAction,iClock,sim)
 
@@ -477,7 +476,7 @@ for iPlan = 1:plannerClock.nT
                 % since the mutual information does not consider
                 % communication (I = I(X;Y)), measurements are always
                 % taken regardless of Z.
-                for iAgent = 2: nAgent
+                for iAgent = 1: nAgent
                     planner.y(:,iAgent) = TakeMeasurement(plannerTarget(iTarget).x,plannerAgent(iAgent).s,planner.param.sensor,flagSensor);
                 end
                 

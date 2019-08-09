@@ -6,7 +6,7 @@ nAgent = length(measNow(1,:));
 wNext = (1/nPt)*ones(1,nPt);
 
 for iAgent = 1:nAgent
-    if ~isnan(measNow(1,iAgent)) % when the emasurement exist
+    if ~isnan(measNow(1,iAgent)) % when the measurement exist
         
         switch property
             case 'PosLinear'
@@ -30,7 +30,11 @@ for iAgent = 1:nAgent
     
 end
 
-% normalization
-wNext = wNext./sum(wNext);
+% normalization 
+if sum(wNext) == 0
+    wNext = (1/nPt)*ones(1,nPt);
+else
+    wNext = wNext./sum(wNext);
+end
     
 end

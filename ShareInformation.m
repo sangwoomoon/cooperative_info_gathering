@@ -9,14 +9,14 @@
 %    - when the communication fails, the measurement is null and it will
 %    not be affected to the filtering process
 %-----------------------------------
-function [commBeta,bConnect,agentStateSet,Z] = ShareInformation(agent,sensor,plannerAgent,id,flagComm)
+function [commBeta,bConnect,agentStateSet,z] = ShareInformation(agent,sensor,plannerAgent,id,flagComm)
 
 % 0. initialization
 nAgent = length(agent);
 nTarget = length(sensor(1,:));
 commBeta = nan(nAgent,1);
 bConnect = nan(nAgent,1);
-Z = nan(nAgent,nTarget);
+z = nan(nAgent,nTarget,length(sensor(id,1).y));
 agentStateSet = plannerAgent;
 
 for iAgent = 1:nAgent
@@ -32,10 +32,10 @@ for iAgent = 1:nAgent
     
     % 3. update information based on the outcome
     if bConnect(iAgent,1) == 1
-       for iTarget = 1:nTarget
-           Z(iAgent,iTarget) = sensor(iAgent,iTarget).y;
-       end
-       agentStateSet(iAgent).s = agent(iAgent).s;
+        for iTarget = 1:nTarget
+            z(iAgent,iTarget,:) = sensor(iAgent,iTarget).y;
+        end
+        agentStateSet(iAgent).s = agent(iAgent).s;
     end
     
 end

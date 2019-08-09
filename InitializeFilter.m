@@ -191,6 +191,7 @@ switch flagFilter
         filter.nState = target.nState;
         
         filter.xhat = (filter.w*filter.pt')';
+        filter.Phat = Phat; % only for reference approaches
         
         filter.hist.pt(:,:,1) = filter.pt;
         filter.hist.w(:,:,1) = filter.w;

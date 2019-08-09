@@ -6,12 +6,12 @@ flagPlot = sim.flagPlot;
 % basic state setting
 agent.id = iAgent;
 if agent.id == 1
-    agent.s = [-100,-100,pi/4,speed]';
+    agent.s = [-100,-100,0,speed]';
 else
     if dist == 0
-        agent.s = [-100+400*cos(pi/4),-100+400*sin(pi/4),-pi*3/4,speed]';
+        agent.s = [-100+400*cos(pi/4),-100+400*sin(pi/4),0,speed]';
     else
-        agent.s = [-100+dist*cos(pi/4) -100+dist*sin(pi/4), -pi*3/4, speed]';
+        agent.s = [-100+dist*cos(pi/4) -100+dist*sin(pi/4), 0, speed]';
     end
 end
 % agent.s = [field.bufferZone(1)+field.zoneLength(1)*rand(), field.bufferZone(3)+field.zoneLength(2)*rand(), 2*pi*rand, speed]';
