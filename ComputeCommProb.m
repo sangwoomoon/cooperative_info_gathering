@@ -14,6 +14,12 @@ function beta = ComputeCommProb(iAgentPos,jAgentPos)
     else
         beta = 0.5*erfc((agentDist-461)/195)-0.085;
     end
+    
+    % erase impossible case
+    if beta < 0
+        beta = 0;
+    end
+    
 end
 
 % distance computation sub-fuction between two(i,j) agents

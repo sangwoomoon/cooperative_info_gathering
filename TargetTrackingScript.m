@@ -110,7 +110,7 @@ for jSim = 1:mSim
         
         %----------------------
         % clock structure
-        sim(jSim,iSim).clock = InitializeClock(   50  ,   1  );
+        sim(jSim,iSim).clock = InitializeClock(   100  ,   1  );
                                                % nt  |  dt
         %----------------------
         
@@ -144,9 +144,21 @@ for jSim = 1:mSim
         %----------------------
         % sensor structure
         for iAgent = 1:sim(jSim,iSim).nAgent
+            % make heterogeneous sensor
+            if iAgent == 1
+                R_pos = [20^2, 20^2]';
+                R_ran = []';
+            else
+                R_pos = [20^2, 20^2]';
+                R_ran = []';
+            end
             for iTarget = 1:sim(jSim,iSim).nTarget
                 sim(jSim,iSim).sensor(iAgent,iTarget) = ...
-                    InitializeSensor(sim(jSim,iSim),iAgent,iTarget,   40,    0.9,  sim(jSim,iSim).agent(iAgent), sim(jSim,iSim).target(iTarget), diag([20^2,20^2,20^2]'), diag([5^2,(pi/18)^2]') );
+                    InitializeSensor(sim(jSim,iSim),iAgent,iTarget,   40,    0.9,  sim(jSim,iSim).agent(iAgent), sim(jSim,iSim).target(iTarget), diag(R_pos), diag([5^2,(pi/18)^2]') );
+                                                                    % range | beta |                                                                R        |       R_rangebear
+                                                                    
+                %sim(jSim,iSim).sensor(iAgent,iTarget) = ...
+                %    InitializeSensor(sim(jSim,iSim),iAgent,iTarget,   40,    0.9,  sim(jSim,iSim).agent(iAgent), sim(jSim,iSim).target(iTarget), diag([20^2,20^2,20^2]'), diag([5^2,(pi/18)^2]') );
                                                                     % range | beta |                                                                      R              |       R_rangebear
             end
         end
@@ -196,7 +208,7 @@ for jSim = 1:mSim
                 otherwise
                     switch flagCondition
                         case 'nT'
-                            sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 3,  nT(jSim),  nPt(1), dRefPt(4), 2 );
+                            sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 10,  nT(jSim),  nPt(1), dRefPt(4), 5 );
                                                                                                    % dt |     nT   | nPt   | dRefPt   | nSample
                         otherwise
                             sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 3,  nT(2),  nPt(1), dRefPt(4), 100 );
@@ -290,9 +302,9 @@ for jSim = 1:mSim
                             
                             % store information data: for pmSample approach
                             % only
-                            sim(jSim,iSim).planner(iAgent).candidate.Hbefore(:,iAction) = pmSample.Hbefore;
-                            sim(jSim,iSim).planner(iAgent).candidate.Hafter(:,iAction) = pmSample.Hafter;
-                            sim(jSim,iSim).planner(iAgent).candidate.I(iAction) = pmSample.I;
+                            sim(jSim,iSim).planner(iAgent).candidate.Hbefore(:,iAction) = sum(pmSample.Hbefore);
+                            sim(jSim,iSim).planner(iAgent).candidate.Hafter(:,iAction) = sum(pmSample.Hafter);
+                            sim(jSim,iSim).planner(iAgent).candidate.I(iAction) = sum(pmSample.I);
                             %---------------------------------------------------------------------------------------------------------
                             
                         else % out of geofence
@@ -421,7 +433,7 @@ for jSim = 1:mSim
         % particle measurement and agent state sharing through communication
         for iAgent = 1:sim(jSim,iSim).nAgent
             [sim(jSim,iSim).comm(iAgent).beta,sim(jSim,iSim).comm(iAgent).bConnect,sim(jSim,iSim).planner(iAgent).param.agent,sim(jSim,iSim).comm(iAgent).z] = ...
-                ShareInformation(sim(jSim,iSim).agent,sim(jSim,iSim).sensor,sim(jSim,iSim).planner(iAgent).param.agent,sim(jSim,iSim).filter(iAgent).id(iAgent), sim(jSim,iSim).flagComm);
+                ShareInformation(sim(jSim,iSim).agent,sim(jSim,iSim).sensor,sim(jSim,iSim).planner(iAgent).param.agent,sim(jSim,iSim).filter(iAgent).id(1), sim(jSim,iSim).flagComm);
             sim(jSim,iSim).comm(iAgent).hist.beta(:,iClock+1) = sim(jSim,iSim).comm(iAgent).beta;
             sim(jSim,iSim).comm(iAgent).hist.bConnect(:,iClock+1) = sim(jSim,iSim).comm(iAgent).bConnect;
             sim(jSim,iSim).comm(iAgent).hist.Z(:,:,:,iClock+1) = sim(jSim,iSim).comm(iAgent).z;
