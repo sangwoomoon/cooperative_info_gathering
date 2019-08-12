@@ -27,15 +27,16 @@ clear;
 % clc;
 format compact;
 
-nSim = 1; % for Monte-Carlo approach with fixed independent condition
+nSim = 10; % for Monte-Carlo approach with fixed independent condition
 nPt = [100 500 1000 2000];
 dist = [200 400 600];
 nT = [1];
 nA = [2 3 5 10];
 dRefPt = [1 5 10 25 50];
 nSample = [1 100 500 1000];
+commAware = [0 1];
 
-flagCondition  = 'nT';
+flagCondition  = 'commAware';
 
 % simulation by changing independent condition
 switch flagCondition
@@ -51,6 +52,8 @@ switch flagCondition
         mSim = length(dRefPt);
     case 'nSample'
         mSim = length(nSample);
+    case 'commAware'
+        mSim = length(commAware);
     otherwise
         mSim = 1;
 end
@@ -65,12 +68,11 @@ for jSim = 1:mSim
         %   sim setting
         %-------------------------------
         
-        % rng(RandSeed);
         
         %----------------------
         % simulation structure
         % in order to allocate as the array of simulation
-        sim(jSim,iSim) = InitializeSim(   3,       3,     'MI',       1,           1,       'uniform',        0,         1,     'Pos',  'unicycle', 'range_bear',   'PF'    );
+        sim(jSim,iSim) = InitializeSim(   2,       1,     'MI',       1,           1,       'uniform',        0,         0,     'Pos',  'unicycle', 'range_bear',   'PF'    );
                                      % nAgent | nTarget | flagDM | flagComm | flagActComm | flagPdfCompute | flagLog | flagPlot | target |  agent     | sensor   | filter
         
         % flagDM         ||   'random': random decision | 'MI': mutual information-based decision | 'mean': particle mean following
@@ -104,19 +106,23 @@ for jSim = 1:mSim
         case 'nSample'
             % with respect to nSample
             fprintf('\njSim = %d, nSample = %d\n',jSim,nSample(jSim));
+        case 'commAware'
+            % with respect to planning w/ comm vs. w/o comm
+            fprintf('\njSim = %d, commAware = %d\n',jSim,commAware(jSim));
+            sim(jSim,iSim).flagComm = commAware(jSim); % hard-coded because it should be inside of sim initialization
     end
     
     for iSim = 1:nSim
         
         %----------------------
         % clock structure
-        sim(jSim,iSim).clock = InitializeClock(   100  ,   1  );
+        sim(jSim,iSim).clock = InitializeClock(   10  ,   1  );
                                                % nt  |  dt
         %----------------------
         
         %----------------------
         % field structure
-        sim(jSim,iSim).field = InitializeField(sim(jSim,iSim), [-700 700],[-700 700]); % overloaded by the number of boundaries (2D)
+        sim(jSim,iSim).field = InitializeField(sim(jSim,iSim), [-1000 1000],[-1000 1000]); % overloaded by the number of boundaries (2D)
         % sim(jSim,iSim).field = InitializeField(sim(jSim,iSim), [-300 300],[-300 300],[-300,300]); % overloaded by the number of boundaries (3D)
         %----------------------
         
@@ -210,7 +216,7 @@ for jSim = 1:mSim
                             sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 10,  nT(jSim),  nPt(1), dRefPt(4), 5 );
                                                                                                    % dt |     nT   | nPt   | dRefPt   | nSample
                         otherwise
-                            sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 3,  nT(2),  nPt(1), dRefPt(4), 100 );
+                            sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 3,  nT(1),  nPt(1), dRefPt(4), 5 );
                                                                                                    % dt |   nT |    nPt | dRefPt   | nSample
                     end
             end
@@ -551,6 +557,8 @@ for jSim = 1:mSim
     fprintf('===========\n');
     
 end
+
+PlotCommAwarePlanningResults(sim);
 
 if sim(jSim,iSim).flagLog
     close all;
