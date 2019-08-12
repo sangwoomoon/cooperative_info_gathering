@@ -1,4 +1,4 @@
-function sim = InitializeSim(nAgent,nTarget,flagDM,flagComm,flagPdfCompute,flagLog,flagPlot, target, agent, sensor, filter)
+function sim = InitializeSim(nAgent,nTarget,flagDM,flagComm,flagActComm,flagPdfCompute,flagLog,flagPlot, target, agent, sensor, filter)
 
     sim.nAgent = nAgent;
     sim.nTarget = nTarget;
@@ -7,7 +7,8 @@ function sim = InitializeSim(nAgent,nTarget,flagDM,flagComm,flagPdfCompute,flagL
     sim.flagInfoCom = 1; % 0: Ryan's approach | 1: Our approach(consider all measurements)
     sim.flagDM = flagDM; % 0: 'random': random decision | 'MI': mutual information-based decision | 'mean': particle mean following
     sim.flagPDF = 0; % 0: no PDF draw | 1: PDF draw
-    sim.flagComm = flagComm; % 0: perfect communication | 1: imperfect communication and communication awareness
+    sim.flagComm = flagComm; % 0: perfect planner communication | 1: imperfect planner communication and communication awareness
+    sim.flagActComm = flagActComm; % 0: perfect communication | 1: imperfect communication in ACTUAL SCENARIO
     sim.flagPdfCompute = flagPdfCompute; % 'uniform': uniformly discretized domain | 'cylinder': cylinder based computation w.r.t particle set
     sim.flagLog = flagLog;
     sim.flagPlot = flagPlot; % flag for the display of trajectories and particles evolution

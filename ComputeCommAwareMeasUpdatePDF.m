@@ -31,7 +31,7 @@ else
     commProb(1) = 0;
 end
 
-for iAgent = 2:nAgent
+for iAgent = 1:nAgent
     
     % considering communication-aware events
     if flagComm

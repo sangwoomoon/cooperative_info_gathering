@@ -70,8 +70,8 @@ for jSim = 1:mSim
         %----------------------
         % simulation structure
         % in order to allocate as the array of simulation
-        sim(jSim,iSim) = InitializeSim(   2,       1,     'MI',       1,       'uniform',        0,         1,     'Pos',  'unicycle', 'PosLinear',   'PF'    );
-                                     % nAgent | nTarget | flagDM | flagComm | flagPdfCompute | flagLog | flagPlot | target |  agent     | sensor   | filter
+        sim(jSim,iSim) = InitializeSim(   3,       1,     'MI',       0,           1,       'uniform',        0,         1,     'Pos',  'unicycle', 'range_bear',   'PF'    );
+                                     % nAgent | nTarget | flagDM | flagComm | flagActComm | flagPdfCompute | flagLog | flagPlot | target |  agent     | sensor   | filter
         
         % flagDM         ||   'random': random decision | 'MI': mutual information-based decision | 'mean': particle mean following
         % flagComm       ||   0: perfect communication | 1: imperfect communication and communication awareness
@@ -154,7 +154,7 @@ for jSim = 1:mSim
             end
             for iTarget = 1:sim(jSim,iSim).nTarget
                 sim(jSim,iSim).sensor(iAgent,iTarget) = ...
-                    InitializeSensor(sim(jSim,iSim),iAgent,iTarget,   40,    0.9,  sim(jSim,iSim).agent(iAgent), sim(jSim,iSim).target(iTarget), diag(R_pos), diag([5^2,(pi/18)^2]') );
+                    InitializeSensor(sim(jSim,iSim),iAgent,iTarget,   40,    0.9,  sim(jSim,iSim).agent(iAgent), sim(jSim,iSim).target(iTarget), diag(R_pos), diag([50^2,(pi/18)^2]') );
                                                                     % range | beta |                                                                R        |       R_rangebear
                                                                     
                 %sim(jSim,iSim).sensor(iAgent,iTarget) = ...
@@ -175,7 +175,6 @@ for jSim = 1:mSim
         % filter structure
         for iAgent = 1:sim(jSim,iSim).nAgent
             for iTarget = 1:sim(jSim,iSim).nTarget
-                % nPt = floor(10^(0.15*(iSim+6)));
                 xhat = zeros(length(sim(jSim,iSim).target(iTarget).x),1);
                 Phat = diag([50^2,50^2]);
                 
@@ -292,19 +291,17 @@ for jSim = 1:mSim
                             % 4. Gaussian approximation with modified covariance approach: Maicej's approach
                             % 5. Gaussian with all measurement/communication possibilities: exact when the model is Linear/Gaussian
                             %
-                            if sim(jSim,iSim).flagComm
-                                [~, pmSample, ~, ~, ~] = ComputeInformationTracking(iAgent,iAction,iClock,sim(jSim,iSim),'pmSample');
-                                %[pmAll, pmSample, pmSeparate, gaussRtilde, gaussAll] = ComputeInformation(iAgent,iAction,iClock,sim(jSim,iSim));
+                            if sim(jSim,iSim).flagComm == 1
+                                [~, pm, ~, ~, ~] = ComputeInformationTracking(iAgent,iAction,iClock,sim(jSim,iSim),'pmSample');
                             else
-                                [pmAll, ~, ~, ~, gaussAll, ~] = ComputeInformationTracking(iAgent,iAction,iClock,sim(jSim,iSim),'pmSample');
+                                [pm, ~, ~, ~, ~] = ComputeInformationTracking(iAgent,iAction,iClock,sim(jSim,iSim),'pmAll'); 
                             end
                             %---------------------------------------------------------------------------------------------------------
                             
-                            % store information data: for pmSample approach
-                            % only
-                            sim(jSim,iSim).planner(iAgent).candidate.Hbefore(:,iAction) = sum(pmSample.Hbefore);
-                            sim(jSim,iSim).planner(iAgent).candidate.Hafter(:,iAction) = sum(pmSample.Hafter);
-                            sim(jSim,iSim).planner(iAgent).candidate.I(iAction) = sum(pmSample.I);
+                            % store information data: for pmSample approach only
+                            sim(jSim,iSim).planner(iAgent).candidate.Hbefore(:,iAction) = sum(pm.Hbefore);
+                            sim(jSim,iSim).planner(iAgent).candidate.Hafter(:,iAction) = sum(pm.Hafter);
+                            sim(jSim,iSim).planner(iAgent).candidate.I(iAction) = sum(pm.I);
                             %---------------------------------------------------------------------------------------------------------
                             
                         else % out of geofence
@@ -433,7 +430,7 @@ for jSim = 1:mSim
         % particle measurement and agent state sharing through communication
         for iAgent = 1:sim(jSim,iSim).nAgent
             [sim(jSim,iSim).comm(iAgent).beta,sim(jSim,iSim).comm(iAgent).bConnect,sim(jSim,iSim).planner(iAgent).param.agent,sim(jSim,iSim).comm(iAgent).z] = ...
-                ShareInformation(sim(jSim,iSim).agent,sim(jSim,iSim).sensor,sim(jSim,iSim).planner(iAgent).param.agent,sim(jSim,iSim).filter(iAgent).id(1), sim(jSim,iSim).flagComm);
+                ShareInformation(sim(jSim,iSim).agent,sim(jSim,iSim).sensor,sim(jSim,iSim).planner(iAgent).param.agent,sim(jSim,iSim).filter(iAgent).id(1), sim(jSim,iSim).flagActComm);
             sim(jSim,iSim).comm(iAgent).hist.beta(:,iClock+1) = sim(jSim,iSim).comm(iAgent).beta;
             sim(jSim,iSim).comm(iAgent).hist.bConnect(:,iClock+1) = sim(jSim,iSim).comm(iAgent).bConnect;
             sim(jSim,iSim).comm(iAgent).hist.Z(:,:,:,iClock+1) = sim(jSim,iSim).comm(iAgent).z;
@@ -496,20 +493,7 @@ for jSim = 1:mSim
                 % store optimized infomation data
                 sim(jSim,iSim).planner(iAgent).hist.actIdx(iClock+1) = sim(jSim,iSim).planner(iAgent).actIdx;
                 sim(jSim,iSim).planner(iAgent).hist.input(:,iClock+1) = sim(jSim,iSim).planner(iAgent).input;
-                
-                % store entropy-based data for planner: only useful for MI-based planning
-                if strcmp(sim(jSim,iSim).flagDM,'MI')
-                    for iAgent = 1:sim(jSim,iSim).nAgent
-                        sim(jSim,iSim).planner(iAgent).hist.I(:,iClock+1) = sim(jSim,iSim).planner(iAgent).I;
-                        sim(jSim,iSim).planner(iAgent).hist.Hafter(:,iClock+1) = sim(jSim,iSim).planner(iAgent).Hafter';
-                        sim(jSim,iSim).planner(iAgent).hist.Hbefore(:,iClock+1) = sim(jSim,iSim).planner(iAgent).Hbefore';
-                        
-                        %                         sim(jSim,iSim).planner(iAgent).hist.IRef(:,iClock+1) = sim(jSim,iSim).planner(iAgent).IRef;
-                        %                         sim(jSim,iSim).planner(iAgent).hist.HafterRef(:,iClock+1) = sim(jSim,iSim).planner(iAgent).HafterRef';
-                        %                         sim(jSim,iSim).planner(iAgent).hist.HbeforeRef(:,iClock+1) = sim(jSim,iSim).planner(iAgent).HbeforeRef';
-                    end
-                end
-                
+                                
                 % compute actual entropy for comparison
                 targetUpdatePdf = ComputePDFMixture(sim(jSim,iSim).filter(iAgent,iTarget).pt,sim(jSim,iSim).filter(iAgent,iTarget).w,sim(jSim,iSim).planner(iAgent).param,sim(jSim,iSim).flagPdfCompute);
                 sim(jSim,iSim).filter(iAgent,iTarget).Hafter = ComputeEntropy(targetUpdatePdf,sim(jSim,iSim).filter(iAgent,iTarget).pt,sim(jSim,iSim).planner(iAgent).param,sim(jSim,iSim).flagPdfCompute);
@@ -519,6 +503,19 @@ for jSim = 1:mSim
                 sim(jSim,iSim).filter(iAgent,iTarget).I = sim(jSim,iSim).filter(iAgent,iTarget).Hbefore - sim(jSim,iSim).filter(iAgent,iTarget).Hafter;
                 sim(jSim,iSim).filter(iAgent,iTarget).hist.I(:,iClock+1) = sim(jSim,iSim).filter(iAgent,iTarget).I;
                 
+            end
+        end
+        
+        % store entropy-based data for planner: only useful for MI-based planning
+        if strcmp(sim(jSim,iSim).flagDM,'MI')
+            for iAgent = 1:sim(jSim,iSim).nAgent
+                sim(jSim,iSim).planner(iAgent).hist.I(:,iClock+1) = sim(jSim,iSim).planner(iAgent).I;
+                sim(jSim,iSim).planner(iAgent).hist.Hafter(:,iClock+1) = sim(jSim,iSim).planner(iAgent).Hafter';
+                sim(jSim,iSim).planner(iAgent).hist.Hbefore(:,iClock+1) = sim(jSim,iSim).planner(iAgent).Hbefore';
+                
+                %                         sim(jSim,iSim).planner(iAgent).hist.IRef(:,iClock+1) = sim(jSim,iSim).planner(iAgent).IRef;
+                %                         sim(jSim,iSim).planner(iAgent).hist.HafterRef(:,iClock+1) = sim(jSim,iSim).planner(iAgent).HafterRef';
+                %                         sim(jSim,iSim).planner(iAgent).hist.HbeforeRef(:,iClock+1) = sim(jSim,iSim).planner(iAgent).HbeforeRef';
             end
         end
         %-----------------------------------

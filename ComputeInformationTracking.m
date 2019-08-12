@@ -334,10 +334,7 @@ for iPlan = 1:plannerClock.nT
                 % the planner considers all predicted measurements with
                 % respect to all agents, of which other agents' states are delivered from
                 % other agents/predicted by its own agent
-                %
-                % now, agent 1's delivered measurement from agent 2 is determined by
-                % communication set
-                for iAgent = 2: nAgent
+                for iAgent = 1: nAgent
                     if planner.z(iAgent)
                         planner.y(:,iAgent) = TakeMeasurement(plannerTarget(iTarget).x,plannerAgent(iAgent).s,planner.param.sensor,flagSensor);
                     else
