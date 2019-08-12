@@ -26,12 +26,15 @@ for iSim = 1 : nSim
     
 end
 
-planErrRms(1) = rms(rms(squeeze(planErr(1,:,:,:))));
-planErrRms(2) = rms(rms(squeeze(planErr(2,:,:,:))));
+planErrRms(1) = rms(rms(rms(squeeze(planErr(1,:,:,:)))));
+planErrRms(2) = rms(rms(rms(squeeze(planErr(2,:,:,:)))));
 
 figure(10),
 bar(planErrRms);
-
+ylabel('RMS error between planned MI and actual MI')
+label{1} = 'assume perfect comm';
+label{2} = 'comm-aware';
+set(gca,'xticklabel',label)
 
 % results from planning W/O communication
 figure(11),

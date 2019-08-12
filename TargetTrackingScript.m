@@ -27,7 +27,7 @@ clear;
 % clc;
 format compact;
 
-nSim = 10; % for Monte-Carlo approach with fixed independent condition
+nSim = 2; % for Monte-Carlo approach with fixed independent condition
 nPt = [100 500 1000 2000];
 dist = [200 400 600];
 nT = [1];
