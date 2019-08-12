@@ -75,6 +75,13 @@ for iAgent = 1:nAgent
     
 end
 
+% to prevent from zero probability of P(X|Z). In this TRIVIAL case, the pdf
+% should be initialized, and the entropy drastically increased. it prevents
+% from the selection by planner
+if sum(sum(measUpdatePdf)) == 0
+        measUpdatePdf = measUpdatePdf + 1;
+end
+
 % normalization
 region = ComputeParticleRegion(pt,param,flagPdfCompute);
 normFactor = 1/sum(sum(squeeze(measUpdatePdf).*squeeze(region)));

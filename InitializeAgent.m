@@ -2,6 +2,7 @@ function agent = InitializeAgent(iAgent, sim, speed, dist)
 
 field = sim.field;
 flagPlot = sim.flagPlot;
+nAgent = sim.nAgent;
 
 % basic state setting
 agent.id = iAgent;
@@ -14,7 +15,7 @@ agent.id = iAgent;
 %         agent.s = [-100+dist*cos(pi/4) -100+dist*sin(pi/4), rand()*2*pi, speed]';
 %     end
 % end
-agent.s = [field.bufferZone(1)+field.zoneLength(1)/2*rand(), field.bufferZone(3)+field.zoneLength(2)/2*rand(), 2*pi*rand, speed]';
+agent.s = [300*cos(2*pi*agent.id/nAgent), 300*sin(2*pi*agent.id/nAgent), 2*pi*rand, speed]';
 agent.hist.s = agent.s;
 
 % agent display

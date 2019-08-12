@@ -7,6 +7,8 @@ end
 field = sim.field;
 property = sim.flagTarget;
 
+nTarget = sim.nTarget;
+
 switch length(field.boundary)
     
     
@@ -17,8 +19,10 @@ switch length(field.boundary)
                 % basic property setting
                 target.id = ID;
                 target.x = ...
-                    [field.bufferZone(1)+rand()*field.zoneLength(1)...
-                    field.bufferZone(3)+rand()*field.zoneLength(2)]'; % x_pos, y_pos
+                    [100*cos(target.id*2*pi/(nTarget+1)),100*sin(target.id*2*pi/(nTarget+1))]'; % x_pos, y_pos
+%                 target.x = ...
+%                     [field.bufferZone(1)+rand()*field.zoneLength(1)...
+%                     field.bufferZone(3)+rand()*field.zoneLength(2)]'; % x_pos, y_pos
                 target.hist.x = target.x;
                 target.nState = length(target.x);
                 

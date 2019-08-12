@@ -70,7 +70,7 @@ for jSim = 1:mSim
         %----------------------
         % simulation structure
         % in order to allocate as the array of simulation
-        sim(jSim,iSim) = InitializeSim(   3,       1,     'MI',       0,           1,       'uniform',        0,         1,     'Pos',  'unicycle', 'range_bear',   'PF'    );
+        sim(jSim,iSim) = InitializeSim(   3,       3,     'MI',       1,           1,       'uniform',        0,         1,     'Pos',  'unicycle', 'range_bear',   'PF'    );
                                      % nAgent | nTarget | flagDM | flagComm | flagActComm | flagPdfCompute | flagLog | flagPlot | target |  agent     | sensor   | filter
         
         % flagDM         ||   'random': random decision | 'MI': mutual information-based decision | 'mean': particle mean following
@@ -116,7 +116,7 @@ for jSim = 1:mSim
         
         %----------------------
         % field structure
-        sim(jSim,iSim).field = InitializeField(sim(jSim,iSim), [-1000 1000],[-1000 1000]); % overloaded by the number of boundaries (2D)
+        sim(jSim,iSim).field = InitializeField(sim(jSim,iSim), [-700 700],[-700 700]); % overloaded by the number of boundaries (2D)
         % sim(jSim,iSim).field = InitializeField(sim(jSim,iSim), [-300 300],[-300 300],[-300,300]); % overloaded by the number of boundaries (3D)
         %----------------------
         
