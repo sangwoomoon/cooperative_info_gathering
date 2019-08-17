@@ -27,7 +27,9 @@ clear;
 % clc;
 format compact;
 
-nSim = 2; % for Monte-Carlo approach with fixed independent condition
+% --------------------------------------------------------------------
+% control parameters for comparison
+nSim = 10; % for Monte-Carlo approach with fixed independent condition
 nPt = [100 500 1000 2000];
 dist = [200 400 600];
 nT = [1];
@@ -35,8 +37,10 @@ nA = [2 3 5 10];
 dRefPt = [1 5 10 25 50];
 nSample = [1 100 500 1000];
 commAware = [0 1];
+planner = {'random','mean','MI','MI_comm'};
 
-flagCondition  = 'commAware';
+% comparison setting
+flagCondition  = 'planner';
 
 % simulation by changing independent condition
 switch flagCondition
@@ -54,9 +58,20 @@ switch flagCondition
         mSim = length(nSample);
     case 'commAware'
         mSim = length(commAware);
+    case 'planner'
+        mSim = length(planner);
     otherwise
         mSim = 1;
 end
+% --------------------------------------------------------------------
+
+
+% --------------------------------------------------------------------
+% time parameters
+nt = 50;
+dt = 1;
+% --------------------------------------------------------------------
+
 
 % RandSeed = rng;
 
@@ -72,7 +87,7 @@ for jSim = 1:mSim
         %----------------------
         % simulation structure
         % in order to allocate as the array of simulation
-        sim(jSim,iSim) = InitializeSim(   2,       1,     'MI',       1,           1,       'uniform',        0,         1,     'Pos',  'unicycle', 'bear',   'PF'    );
+        sim(jSim,iSim) = InitializeSim(   2,       1,     'MI',       1,           1,       'uniform',        0,         0,     'Pos',  'unicycle',    'bear',   'PF'    );
                                      % nAgent | nTarget | flagDM | flagComm | flagActComm | flagPdfCompute | flagLog | flagPlot | target |  agent     | sensor   | filter
         
         % flagDM         ||   'random': random decision | 'MI': mutual information-based decision | 'mean': particle mean following
@@ -110,13 +125,23 @@ for jSim = 1:mSim
             % with respect to planning w/ comm vs. w/o comm
             fprintf('\njSim = %d, commAware = %d\n',jSim,commAware(jSim));
             sim(jSim,iSim).flagComm = commAware(jSim); % hard-coded because it should be inside of sim initialization
+        case 'planner'
+            % with respect to planner scheme: random, mean-following, MI w/o communcation-aware, MI w/ comm-aware
+            fprintf('\njSim = %d, planner = %s\n',jSim,planner{jSim});
+            sim(jSim,iSim).flagDM = planner{jSim}; % hard-coded because it should be inside of sim initialization
+            if jSim == 3
+                sim(jSim,iSim).flagComm = 0; % hard-coded because it should be inside of sim initialization
+            elseif jSim == 4
+                sim(jSim,iSim).flagDM = planner{jSim-1}; % hard-coded because it should be inside of sim initialization
+                sim(jSim,iSim).flagComm = 1; % hard-coded because it should be inside of sim initialization
+            end
     end
     
     for iSim = 1:nSim
         
         %----------------------
         % clock structure
-        sim(jSim,iSim).clock = InitializeClock(   50  ,   1  );
+        sim(jSim,iSim).clock = InitializeClock(  nt  ,  dt  );
                                                % nt  |  dt
         %----------------------
         
@@ -151,20 +176,9 @@ for jSim = 1:mSim
         % sensor structure
         for iAgent = 1:sim(jSim,iSim).nAgent
             % make heterogeneous sensor
-            if iAgent == 1
-                R_pos = [20^2, 20^2]';
-                R_ran = []';
-            else
-                R_pos = [20^2, 20^2]';
-                R_ran = []';
-            end
-            for iTarget = 1:sim(jSim,iSim).nTarget
+            for iTarget = 1:sim(jSim,iSim).nTarget                             
                 sim(jSim,iSim).sensor(iAgent,iTarget) = ...
-                    InitializeSensor(sim(jSim,iSim),iAgent,iTarget,   40,    0.9,  sim(jSim,iSim).agent(iAgent), sim(jSim,iSim).target(iTarget), diag(R_pos), diag([50^2,(pi/18)^2]') );
-                                                                    % range | beta |                                                                R        |       R_rangebear
-                                                                    
-                %sim(jSim,iSim).sensor(iAgent,iTarget) = ...
-                %    InitializeSensor(sim(jSim,iSim),iAgent,iTarget,   40,    0.9,  sim(jSim,iSim).agent(iAgent), sim(jSim,iSim).target(iTarget), diag([20^2,20^2,20^2]'), diag([5^2,(pi/18)^2]') );
+                     InitializeSensor(sim(jSim,iSim),iAgent,iTarget,   40,    0.9,  sim(jSim,iSim).agent(iAgent), sim(jSim,iSim).target(iTarget), diag([20^2,20^2,20^2]'), diag([5^2,(pi/18)^2]') );
                                                                     % range | beta |                                                                      R              |       R_rangebear
             end
         end
@@ -271,8 +285,7 @@ for jSim = 1:mSim
                 % follow mean of a single target
                 case 'mean'
                     
-                    iTarget = 1;
-                    sim(jSim,iSim).planner(iAgent).actIdx = MoveToPoint(sim(jSim,iSim).planner(iAgent).PTset(iTarget).xhat, sim(jSim,iSim).agent(iAgent).s);
+                    sim(jSim,iSim).planner(iAgent).actIdx = MoveToPoint(sim(jSim,iSim).planner(iAgent).PTset(iTarget), sim(jSim,iSim).agent(iAgent).s);
                     sim(jSim,iSim).planner(iAgent).input = sim(jSim,iSim).planner(iAgent).actionSet(:,sim(jSim,iSim).planner(iAgent).actIdx);
                     
                     
@@ -520,10 +533,6 @@ for jSim = 1:mSim
                 sim(jSim,iSim).planner(iAgent).hist.I(:,iClock+1) = sim(jSim,iSim).planner(iAgent).I;
                 sim(jSim,iSim).planner(iAgent).hist.Hafter(:,iClock+1) = sim(jSim,iSim).planner(iAgent).Hafter';
                 sim(jSim,iSim).planner(iAgent).hist.Hbefore(:,iClock+1) = sim(jSim,iSim).planner(iAgent).Hbefore';
-                
-                %                         sim(jSim,iSim).planner(iAgent).hist.IRef(:,iClock+1) = sim(jSim,iSim).planner(iAgent).IRef;
-                %                         sim(jSim,iSim).planner(iAgent).hist.HafterRef(:,iClock+1) = sim(jSim,iSim).planner(iAgent).HafterRef';
-                %                         sim(jSim,iSim).planner(iAgent).hist.HbeforeRef(:,iClock+1) = sim(jSim,iSim).planner(iAgent).HbeforeRef';
             end
         end
         %-----------------------------------
@@ -560,7 +569,13 @@ for jSim = 1:mSim
     
 end
 
-PlotCommAwarePlanningResults(sim);
+% result plot based on Monte-Carlo runs
+switch flagCondition
+    case 'commAware'
+        PlotCommAwarePlanningResults(sim);
+    case 'planner'
+        PlotPlanningResults(sim);
+end
 
 if sim(jSim,iSim).flagLog
     close all;
