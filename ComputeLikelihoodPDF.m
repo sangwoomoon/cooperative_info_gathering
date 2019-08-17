@@ -12,6 +12,8 @@ switch option
                 pdf = LinearSensorProb(meas,paramPdf.refPt,paramSensor);
             case 'range_bear'
                 pdf = RangeBearProb(meas,paramAgent,paramPdf.refPt,paramSensor);
+            case 'bear'
+                pdf = BearProb(meas,paramAgent,paramPdf.refPt,paramSensor);
             case 'detection'
                 pdf = BinarySensorProb(meas,paramAgent,paramPdf.refPt,paramSensor);
         end

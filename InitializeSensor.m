@@ -28,6 +28,15 @@ switch property
         sensor.hist.y(:,1) = sensor.y;
         
         sensor.param.R = RrangeBear;
+        
+        
+    case 'bear'
+        
+        sensor.y = nan;
+        sensor.hist.y(:,1) = sensor.y;
+        
+        sensor.param.R = RrangeBear(2,2);
+        
     
     case 'detection'
         sensor.y = nan;

@@ -13,6 +13,8 @@ for iAgent = 1:nAgent
                 prob = LinearSensorProb(measNow(:,iAgent),ptNow,paramSensor);
             case 'range_bear'
                 prob = RangeBearProb(measNow(:,iAgent),paramAgent,ptNow,paramSensor);
+            case 'bear'
+                prob = BearProb(measNow(:,iAgent),paramAgent,ptNow,paramSensor);
             case 'detection'
                 prob = BinarySensorProb(measNow(:,iAgent),paramAgent,ptNow,paramSensor);
         end

@@ -158,13 +158,13 @@ switch flagFilter
                 
                 switch dimension
                     case 2 % 2D
-                        filter.pt(:,iPt) = mvnrnd(xhat,Phat(1:2,1:2))';
-%                         filter.pt(:,iPt) = ...
-%                             [field.bufferZone(1)+rand()*field.zoneLength(1) field.bufferZone(3)+rand()*field.zoneLength(2)]';
+%                        filter.pt(:,iPt) = mvnrnd(xhat,Phat(1:2,1:2))';
+                         filter.pt(:,iPt) = ...
+                             [field.bufferZone(1)+rand()*field.zoneLength(1) field.bufferZone(3)+rand()*field.zoneLength(2)]';
                     case 3 % 3D
-                        filter.pt(:,iPt) = mvnrnd(xhat,Phat)';
-%                         filter.pt(:,iPt) = ...
-%                             [field.bufferZone(1)+rand()*field.zoneLength(1) field.bufferZone(3)+rand()*field.zoneLength(2) field.bufferZone(5)+rand()*field.zoneLength(3)]';
+%                        filter.pt(:,iPt) = mvnrnd(xhat,Phat)';
+                         filter.pt(:,iPt) = ...
+                             [field.bufferZone(1)+rand()*field.zoneLength(1) field.bufferZone(3)+rand()*field.zoneLength(2) field.bufferZone(5)+rand()*field.zoneLength(3)]';
                 end
                     
             end
@@ -184,6 +184,8 @@ switch flagFilter
             case 'PosLinear'
                 filter.param.R = sensor.param.R;
             case 'range_bear'
+                filter.param.R = sensor.param.R;
+            case 'bear'
                 filter.param.R = sensor.param.R;
         end
         

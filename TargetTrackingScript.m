@@ -58,7 +58,7 @@ switch flagCondition
         mSim = 1;
 end
 
-RandSeed = rng;
+% RandSeed = rng;
 
 % make array of simulation structure
 for jSim = 1:mSim
@@ -72,7 +72,7 @@ for jSim = 1:mSim
         %----------------------
         % simulation structure
         % in order to allocate as the array of simulation
-        sim(jSim,iSim) = InitializeSim(   2,       1,     'MI',       1,           1,       'uniform',        0,         0,     'Pos',  'unicycle', 'range_bear',   'PF'    );
+        sim(jSim,iSim) = InitializeSim(   2,       1,     'MI',       1,           1,       'uniform',        0,         1,     'Pos',  'unicycle', 'bear',   'PF'    );
                                      % nAgent | nTarget | flagDM | flagComm | flagActComm | flagPdfCompute | flagLog | flagPlot | target |  agent     | sensor   | filter
         
         % flagDM         ||   'random': random decision | 'MI': mutual information-based decision | 'mean': particle mean following
@@ -81,7 +81,7 @@ for jSim = 1:mSim
         % flagLog        ||   0: skip logging | 1: log data
         % flagPlot       ||   flag for the display of trajectories and particles evolution
         % target         ||   'Pos': position only | 'PosVel': position and velocity
-        % sensor         ||   'linear', 'range_bear', 'detection'
+        % sensor         ||   'linear', 'range_bear', 'detection', 'bear', 'RF'
         %----------------------
         
     end
@@ -116,7 +116,7 @@ for jSim = 1:mSim
         
         %----------------------
         % clock structure
-        sim(jSim,iSim).clock = InitializeClock(   10  ,   1  );
+        sim(jSim,iSim).clock = InitializeClock(   50  ,   1  );
                                                % nt  |  dt
         %----------------------
         
@@ -413,6 +413,8 @@ for jSim = 1:mSim
 %                         sim(jSim,iSim).sensor(iAgent,1).plot.hist.data.x(:,iClock+1) = sim(jSim,iSim).sensor(iAgent,1).plot.data.x';
 %                         sim(jSim,iSim).sensor(iAgent,1).plot.hist.data.y(:,iClock+1) = sim(jSim,iSim).sensor(iAgent,1).plot.data.y';                        
                     case 'range_bear'
+                        
+                    case 'bear'
                         
                     case 'detection' % sensor coverage plot
                         [sim(jSim,iSim).sensor(iAgent,1).plot.data.x,sim(jSim,iSim).sensor(iAgent,1).plot.data.y,~] = ...

@@ -28,7 +28,9 @@ switch flagSensor
     case 'PosLinear'
         [planner.meas,planner.measNum,planner.measSetNum,planner.measSet] = GenerateOutcomeProfile(1,planner.param.clock.nT);
     case 'range_bear'
-        [planner.meas,planner.measNum,planner.measSetNum,planner.measSet] = GenerateOutcomeProfile(1,planner.param.clock.nT);        
+        [planner.meas,planner.measNum,planner.measSetNum,planner.measSet] = GenerateOutcomeProfile(1,planner.param.clock.nT);         
+    case 'bear'
+        [planner.meas,planner.measNum,planner.measSetNum,planner.measSet] = GenerateOutcomeProfile(1,planner.param.clock.nT); 
     case 'detection'
         [planner.meas,planner.measNum,planner.measSetNum,planner.measSet] = GenerateOutcomeProfile([0 1],planner.param.clock.nT);        
 end
@@ -127,6 +129,8 @@ switch flagSensor
         planner.param.sensor.H = sensor(iAgent,iTarget).param.H;
         % 
     case 'range_bear'
+        planner.param.sensor.R = sensor(iAgent,iTarget).param.R;
+    case 'bear'
         planner.param.sensor.R = sensor(iAgent,iTarget).param.R;
     case 'detection'        
         planner.param.sensor.regionRadius = sensor(iAgent,iTarget).param.regionRadius;
