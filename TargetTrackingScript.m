@@ -29,7 +29,7 @@ format compact;
 
 % --------------------------------------------------------------------
 % control parameters for comparison
-nSim = 10; % for Monte-Carlo approach with fixed independent condition
+nSim = 1; % for Monte-Carlo approach with fixed independent condition
 nPt = [100 500 1000 2000];
 dist = [200 400 600];
 nT = [1];
@@ -40,7 +40,7 @@ commAware = [0 1];
 planner = {'random','mean','MI','MI_comm'};
 
 % comparison setting
-flagCondition  = 'planner';
+flagCondition  = 'nA';
 
 % simulation by changing independent condition
 switch flagCondition
@@ -87,8 +87,8 @@ for jSim = 1:mSim
         %----------------------
         % simulation structure
         % in order to allocate as the array of simulation
-        sim(jSim,iSim) = InitializeSim(   2,       1,     'MI',       1,           1,       'uniform',        0,         1,     'Pos',  'unicycle',    'bear',   'PF'    );
-        % nAgent | nTarget | flagDM | flagComm | flagActComm | flagPdfCompute | flagLog | flagPlot | target |  agent     | sensor   | filter
+        sim(jSim,iSim) = InitializeSim(   4,       1,     'MI',       1,           1,       'uniform',        0,         1,     'Pos',  'unicycle',    'bear',   'PF'    );
+                                    % nAgent | nTarget | flagDM | flagComm | flagActComm | flagPdfCompute | flagLog | flagPlot | target |  agent     | sensor   | filter
         
         % flagDM         ||   'random': random decision | 'MI': mutual information-based decision | 'mean': particle mean following
         % flagComm       ||   0: perfect communication | 1: imperfect communication and communication awareness
@@ -128,6 +128,9 @@ for jSim = 1:mSim
         case 'planner'
             % with respect to planner scheme: random, mean-following, MI w/o communcation-aware, MI w/ comm-aware
             fprintf('\njSim = %d, planner = %s\n',jSim,planner{jSim});
+        case 'nA'
+            % with respect to number of agents
+            fprintf('\njSim = %d, nA = %d\n',jSim,nA(jSim));
     end
     
     for iSim = 1:nSim
@@ -145,6 +148,8 @@ for jSim = 1:mSim
                     sim(jSim,iSim).flagDM = planner{jSim-1};
                     sim(jSim,iSim).flagComm = 1;
                 end
+            case 'nA'
+                sim(jSim,iSim).nAgent = nA(jSim);
         end
         
         %----------------------
@@ -187,7 +192,7 @@ for jSim = 1:mSim
             for iTarget = 1:sim(jSim,iSim).nTarget
                 sim(jSim,iSim).sensor(iAgent,iTarget) = ...
                     InitializeSensor(sim(jSim,iSim),iAgent,iTarget,   40,    0.9,  sim(jSim,iSim).agent(iAgent), sim(jSim,iSim).target(iTarget), diag([20^2,20^2,20^2]'), diag([5^2,(pi/18)^2]') );
-                % range | beta |                                                                      R              |       R_rangebear
+                                                                    % range | beta |                                                                      R              |       R_rangebear
             end
         end
         %----------------------
@@ -195,7 +200,7 @@ for jSim = 1:mSim
         %----------------------
         % communication structure
         for iAgent = 1:sim(jSim,iSim).nAgent
-            sim(jSim,iSim).comm(iAgent) = InitializeCommunication(iAgent,sim);
+            sim(jSim,iSim).comm(iAgent) = InitializeCommunication(iAgent,sim(jSim,iSim));
         end
         %----------------------
         
@@ -209,10 +214,10 @@ for jSim = 1:mSim
                 switch flagCondition
                     case 'nPt'
                         sim(jSim,iSim).filter(iAgent,iTarget) = InitializeFilter(sim(jSim,iSim),iAgent,iTarget,  xhat,  Phat,   diag([18^2,18^2,18^2]), nPt(jSim));
-                        %  xhat | Phat   |            Q         | nPt
+                                                                                                                %  xhat | Phat   |            Q         | nPt
                     otherwise
                         sim(jSim,iSim).filter(iAgent,iTarget) = InitializeFilter(sim(jSim,iSim),iAgent,iTarget,  xhat,  Phat,   diag([18^2,18^2,18^2]), nPt(1));
-                        %  xhat | Phat   |            Q         | nPt
+                                                                                                                %  xhat | Phat   |            Q         | nPt
                 end
             end
         end
@@ -225,21 +230,21 @@ for jSim = 1:mSim
             switch flagCondition
                 case 'nPt'
                     sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 3,  nT(2),  nPt(jSim), dRefPt(4), 100 );
-                    % dt | nT |     nPt    | dRefPt   | nSample
+                                                                                             % dt | nT |     nPt    | dRefPt   | nSample
                 case 'dRefPt'
                     sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 3,  nT(2),  nPt(1),    dRefPt(jSim), 100 );
-                    % dt | nT |     nPt    | dRefPt      | nSample
+                                                                                            % dt | nT |     nPt    | dRefPt      | nSample
                 case 'nSample'
                     sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 3,  nT(2),  nPt(1),    dRefPt(4), nSample(jSim) );
-                    % dt | nT |     nPt    | dRefPt      | nSample
+                                                                                            % dt | nT |     nPt    | dRefPt      | nSample
                 otherwise
                     switch flagCondition
                         case 'nT'
                             sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 10,  nT(jSim),  nPt(1), dRefPt(4), 5 );
-                            % dt |     nT   | nPt   | dRefPt   | nSample
+                                                                                                    % dt |     nT   | nPt   | dRefPt   | nSample
                         otherwise
                             sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 3,  nT(1),  nPt(1), dRefPt(4), 5 );
-                            % dt |   nT |    nPt | dRefPt   | nSample
+                                                                                                    % dt |   nT |    nPt | dRefPt   | nSample
                     end
             end
         end
@@ -293,7 +298,7 @@ for jSim = 1:mSim
                         % follow mean of a single target
                     case 'mean'
                         
-                        sim(jSim,iSim).planner(iAgent).actIdx = MoveToPoint(sim(jSim,iSim).planner(iAgent).PTset(iTarget), sim(jSim,iSim).agent(iAgent).s);
+                        sim(jSim,iSim).planner(iAgent).actIdx = MoveToPoint(sim(jSim,iSim).filter(iAgent,:), sim(jSim,iSim).agent(iAgent).s);
                         sim(jSim,iSim).planner(iAgent).input = sim(jSim,iSim).planner(iAgent).actionSet(:,sim(jSim,iSim).planner(iAgent).actIdx);
                         
                         
@@ -343,7 +348,9 @@ for jSim = 1:mSim
                         % AD-HOC: when the agent is close to the geofence so that all
                         % cost candidates are infinity, then go to the origin.
                         if min(sim(jSim,iSim).planner(iAgent).candidate.I) == inf
-                            sim(jSim,iSim).planner(iAgent).actIdx = MoveToPoint([0 0], sim(jSim,iSim).agent(iAgent).s);
+                            % mock filterSet.xhat (allocated as origin)
+                            filterSet.xhat = [0 0];
+                            sim(jSim,iSim).planner(iAgent).actIdx = MoveToPoint(filterSet, sim(jSim,iSim).agent(iAgent).s);
                         else
                             [~,sim(jSim,iSim).planner(iAgent).actIdx] = max(sim(jSim,iSim).planner(iAgent).candidate.I);
                         end
@@ -352,16 +359,6 @@ for jSim = 1:mSim
                         sim(jSim,iSim).planner(iAgent).I = sim(jSim,iSim).planner(iAgent).candidate.I(sim(jSim,iSim).planner(iAgent).actIdx);
                         sim(jSim,iSim).planner(iAgent).Hbefore = sim(jSim,iSim).planner(iAgent).candidate.Hbefore(:,sim(jSim,iSim).planner(iAgent).actIdx);
                         sim(jSim,iSim).planner(iAgent).Hafter = sim(jSim,iSim).planner(iAgent).candidate.Hafter(:,sim(jSim,iSim).planner(iAgent).actIdx);
-                        
-                        %                     sim(jSim,iSim).planner(iAgent).IRef = sim(jSim,iSim).planner(iAgent).candidate.IRef(sim(jSim,iSim).planner(iAgent).actIdx);
-                        %                     sim(jSim,iSim).planner(iAgent).HbeforeRef = sim(jSim,iSim).planner(iAgent).candidate.HbeforeRef(:,sim(jSim,iSim).planner(iAgent).actIdx);
-                        %                     sim(jSim,iSim).planner(iAgent).HafterRef = sim(jSim,iSim).planner(iAgent).candidate.HafterRef(:,sim(jSim,iSim).planner(iAgent).actIdx);
-                        %
-                        %                     % add computed information to analyze Monte-Carlo based approach
-                        %                     sim(jSim,iSim).planner(iAgent).Isum = sim(jSim,iSim).planner(iAgent).Isum + sim(jSim,iSim).planner(iAgent).I;
-                        %                     sim(jSim,iSim).planner(iAgent).HbeforeSum = sim(jSim,iSim).planner(iAgent).HbeforeSum + sim(jSim,iSim).planner(iAgent).Hbefore;
-                        %                     sim(jSim,iSim).planner(iAgent).HafterSum = sim(jSim,iSim).planner(iAgent).HafterSum + sim(jSim,iSim).planner(iAgent).Hafter;
-                        
                 end
                 
             end
@@ -582,7 +579,9 @@ switch flagCondition
     case 'commAware'
         PlotCommAwarePlanningResults(sim);
     case 'planner'
-        PlotPlanningResults(sim);
+        PlotPlanningResults(sim,'planner');
+    case 'nA'
+        PlotPlanningResults(sim,'nA');
 end
 
 if sim(jSim,iSim).flagLog
