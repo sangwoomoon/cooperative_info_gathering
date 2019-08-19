@@ -1,4 +1,4 @@
-function sim = InitializeSim(nAgent,nTarget,flagDM,flagComm,flagActComm,flagPdfCompute,flagLog,flagPlot, target, agent, sensor, filter)
+function sim = InitializeSim(nAgent,nTarget,flagDM,flagComm,flagActComm,flagPdfCompute,flagLog,flagPlot, target, agent, sensor, filter, jSim, iSim)
 
     sim.nAgent = nAgent;
     sim.nTarget = nTarget;
@@ -12,6 +12,8 @@ function sim = InitializeSim(nAgent,nTarget,flagDM,flagComm,flagActComm,flagPdfC
     sim.flagPdfCompute = flagPdfCompute; % 'uniform': uniformly discretized domain | 'cylinder': cylinder based computation w.r.t particle set
     sim.flagLog = flagLog;
     sim.flagPlot = flagPlot; % flag for the display of trajectories and particles evolution
+    
+    sim.id = [jSim,iSim]; % sim id tag
     
     % store property
     sim.flagAgent = agent;

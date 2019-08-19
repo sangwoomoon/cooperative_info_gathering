@@ -72,8 +72,8 @@ nt = 50;
 dt = 1;
 % --------------------------------------------------------------------
 
-
-% RandSeed = rng;
+% fix random
+rng(1);
 
 % make array of simulation structure
 for jSim = 1:mSim
@@ -87,7 +87,7 @@ for jSim = 1:mSim
         %----------------------
         % simulation structure
         % in order to allocate as the array of simulation
-        sim(jSim,iSim) = InitializeSim(   4,       1,     'MI',       1,           1,       'uniform',        0,         1,     'PosRF',  'unicycle',    'RF',   'PF'    );
+        sim(jSim,iSim) = InitializeSim(   4,       1,     'MI',       1,           1,       'uniform',        0,         1,     'PosRF',  'unicycle',    'RF',   'PF',     jSim,     iSim    );
                                     % nAgent | nTarget | flagDM | flagComm | flagActComm | flagPdfCompute | flagLog | flagPlot | target |  agent     | sensor   | filter
         
         % flagDM         ||   'random': random decision | 'MI': mutual information-based decision | 'mean': particle mean following
