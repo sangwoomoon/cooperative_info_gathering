@@ -1,10 +1,10 @@
 function actIdx = MoveToPoint(filterSet, agentPos)
 
 nTarget = length(filterSet);
-targetsPos = nan(length(filterSet.xhat),nTarget);
+targetsPos = nan(length(filterSet(1).xhat),nTarget);
 
 for iTarget = 1 : nTarget
-    targetsPos(:,iTarget) = filterSet.xhat;
+    targetsPos(:,iTarget) = filterSet(iTarget).xhat;
 end
 
 % take mean of targets' positions

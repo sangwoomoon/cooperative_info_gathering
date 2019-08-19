@@ -37,7 +37,8 @@ nA = [2 3 5 10];
 dRefPt = [1 5 10 25 50];
 nSample = [1 100 500 1000];
 commAware = [0 1];
-planner = {'random','mean','MI','MI_comm'};
+planner = {'MI_comm'};
+% planner = {'random','mean','MI','MI_comm'};
 
 % comparison setting
 flagCondition  = 'planner';
@@ -68,7 +69,7 @@ end
 
 % --------------------------------------------------------------------
 % time parameters
-nt = 50;
+nt = 200;
 dt = 1;
 % --------------------------------------------------------------------
 
@@ -141,12 +142,16 @@ for jSim = 1:mSim
                 % with respect to planning w/ comm vs. w/o comm
                 sim(jSim,iSim).flagComm = commAware(jSim);
             case 'planner'
-                sim(jSim,iSim).flagDM = planner{jSim};
-                if jSim == 3
-                    sim(jSim,iSim).flagComm = 0;
-                elseif jSim == 4
-                    sim(jSim,iSim).flagDM = planner{jSim-1};
-                    sim(jSim,iSim).flagComm = 1;
+                switch planner{jSim}
+                    case 'MI'
+                        sim(jSim,iSim).flagDM = 'MI';
+                        sim(jSim,iSim).flagComm = 0;
+                    case 'MI_comm'
+                        sim(jSim,iSim).flagDM = 'MI';
+                        sim(jSim,iSim).flagComm = 1;
+                    otherwise
+                        sim(jSim,iSim).flagDM = planner{jSim};
+                        sim(jSim,iSim).flagComm = 1;
                 end
             case 'nA'
                 sim(jSim,iSim).nAgent = nA(jSim);
@@ -529,15 +534,14 @@ for jSim = 1:mSim
                     end
                     
                     
-                    % resample particle
-                    [sim(jSim,iSim).filter(iAgent,iTarget).pt,sim(jSim,iSim).filter(iAgent,iTarget).w] = ResampleParticle(sim(jSim,iSim).filter(iAgent,iTarget).pt,sim(jSim,iSim).filter(iAgent,iTarget).w,sim(jSim,iSim).field);
-                    
                     % particle filter info update/store
                     sim(jSim,iSim).filter(iAgent,iTarget).xhat = (sim(jSim,iSim).filter(iAgent,iTarget).w*sim(jSim,iSim).filter(iAgent,iTarget).pt')';
                     sim(jSim,iSim).filter(iAgent,iTarget).hist.pt(:,:,iClock+1) = sim(jSim,iSim).filter(iAgent,iTarget).pt;
                     sim(jSim,iSim).filter(iAgent,iTarget).hist.w(:,:,iClock+1) = sim(jSim,iSim).filter(iAgent,iTarget).w;
                     sim(jSim,iSim).filter(iAgent,iTarget).hist.xhat(:,iClock+1) = sim(jSim,iSim).filter(iAgent,iTarget).xhat;
                     
+                    % resample particle
+                    [sim(jSim,iSim).filter(iAgent,iTarget).pt,sim(jSim,iSim).filter(iAgent,iTarget).w] = ResampleParticle(sim(jSim,iSim).filter(iAgent,iTarget).pt,sim(jSim,iSim).filter(iAgent,iTarget).w,sim(jSim,iSim).field);
                     
                     % update planner initial info
                     sim(jSim,iSim).planner(iAgent).PTset(iTarget).xhat = sim(jSim,iSim).filter(iAgent,iTarget).xhat;

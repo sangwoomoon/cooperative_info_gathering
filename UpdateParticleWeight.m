@@ -12,13 +12,13 @@ for iAgent = 1:nAgent
             case 'PosLinear'
                 prob = LinearSensorProb(measNow(:,iAgent),ptNow,paramSensor);
             case 'range_bear'
-                prob = RangeBearProb(measNow(:,iAgent),paramAgent,ptNow,paramSensor);
+                prob = RangeBearProb(measNow(:,iAgent),paramAgent(iAgent),ptNow,paramSensor);
             case 'bear'
-                prob = BearProb(measNow(:,iAgent),paramAgent,ptNow,paramSensor);
+                prob = BearProb(measNow(:,iAgent),paramAgent(iAgent),ptNow,paramSensor);
             case 'detection'
-                prob = BinarySensorProb(measNow(:,iAgent),paramAgent,ptNow,paramSensor);
+                prob = BinarySensorProb(measNow(:,iAgent),paramAgent(iAgent),ptNow,paramSensor);
             case 'RF'
-                prob = RFProb(measNow(:,iAgent),paramAgent,ptNow,paramSensor);
+                prob = RFProb(measNow(:,iAgent),paramAgent(iAgent),ptNow,paramSensor);
         end
         
         
