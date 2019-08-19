@@ -4,26 +4,22 @@ clear;
 load('sim_demo.mat');
 close all;
 
+B2G = [1 0 0; 0 0 1; 0 1 0];
+B2R = [0 0 1; 0 1 0; 1 0 0];
+
 jSim = 1; % take one condition of simulations (1: random, 2: mean, 3: MI, 4: MI_comm)
 iSim = 1; % take one of simulations
 bMovie = 0; % movie making flag (as gif)
-fAgent = 1; % agent number to see communication & filtering results
+fAgent = 4; % agent number to see communication & filtering results
 
 %----------------------
 % simulation plotting initialization:
-% Figure 1: agent/target moving
-sim(jSim,iSim).plot.fieldView = figure(1); hold on;
-% Figure 2+ (# of agents): estimation. particle evolution
-for iAgent = 1:sim(jSim,iSim).nAgent
-    % ONLY AGENT 1 PLOTS ESTIMATION RESULT BECAUSE OF HUGE PLOTTING SPACE!!
-    if iAgent == fAgent
-        sim(jSim,iSim).plot.particle(iAgent) = figure(1+iAgent); hold on;
-    end
-end
+% Figure 1: agent/target moving, comm status & filtering results based on by a picked agent
+sim(jSim,iSim).plot.fieldView = figure(1); hold on;    
 %----------------------
 
 %----------------------
-% field plotting setting
+% plotting setting
 figure(1)
 set(gca,'xlim',[sim(jSim,iSim).field.boundary(1),sim(jSim,iSim).field.boundary(2)],...
     'ylim',[sim(jSim,iSim).field.boundary(3),sim(jSim,iSim).field.boundary(4)])
@@ -46,6 +42,11 @@ tailWingData = [-15 4; -14 4; -13 0; -14 -4; -15 -4]'*scale;
 for iAgent = 1:sim(jSim,iSim).nAgent
 
     % agent position setting
+    if iAgent == fAgent
+        % change color from bluish to greenish (pick-notation)
+        sim(jSim,iSim).agent(iAgent).plot.clr = (B2G*sim(jSim,iSim).agent(iAgent).plot.clr')';
+    end
+    
     sim(jSim,iSim).agent(iAgent).plot.mainWing = ...
         patch(mainWingData(1,:),mainWingData(2,:),sim(jSim,iSim).agent(iAgent).plot.clr);
     sim(jSim,iSim).agent(iAgent).plot.fuselarge = ...
@@ -61,9 +62,15 @@ for iAgent = 1:sim(jSim,iSim).nAgent
     tailWingDataRot = R*tailWingData;
     
     % deploy agents
-    set(sim(jSim,iSim).agent(iAgent).plot.mainWing,'Xdata',sim(jSim,iSim).agent(iAgent).hist.s(1,1)+mainWingDataRot(1,:),'Ydata',sim(jSim,iSim).agent(iAgent).hist.s(2,1)+mainWingDataRot(2,:));
-    set(sim(jSim,iSim).agent(iAgent).plot.fuselarge,'Xdata',sim(jSim,iSim).agent(iAgent).hist.s(1,1)+fuselargeDataRot(1,:),'Ydata',sim(jSim,iSim).agent(iAgent).hist.s(2,1)+fuselargeDataRot(2,:));
-    set(sim(jSim,iSim).agent(iAgent).plot.tailWing,'Xdata',sim(jSim,iSim).agent(iAgent).hist.s(1,1)+tailWingDataRot(1,:),'Ydata',sim(jSim,iSim).agent(iAgent).hist.s(2,1)+tailWingDataRot(2,:));
+    set(sim(jSim,iSim).agent(iAgent).plot.mainWing,...
+        'Xdata',sim(jSim,iSim).agent(iAgent).hist.s(1,1)+mainWingDataRot(1,:),'Ydata',sim(jSim,iSim).agent(iAgent).hist.s(2,1)+mainWingDataRot(2,:),...
+        'faceColor',sim(jSim,iSim).agent(iAgent).plot.clr);
+    set(sim(jSim,iSim).agent(iAgent).plot.fuselarge,...
+        'Xdata',sim(jSim,iSim).agent(iAgent).hist.s(1,1)+fuselargeDataRot(1,:),'Ydata',sim(jSim,iSim).agent(iAgent).hist.s(2,1)+fuselargeDataRot(2,:),...
+        'faceColor',sim(jSim,iSim).agent(iAgent).plot.clr);
+    set(sim(jSim,iSim).agent(iAgent).plot.tailWing,...
+        'Xdata',sim(jSim,iSim).agent(iAgent).hist.s(1,1)+tailWingDataRot(1,:),'Ydata',sim(jSim,iSim).agent(iAgent).hist.s(2,1)+tailWingDataRot(2,:),...
+        'faceColor',sim(jSim,iSim).agent(iAgent).plot.clr);
     set(gca,'xlim',[sim(jSim,iSim).field.boundary(1),sim(jSim,iSim).field.boundary(2)],...
         'ylim',[sim(jSim,iSim).field.boundary(3),sim(jSim,iSim).field.boundary(4)])
     sim(jSim,iSim).agent(iAgent).plot.id = ...
@@ -97,21 +104,8 @@ for iAgent = 1:sim(jSim,iSim).nAgent
     
     for iTarget = 1:sim(jSim,iSim).nTarget
         
-        % particle scatter plot setting
-        % AGENT 1 ONLY VISUALIZES PARTICLE BECAUSE OF HUGE PLOTTING SPACE!
         if iAgent == fAgent
-            figure(1+iAgent)
-            sim(jSim,iSim).plot.particle(iAgent).Units = 'inches';
-            sim(jSim,iSim).plot.particle(iAgent).OuterPosition = [0 0 2*ceil(sim(jSim,iSim).nTarget/2) 2*(sim(jSim,iSim).nTarget<2)+4*(sim(jSim,iSim).nTarget>=2)];
-
-            subplot(sim(jSim,iSim).filter(iAgent,iTarget).plot.location.col,...
-                sim(jSim,iSim).filter(iAgent,iTarget).plot.location.row,...
-                sim(jSim,iSim).filter(iAgent,iTarget).plot.location.num),
-            set(gca,'xlim',[sim(jSim,iSim).field.boundary(1),sim(jSim,iSim).field.boundary(2)],...
-                'ylim',[sim(jSim,iSim).field.boundary(3),sim(jSim,iSim).field.boundary(4)])
-            set(sim(jSim,iSim).plot.particle(iAgent),'color','w')
-            xlabel('East [m]'); ylabel('North [m]'); axis equal; hold on;
-            
+            figure(1)
             % actual target plot setting for comparison
             sim(jSim,iSim).filter(iAgent,iTarget).plot.targetPos = ...
                 plot(sim(jSim,iSim).target(iTarget).hist.x(1,1),sim(jSim,iSim).target(iTarget).hist.x(2,1),...
@@ -163,10 +157,30 @@ for iClock = 2:sim(jSim,iSim).clock.nt+1
         fuselargeDataRot = R*fuselargeData;
         tailWingDataRot = R*tailWingData;
         
+        if iAgent ~= fAgent
+            if iClock == 2
+                if sim(jSim,iSim).comm(fAgent).hist.bConnect(iAgent,iClock) == 0
+                    % change color from bluish to redish (non-neighbor notation)
+                    sim(jSim,iSim).agent(iAgent).plot.clr = (B2R*sim(jSim,iSim).agent(iAgent).plot.clr')';
+                end
+            else
+                if sim(jSim,iSim).comm(fAgent).hist.bConnect(iAgent,iClock) ~= sim(jSim,iSim).comm(fAgent).hist.bConnect(iAgent,iClock-1)
+                    % change color from bluish to redish or vise versa (neighbor:blue, non-neighbor: red)
+                    sim(jSim,iSim).agent(iAgent).plot.clr = (B2R*sim(jSim,iSim).agent(iAgent).plot.clr')';
+                end
+            end
+        end
+        
         % agents update
-        set(sim(jSim,iSim).agent(iAgent).plot.mainWing,'Xdata',sim(jSim,iSim).agent(iAgent).hist.s(1,iClock)+mainWingDataRot(1,:),'Ydata',sim(jSim,iSim).agent(iAgent).hist.s(2,iClock)+mainWingDataRot(2,:));
-        set(sim(jSim,iSim).agent(iAgent).plot.fuselarge,'Xdata',sim(jSim,iSim).agent(iAgent).hist.s(1,iClock)+fuselargeDataRot(1,:),'Ydata',sim(jSim,iSim).agent(iAgent).hist.s(2,iClock)+fuselargeDataRot(2,:));
-        set(sim(jSim,iSim).agent(iAgent).plot.tailWing,'Xdata',sim(jSim,iSim).agent(iAgent).hist.s(1,iClock)+tailWingDataRot(1,:),'Ydata',sim(jSim,iSim).agent(iAgent).hist.s(2,iClock)+tailWingDataRot(2,:));
+        set(sim(jSim,iSim).agent(iAgent).plot.mainWing,...
+            'Xdata',sim(jSim,iSim).agent(iAgent).hist.s(1,iClock)+mainWingDataRot(1,:),'Ydata',sim(jSim,iSim).agent(iAgent).hist.s(2,iClock)+mainWingDataRot(2,:),...
+            'faceColor',sim(jSim,iSim).agent(iAgent).plot.clr);
+        set(sim(jSim,iSim).agent(iAgent).plot.fuselarge,...
+            'Xdata',sim(jSim,iSim).agent(iAgent).hist.s(1,iClock)+fuselargeDataRot(1,:),'Ydata',sim(jSim,iSim).agent(iAgent).hist.s(2,iClock)+fuselargeDataRot(2,:),...
+            'faceColor',sim(jSim,iSim).agent(iAgent).plot.clr);
+        set(sim(jSim,iSim).agent(iAgent).plot.tailWing,...
+            'Xdata',sim(jSim,iSim).agent(iAgent).hist.s(1,iClock)+tailWingDataRot(1,:),'Ydata',sim(jSim,iSim).agent(iAgent).hist.s(2,iClock)+tailWingDataRot(2,:),...
+            'faceColor',sim(jSim,iSim).agent(iAgent).plot.clr);
         set(gca,'xlim',[sim(jSim,iSim).field.boundary(1),sim(jSim,iSim).field.boundary(2)],...
             'ylim',[sim(jSim,iSim).field.boundary(3),sim(jSim,iSim).field.boundary(4)])
         set(sim(jSim,iSim).agent(iAgent).plot.id,'position',[sim(jSim,iSim).agent(iAgent).hist.s(1,iClock)+offset,sim(jSim,iSim).agent(iAgent).hist.s(2,iClock)+offset]);
@@ -179,7 +193,7 @@ for iClock = 2:sim(jSim,iSim).clock.nt+1
             % AGENT 1 ONLY VISUALIZES PARTICLE INFO BECAUSE OF HUGE
             % PLOTTING SPACE!
             if iAgent == fAgent
-                figure(1+iAgent)
+                figure(1)
                 subplot(sim(jSim,iSim).filter(iAgent,iTarget).plot.location.col,...
                     sim(jSim,iSim).filter(iAgent,iTarget).plot.location.row,...
                     sim(jSim,iSim).filter(iAgent,iTarget).plot.location.num)
