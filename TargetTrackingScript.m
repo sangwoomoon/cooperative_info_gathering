@@ -87,7 +87,7 @@ for jSim = 1:mSim
         %----------------------
         % simulation structure
         % in order to allocate as the array of simulation
-        sim(jSim,iSim) = InitializeSim(   4,       1,     'MI',       1,           1,       'uniform',        0,         1,     'Pos',  'unicycle',    'bear',   'PF'    );
+        sim(jSim,iSim) = InitializeSim(   4,       1,     'MI',       1,           1,       'uniform',        0,         1,     'PosRF',  'unicycle',    'RF',   'PF'    );
                                     % nAgent | nTarget | flagDM | flagComm | flagActComm | flagPdfCompute | flagLog | flagPlot | target |  agent     | sensor   | filter
         
         % flagDM         ||   'random': random decision | 'MI': mutual information-based decision | 'mean': particle mean following
@@ -220,7 +220,7 @@ for jSim = 1:mSim
                                 % Target Localization with a Communication-Aware Unmanned
                                 % Aircraft System, Stachura, Maciej and Frew, Eric W.
                                 Phat = diag([2e4,2e4,1e-7,2e-4]);
-                                Q = diag([10e-2 10e-2 5e-20 5e-9]);
+                                Q = diag([10e2 10e2 5e-20 5e-9]);
                                 sim(jSim,iSim).filter(iAgent,iTarget) = InitializeFilter(sim(jSim,iSim),iAgent,iTarget,  xhat,  Phat,  Q, nPt(jSim));
                                                                                                                       %  xhat | Phat|  Q | nPt
                             otherwise
@@ -236,7 +236,7 @@ for jSim = 1:mSim
                                 % Target Localization with a Communication-Aware Unmanned
                                 % Aircraft System, Stachura, Maciej and Frew, Eric W.
                                 Phat = diag([2e4,2e4,1e-7,2e-4]);
-                                Q = diag([10e-2 10e-2 5e-20 5e-9]);
+                                Q = diag([10e2 10e2 5e-20 5e-9]);
                                 sim(jSim,iSim).filter(iAgent,iTarget) = InitializeFilter(sim(jSim,iSim),iAgent,iTarget,  xhat,  Phat,   Q,  nPt(1));
                                                                                                                       %  xhat | Phat  | Q | nPt
                             otherwise
