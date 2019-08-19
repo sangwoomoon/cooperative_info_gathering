@@ -17,6 +17,8 @@ for iAgent = 1:nAgent
                 prob = BearProb(measNow(:,iAgent),paramAgent,ptNow,paramSensor);
             case 'detection'
                 prob = BinarySensorProb(measNow(:,iAgent),paramAgent,ptNow,paramSensor);
+            case 'RF'
+                prob = RFProb(measNow(:,iAgent),paramAgent,ptNow,paramSensor);
         end
         
         

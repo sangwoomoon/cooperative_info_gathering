@@ -16,6 +16,8 @@ switch option
                 pdf = BearProb(meas,paramAgent,paramPdf.refPt,paramSensor);
             case 'detection'
                 pdf = BinarySensorProb(meas,paramAgent,paramPdf.refPt,paramSensor);
+            case 'RF'
+                pdf = RFProb(meas,paramAgent,paramPdf.refPt,paramSensor);
         end
         
         pdfSizeTemp = size(paramPdf.refPt);

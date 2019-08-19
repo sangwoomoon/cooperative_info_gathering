@@ -9,6 +9,8 @@ switch property
         meas = BearMeasurement(targetState,agentState,sensorParam);
     case 'detection'
         meas = BinarySensorMeasurement(targetState,agentState,sensorParam);
+    case 'RF'
+        meas = RFMeasurement(targetState,agentState,sensorParam);
 end
 
 end

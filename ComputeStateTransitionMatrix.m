@@ -5,5 +5,8 @@ switch property
         F = eye(length(targetState));
     case 'PosVel'
         
+    case 'PosRF'
+        F = eye(length(targetState));
+        
 end
 

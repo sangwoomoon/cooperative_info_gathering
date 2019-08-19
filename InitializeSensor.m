@@ -1,4 +1,4 @@
-function sensor = InitializeSensor(sim, iAgent, iTarget, regionRadius, detectBeta, agent, target, R, RrangeBear)
+function sensor = InitializeSensor(sim, iAgent, iTarget, regionRadius, detectBeta, agent, target, Rpos, RrangeBear, Rrf )
 
 sensor.id = [iAgent,iTarget];
 property = sim.flagSensor;
@@ -12,7 +12,7 @@ switch property
         sensor.hist.y(:,1) = sensor.y;
         
         sensor.param.H = eye(dimension); % directly observe (linear/gaussian)
-        sensor.param.R = R(1:dimension,1:dimension);
+        sensor.param.Rpos = Rpos(1:dimension,1:dimension);
         
         if flagPlot
             if dimension == 2 % 2D     
@@ -36,6 +36,14 @@ switch property
         sensor.hist.y(:,1) = sensor.y;
         
         sensor.param.R = RrangeBear(2,2);
+        
+        
+    case 'RF'
+        
+        sensor.y = nan;
+        sensor.hist.y(:,1) = sensor.y;
+        
+        sensor.param.R = Rrf;        
         
     
     case 'detection'

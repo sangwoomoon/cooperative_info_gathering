@@ -7,5 +7,7 @@ switch property
         H = ComputeRangeBearMeasMatrix(agentState,targetState);
     case 'bear'
         H = ComputeBearMeasMatrix(agentState,targetState);
+    case 'RF'
+        H = ComputeRFMeasMatrix(agentState,targetState);
 end
 

@@ -40,7 +40,7 @@ commAware = [0 1];
 planner = {'random','mean','MI','MI_comm'};
 
 % comparison setting
-flagCondition  = 'nA';
+flagCondition  = 'planner';
 
 % simulation by changing independent condition
 switch flagCondition
@@ -95,7 +95,7 @@ for jSim = 1:mSim
         % flagPdfCompute ||   'uniform': uniformly discretized domain | 'cylinder': cylinder based computation w.r.t particle set
         % flagLog        ||   0: skip logging | 1: log data
         % flagPlot       ||   flag for the display of trajectories and particles evolution
-        % target         ||   'Pos': position only | 'PosVel': position and velocity
+        % target         ||   'Pos': position only | 'PosVel': position and velocity | 'PosRF': position with RF properties (referred by Maciej's JCSD paper)
         % sensor         ||   'linear', 'range_bear', 'detection', 'bear', 'RF'
         %----------------------
         
@@ -191,8 +191,8 @@ for jSim = 1:mSim
             % make heterogeneous sensor
             for iTarget = 1:sim(jSim,iSim).nTarget
                 sim(jSim,iSim).sensor(iAgent,iTarget) = ...
-                    InitializeSensor(sim(jSim,iSim),iAgent,iTarget,   40,    0.9,  sim(jSim,iSim).agent(iAgent), sim(jSim,iSim).target(iTarget), diag([20^2,20^2,20^2]'), diag([5^2,(pi/18)^2]') );
-                                                                    % range | beta |                                                                      R              |       R_rangebear
+                    InitializeSensor(sim(jSim,iSim),iAgent,iTarget,   40,    0.9,  sim(jSim,iSim).agent(iAgent), sim(jSim,iSim).target(iTarget), diag([20^2,20^2,20^2]'), diag([5^2,(pi/18)^2]'),  9 );
+                                                                    % range | beta |                                                                      R              |       R_rangebear    |  R_rf
             end
         end
         %----------------------
@@ -213,11 +213,37 @@ for jSim = 1:mSim
                 
                 switch flagCondition
                     case 'nPt'
-                        sim(jSim,iSim).filter(iAgent,iTarget) = InitializeFilter(sim(jSim,iSim),iAgent,iTarget,  xhat,  Phat,   diag([18^2,18^2,18^2]), nPt(jSim));
-                                                                                                                %  xhat | Phat   |            Q         | nPt
+                        
+                        switch sim(jSim,iSim).flagTarget
+                            case 'PosRF'
+                                % based on reference, "Cooperative
+                                % Target Localization with a Communication-Aware Unmanned
+                                % Aircraft System, Stachura, Maciej and Frew, Eric W.
+                                Phat = diag([2e4,2e4,1e-7,2e-4]);
+                                Q = diag([10e-2 10e-2 5e-20 5e-9]);
+                                sim(jSim,iSim).filter(iAgent,iTarget) = InitializeFilter(sim(jSim,iSim),iAgent,iTarget,  xhat,  Phat,  Q, nPt(jSim));
+                                                                                                                      %  xhat | Phat|  Q | nPt
+                            otherwise
+                                sim(jSim,iSim).filter(iAgent,iTarget) = InitializeFilter(sim(jSim,iSim),iAgent,iTarget,  xhat,  Phat,   diag([18^2,18^2,18^2]), nPt(jSim));
+                                                                                                                        %  xhat | Phat   |            Q         | nPt
+                        end
+                        
                     otherwise
-                        sim(jSim,iSim).filter(iAgent,iTarget) = InitializeFilter(sim(jSim,iSim),iAgent,iTarget,  xhat,  Phat,   diag([18^2,18^2,18^2]), nPt(1));
-                                                                                                                %  xhat | Phat   |            Q         | nPt
+                        
+                        switch sim(jSim,iSim).flagTarget
+                            case 'PosRF'
+                                % based on reference, "Cooperative
+                                % Target Localization with a Communication-Aware Unmanned
+                                % Aircraft System, Stachura, Maciej and Frew, Eric W.
+                                Phat = diag([2e4,2e4,1e-7,2e-4]);
+                                Q = diag([10e-2 10e-2 5e-20 5e-9]);
+                                sim(jSim,iSim).filter(iAgent,iTarget) = InitializeFilter(sim(jSim,iSim),iAgent,iTarget,  xhat,  Phat,   Q,  nPt(1));
+                                                                                                                      %  xhat | Phat  | Q | nPt
+                            otherwise
+                                sim(jSim,iSim).filter(iAgent,iTarget) = InitializeFilter(sim(jSim,iSim),iAgent,iTarget,  xhat,  Phat,   diag([18^2,18^2,18^2]), nPt(1));
+                                                                                                                        %  xhat | Phat   |            Q         | nPt
+                        end
+                        
                 end
             end
         end
@@ -433,6 +459,8 @@ for jSim = 1:mSim
                         case 'range_bear'
                             
                         case 'bear'
+                            
+                        case 'RF'
                             
                         case 'detection' % sensor coverage plot
                             [sim(jSim,iSim).sensor(iAgent,1).plot.data.x,sim(jSim,iSim).sensor(iAgent,1).plot.data.y,~] = ...

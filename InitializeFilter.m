@@ -5,6 +5,7 @@ filter.id = [iAgent, iTarget];
 flagFilter = sim.flagFilter;
 flagPlot = sim.flagPlot;
 flagSensor = sim.flagSensor;
+flagTarget = sim.flagTarget;
 
 nTarget = sim.nTarget;
 
@@ -156,15 +157,28 @@ switch flagFilter
         if iAgent == 1
             for iPt = 1 : filter.nPt
                 
-                switch dimension
-                    case 2 % 2D
-%                        filter.pt(:,iPt) = mvnrnd(xhat,Phat(1:2,1:2))';
-                         filter.pt(:,iPt) = ...
-                             [field.bufferZone(1)+rand()*field.zoneLength(1) field.bufferZone(3)+rand()*field.zoneLength(2)]';
-                    case 3 % 3D
-%                        filter.pt(:,iPt) = mvnrnd(xhat,Phat)';
-                         filter.pt(:,iPt) = ...
-                             [field.bufferZone(1)+rand()*field.zoneLength(1) field.bufferZone(3)+rand()*field.zoneLength(2) field.bufferZone(5)+rand()*field.zoneLength(3)]';
+                switch flagTarget
+                    case 'PosRF'
+                        switch dimension
+                            case 4 % 2D with RF info
+                                filter.pt(:,iPt) = ...
+                                    [field.bufferZone(1)+rand()*field.zoneLength(1) field.bufferZone(3)+rand()*field.zoneLength(2) mvnrnd(1.81e-6,Q(3,3)) mvnrnd(1.2,Q(4,4))]';
+                            case 5 % 3D with RF info
+                                
+                        end
+                    otherwise
+                        
+                        switch dimension
+                            case 2 % 2D
+                                %                        filter.pt(:,iPt) = mvnrnd(xhat,Phat(1:2,1:2))';
+                                filter.pt(:,iPt) = ...
+                                    [field.bufferZone(1)+rand()*field.zoneLength(1) field.bufferZone(3)+rand()*field.zoneLength(2)]';
+                            case 3 % 3D
+                                %                        filter.pt(:,iPt) = mvnrnd(xhat,Phat)';
+                                filter.pt(:,iPt) = ...
+                                    [field.bufferZone(1)+rand()*field.zoneLength(1) field.bufferZone(3)+rand()*field.zoneLength(2) field.bufferZone(5)+rand()*field.zoneLength(3)]';
+                        end
+                        
                 end
                     
             end
@@ -173,11 +187,22 @@ switch flagFilter
         end
         
         filter.param.F = target.param.F;
-        switch dimension
-            case 2
-                filter.param.Q = Q(1:2,1:2);
-            case 3
-                filter.param.Q = Q;
+        switch flagTarget
+            case 'PosRF'
+                switch dimension
+                    case 4 % 2D with RF info
+                        filter.param.Q = Q;
+                    case 5 % 3D with RF info
+                        
+                end
+            otherwise
+                
+                switch dimension
+                    case 2
+                        filter.param.Q = Q(1:2,1:2);
+                    case 3
+                        filter.param.Q = Q;
+                end
         end
         
         switch flagSensor
@@ -186,6 +211,8 @@ switch flagFilter
             case 'range_bear'
                 filter.param.R = sensor.param.R;
             case 'bear'
+                filter.param.R = sensor.param.R;
+            case 'RF'
                 filter.param.R = sensor.param.R;
         end
         
@@ -223,45 +250,87 @@ switch flagFilter
                 subplot(filter.plot.location.col,...
                     filter.plot.location.row,...
                     filter.plot.location.num),
-                
-                switch dimension
-                    case 2 % 2D
+                switch flagTarget
+                    case 'PosRF'
                         
-                        set(gca,'xlim',[field.boundary(1),field.boundary(2)],...
-                            'ylim',[field.boundary(3),field.boundary(4)])
-                        xlabel('East [m]'); ylabel('North [m]'); axis equal; hold on;
+                        switch dimension
+                            case 4 % 2D with RF info
+                                
+                                set(gca,'xlim',[field.boundary(1),field.boundary(2)],...
+                                    'ylim',[field.boundary(3),field.boundary(4)])
+                                xlabel('East [m]'); ylabel('North [m]'); axis equal; hold on;
+                                
+                                % actual target plot setting for comparison
+                                filter.plot.targetPos = ...
+                                    plot(target.x(1),target.x(2),...
+                                    target.plot.marker,'LineWidth',2,'color',target.plot.clr);
+                                filter.plot.targetId = ...
+                                    text(target.x(1),target.x(2),...
+                                    sim.plot.targetID(iTarget));
+                                
+                                % particle plot
+                                filter.plot.pt = ...
+                                    scatter(filter.pt(1,:),filter.pt(2,:),10,filter.w,'filled');
+                                
+                            case 5 % 3D with RF info
+                                
+                                set(gca,'xlim',[field.boundary(1),field.boundary(2)],...
+                                    'ylim',[field.boundary(3),field.boundary(4)],...
+                                    'zlim',[field.boundary(5),field.boundary(6)])
+                                xlabel('East [m]'); ylabel('North [m]'); zlabel('Altitude [m]'); hold on; view(40,20);
+                                
+                                % actual target plot setting for comparison
+                                filter.plot.targetPos = ...
+                                    plot3(target.x(1),target.x(2),target.x(3),...
+                                    target.plot.marker,'LineWidth',2,'color',target.plot.clr);
+                                filter.plot.targetId = ...
+                                    text(target.x(1),target.x(2),target.x(3),...
+                                    sim.plot.targetID(iTarget));
+                                
+                                % particle plot
+                                filter.plot.pt = ...
+                                    scatter3(filter.pt(1,:),filter.pt(2,:),filter.pt(3,:),10,filter.w,'filled');
+                        end
                         
-                        % actual target plot setting for comparison
-                        filter.plot.targetPos = ...
-                            plot(target.x(1),target.x(2),...
-                            target.plot.marker,'LineWidth',2,'color',target.plot.clr);
-                        filter.plot.targetId = ...
-                            text(target.x(1),target.x(2),...
-                            sim.plot.targetID(iTarget));
-                        
-                        % particle plot
-                        filter.plot.pt = ...
-                            scatter(filter.pt(1,:),filter.pt(2,:),10,filter.w,'filled');
-                        
-                    case 3 % 3D
-
-                        set(gca,'xlim',[field.boundary(1),field.boundary(2)],...
-                            'ylim',[field.boundary(3),field.boundary(4)],...
-                            'zlim',[field.boundary(5),field.boundary(6)])
-                        xlabel('East [m]'); ylabel('North [m]'); zlabel('Altitude [m]'); hold on; view(40,20);
-                        
-                        % actual target plot setting for comparison
-                        filter.plot.targetPos = ...
-                            plot3(target.x(1),target.x(2),target.x(3),...
-                            target.plot.marker,'LineWidth',2,'color',target.plot.clr);
-                        filter.plot.targetId = ...
-                            text(target.x(1),target.x(2),target.x(3),...
-                            sim.plot.targetID(iTarget));
-                        
-                        % particle plot
-                        filter.plot.pt = ...
-                            scatter3(filter.pt(1,:),filter.pt(2,:),filter.pt(3,:),10,filter.w,'filled');
-                        
+                    otherwise
+                        switch dimension
+                            case 2 % 2D
+                                
+                                set(gca,'xlim',[field.boundary(1),field.boundary(2)],...
+                                    'ylim',[field.boundary(3),field.boundary(4)])
+                                xlabel('East [m]'); ylabel('North [m]'); axis equal; hold on;
+                                
+                                % actual target plot setting for comparison
+                                filter.plot.targetPos = ...
+                                    plot(target.x(1),target.x(2),...
+                                    target.plot.marker,'LineWidth',2,'color',target.plot.clr);
+                                filter.plot.targetId = ...
+                                    text(target.x(1),target.x(2),...
+                                    sim.plot.targetID(iTarget));
+                                
+                                % particle plot
+                                filter.plot.pt = ...
+                                    scatter(filter.pt(1,:),filter.pt(2,:),10,filter.w,'filled');
+                                
+                            case 3 % 3D
+                                
+                                set(gca,'xlim',[field.boundary(1),field.boundary(2)],...
+                                    'ylim',[field.boundary(3),field.boundary(4)],...
+                                    'zlim',[field.boundary(5),field.boundary(6)])
+                                xlabel('East [m]'); ylabel('North [m]'); zlabel('Altitude [m]'); hold on; view(40,20);
+                                
+                                % actual target plot setting for comparison
+                                filter.plot.targetPos = ...
+                                    plot3(target.x(1),target.x(2),target.x(3),...
+                                    target.plot.marker,'LineWidth',2,'color',target.plot.clr);
+                                filter.plot.targetId = ...
+                                    text(target.x(1),target.x(2),target.x(3),...
+                                    sim.plot.targetID(iTarget));
+                                
+                                % particle plot
+                                filter.plot.pt = ...
+                                    scatter3(filter.pt(1,:),filter.pt(2,:),filter.pt(3,:),10,filter.w,'filled');
+                        end
                 end
                 
             end

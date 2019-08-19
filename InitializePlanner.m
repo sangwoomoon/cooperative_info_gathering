@@ -4,6 +4,7 @@ D2R = pi/180;
 
 nAgent = sim.nAgent;
 nTarget = sim.nTarget;
+flagTarget = sim.flagTarget;
 flagComm = sim.flagComm;
 flagSensor = sim.flagSensor;
 flagFilter = sim.flagFilter;
@@ -30,7 +31,9 @@ switch flagSensor
     case 'range_bear'
         [planner.meas,planner.measNum,planner.measSetNum,planner.measSet] = GenerateOutcomeProfile(1,planner.param.clock.nT);         
     case 'bear'
-        [planner.meas,planner.measNum,planner.measSetNum,planner.measSet] = GenerateOutcomeProfile(1,planner.param.clock.nT); 
+        [planner.meas,planner.measNum,planner.measSetNum,planner.measSet] = GenerateOutcomeProfile(1,planner.param.clock.nT);
+    case 'RF'
+        [planner.meas,planner.measNum,planner.measSetNum,planner.measSet] = GenerateOutcomeProfile(1,planner.param.clock.nT);
     case 'detection'
         [planner.meas,planner.measNum,planner.measSetNum,planner.measSet] = GenerateOutcomeProfile([0 1],planner.param.clock.nT);        
 end
@@ -110,10 +113,20 @@ planner.hist.HbeforeRef = nan(planner.param.clock.nT,1);
 planner.hist.HafterRef = nan(planner.param.clock.nT,1);
 
 % pdf parameter initialization
-planner.param.pdf.dRefPt = dRefPt;
-[planner.param.pdf.refPt(1,:,:), planner.param.pdf.refPt(2,:,:)] = ...
-    meshgrid(field.boundary(1):planner.param.pdf.dRefPt:field.boundary(2),...
-    field.boundary(3):planner.param.pdf.dRefPt:field.boundary(4));
+switch flagTarget
+    case 'PosRF'
+        planner.param.pdf.dRefPt = dRefPt;
+        [planner.param.pdf.refPt(1,:,:), planner.param.pdf.refPt(2,:,:)] = ...
+            meshgrid(field.boundary(1):planner.param.pdf.dRefPt:field.boundary(2),...
+            field.boundary(3):planner.param.pdf.dRefPt:field.boundary(4));        
+        planner.param.pdf.refPt(3,:,:) = 1.81e-6; % ad-hoc for RF handling
+        planner.param.pdf.refPt(4,:,:) = 1.2; % ad-hoc for RF handling
+    otherwise
+        planner.param.pdf.dRefPt = dRefPt;
+        [planner.param.pdf.refPt(1,:,:), planner.param.pdf.refPt(2,:,:)] = ...
+            meshgrid(field.boundary(1):planner.param.pdf.dRefPt:field.boundary(2),...
+            field.boundary(3):planner.param.pdf.dRefPt:field.boundary(4));
+end
 
 % plotting layout
 planner.param.plot.row = planner.param.clock.nT;
@@ -131,6 +144,8 @@ switch flagSensor
     case 'range_bear'
         planner.param.sensor.R = sensor(iAgent,iTarget).param.R;
     case 'bear'
+        planner.param.sensor.R = sensor(iAgent,iTarget).param.R;
+    case 'RF'
         planner.param.sensor.R = sensor(iAgent,iTarget).param.R;
     case 'detection'        
         planner.param.sensor.regionRadius = sensor(iAgent,iTarget).param.regionRadius;
