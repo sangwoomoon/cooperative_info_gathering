@@ -29,11 +29,11 @@ format compact;
 
 % --------------------------------------------------------------------
 % control parameters for comparison
-nSim = 10; % for Monte-Carlo approach with fixed independent condition
+nSim = 20; % for Monte-Carlo approach with fixed independent condition
 nPt = [100 500 1000 2000];
 dist = [200 400 600];
 nT = [1];
-nA = [2 3 5 10];
+nA = [2 3 5 10 20];
 dRefPt = [1 5 10 25 50];
 nSample = [1 100 500 1000];
 commAware = [0 1];
@@ -88,7 +88,7 @@ for jSim = 1:mSim
         %----------------------
         % simulation structure
         % in order to allocate as the array of simulation
-        sim(jSim,iSim) = InitializeSim(   4,       1,     'MI',       1,           1,       'uniform',        0,         0,     'PosRF',  'unicycle',    'RF',   'PF',     jSim,     iSim    );
+        sim(jSim,iSim) = InitializeSim(   5,       3,     'MI',       1,           1,       'uniform',        0,         1,     'PosRF',  'unicycle',    'RF',   'PF',     jSim,     iSim    );
                                     % nAgent | nTarget | flagDM | flagComm | flagActComm | flagPdfCompute | flagLog | flagPlot | target |  agent     | sensor   | filter
         
         % flagDM         ||   'random': random decision | 'MI': mutual information-based decision | 'mean': particle mean following
@@ -161,6 +161,8 @@ for jSim = 1:mSim
                 end
             case 'nA'
                 sim(jSim,iSim).nAgent = nA(jSim);
+                sim(jSim,iSim).flagComm = 1;
+                planner{jSim} = 'MI_comm';
         end
         
         %----------------------
@@ -177,8 +179,13 @@ for jSim = 1:mSim
         
         %----------------------
         % target structure
-        for iTarget = 1:sim(jSim,iSim).nTarget
-            sim(jSim,iSim).target(iTarget) = InitializeTarget(iTarget, sim(jSim,iSim));
+        if jSim == 1
+            for iTarget = 1:sim(jSim,iSim).nTarget
+                sim(jSim,iSim).target(iTarget) = InitializeTarget(iTarget, sim(jSim,iSim));
+            end
+        else
+            % to make the same condition
+            sim(jSim,iSim).target = sim(1,iSim).target;
         end
         %----------------------
         
@@ -303,6 +310,8 @@ for jSim = 1:mSim
             % COMPUTED INFORMATION IS DIFFERENT WITH RESPECT TO AGENT
             for iAgent = 1:sim(jSim,iSim).nAgent
                 
+                tic;
+                
                 % decision making procedure
                 switch sim(jSim,iSim).flagDM
                     
@@ -407,6 +416,10 @@ for jSim = 1:mSim
                         sim(jSim,iSim).planner(iAgent).Hbefore = sim(jSim,iSim).planner(iAgent).candidate.Hbefore(:,sim(jSim,iSim).planner(iAgent).actIdx);
                         sim(jSim,iSim).planner(iAgent).Hafter = sim(jSim,iSim).planner(iAgent).candidate.Hafter(:,sim(jSim,iSim).planner(iAgent).actIdx);
                 end
+                
+                % take planning time to check scalability
+                sim(jSim,iSim).planner(iAgent).time = toc;
+                sim(jSim,iSim).planner(iAgent).hist.time(:,iClock+1) = sim(jSim,iSim).planner(iAgent).time;
                 
             end
             

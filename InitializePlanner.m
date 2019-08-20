@@ -169,4 +169,8 @@ for iTarget = 1:nTarget
     planner.param.target(iTarget).x = filter(iAgent,iTarget).xhat;
 end
 
+% for planner computational power
+planner.time = nan;
+planner.hist.time = planner.time;
+
 end
