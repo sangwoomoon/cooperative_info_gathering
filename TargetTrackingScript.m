@@ -37,8 +37,8 @@ nA = [2 3 5 10];
 dRefPt = [1 5 10 25 50];
 nSample = [1 100 500 1000];
 commAware = [0 1];
-planner = {'MI_comm'};
-% planner = {'random','mean','MI','MI_comm'};
+% planner = {'MI_comm'};
+planner = {'random','MI','MI_sepa','MI_gauss','MI_comm'};
 
 % comparison setting
 flagCondition  = 'planner';
@@ -69,7 +69,7 @@ end
 
 % --------------------------------------------------------------------
 % time parameters
-nt = 200;
+nt = 50;
 dt = 1;
 % --------------------------------------------------------------------
 
@@ -146,6 +146,12 @@ for jSim = 1:mSim
                     case 'MI'
                         sim(jSim,iSim).flagDM = 'MI';
                         sim(jSim,iSim).flagComm = 0;
+                    case 'MI_sepa'
+                        sim(jSim,iSim).flagDM = 'MI';
+                        sim(jSim,iSim).flagComm = 1;
+                    case 'MI_gauss'
+                        sim(jSim,iSim).flagDM = 'MI';
+                        sim(jSim,iSim).flagComm = 1;
                     case 'MI_comm'
                         sim(jSim,iSim).flagDM = 'MI';
                         sim(jSim,iSim).flagComm = 1;
@@ -320,7 +326,8 @@ for jSim = 1:mSim
                         % AD-HOC: when the agent is close to the geofence so that all
                         % cost candidates are infinity, then go to the origin.
                         if sum(bAction) == 0
-                            sim(jSim,iSim).planner(iAgent).actIdx = MoveToPoint([0 0], sim(jSim,iSim).agent(iAgent).s);
+                            filterSet.xhat = [0 0];
+                            sim(jSim,iSim).planner(iAgent).actIdx = MoveToPoint(filterSet, sim(jSim,iSim).agent(iAgent).s);
                         else
                             sim(jSim,iSim).planner(iAgent).actIdx = ceil(rand()*sim(jSim,iSim).planner(iAgent).actionNum);
                         end
@@ -355,7 +362,16 @@ for jSim = 1:mSim
                                 % 5. Gaussian with all measurement/communication possibilities: exact when the model is Linear/Gaussian
                                 %
                                 if sim(jSim,iSim).flagComm == 1
-                                    [~, pm, ~, ~, ~] = ComputeInformationTracking(iAgent,iAction,iClock,sim(jSim,iSim),'pmSample');
+                                    switch planner{jSim}
+                                        case 'MI'
+                                            [~, pm, ~, ~, ~] = ComputeInformationTracking(iAgent,iAction,iClock,sim(jSim,iSim),'pmSample');
+                                        case 'MI_sepa'
+                                            [~, ~, pm, ~, ~] = ComputeInformationTracking(iAgent,iAction,iClock,sim(jSim,iSim),'pmSeparate');
+                                        case 'MI_gauss'
+                                            [~, ~, ~, pm, ~] = ComputeInformationTracking(iAgent,iAction,iClock,sim(jSim,iSim),'gaussRtilde');
+                                        case 'MI_comm'
+                                            [~, pm, ~, ~, ~] = ComputeInformationTracking(iAgent,iAction,iClock,sim(jSim,iSim),'pmSample');
+                                    end
                                 else
                                     [pm, ~, ~, ~, ~] = ComputeInformationTracking(iAgent,iAction,iClock,sim(jSim,iSim),'pmAll');
                                 end

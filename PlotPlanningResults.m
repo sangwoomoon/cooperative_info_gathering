@@ -36,7 +36,7 @@ figure(11),
 plot(sim(1,1).clock.hist.time,Hmean); hold on;
 switch option
     case 'planner'
-        legend('random','mean tracking','MI(w/o comm-aware)','MI(w/ comm-aware)');
+        legend('random','w/o comm-aware','disjoint','Gaussian-based','combined');
     case 'nA'
         legend('n=2','n=3','n=5','n=10');
 end
@@ -48,7 +48,7 @@ figure(12),
 plot(sim(1,1).clock.hist.time,rmse); hold on;
 switch option
     case 'planner'
-        legend('random','mean tracking','MI(w/o comm-aware)','MI(w/ comm-aware)');
+        legend('random','w/o comm-aware','disjoint','Gaussian-based','combined');
     case 'nA'
         legend('n=2','n=3','n=5','n=10');
 end

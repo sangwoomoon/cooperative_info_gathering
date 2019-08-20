@@ -41,20 +41,24 @@ gaussAll.Hbefore = zeros(plannerClock.nT,1);
 gaussAll.Hafter = zeros(plannerClock.nT,1);
 gaussAll.I = nan(plannerClock.nT,1);
 
-if flagComm == 1
-    
-    % initialization of mutual info by Gaussian assumption with
-    % modified sensor noise covariance matrix: what Maicej did
-    gaussRtilde.I = nan(plannerClock.nT,1);
-    gaussRtilde.Hbefore = zeros(plannerClock.nT,1);
-    gaussRtilde.Hafter = zeros(plannerClock.nT,1);
-    
-    % initialization of mutual info by Particle Method by sampling events
-    % concept of Ryan's approach
-    pmSample.I = nan(plannerClock.nT,1);
-    
-end
+% initialization of mutual info by Gaussian assumption with
+% modified sensor noise covariance matrix: what Maicej did
+gaussRtilde.I = nan(plannerClock.nT,1);
+gaussRtilde.Hbefore = zeros(plannerClock.nT,1);
+gaussRtilde.Hafter = zeros(plannerClock.nT,1);
+
+% initialization of mutual info by Particle Method by sampling events
+% concept of Ryan's approach
+pmSample.I = nan(plannerClock.nT,1);
+
 %---
+
+% make entropy history
+HbeforeIdx = 1:2:2*plannerClock.nT-1;
+HafterIdx = 2:2:2*plannerClock.nT;
+
+% make time history with respect to entropy change
+tIdx = 1:plannerClock.nT;
 
 
 % select one approach based on the option
@@ -86,6 +90,17 @@ switch flagApproach
         end
         
         pmAll.time = toc;
+        
+        % compute cost function, which is I(X_{k:k+t};Z_{k:k+t})
+        for iClock = 1:plannerClock.nT
+            pmAll.I(iClock) = sum(pmAll.Hbefore(1:iClock) - pmAll.Hafter(1:iClock));
+        end
+        
+        pmAll.hist.H(HbeforeIdx) = pmAll.Hbefore;
+        pmAll.hist.H(HafterIdx) = pmAll.Hafter;
+        
+        pmAll.hist.time(HbeforeIdx) = tIdx;
+        pmAll.hist.time(HafterIdx) = tIdx;
         %---------------------------------------------------------------------
         
     case 'gaussAll'
@@ -109,156 +124,135 @@ switch flagApproach
             end
             
         end
+        
+        % compute cost function, which is I(X_{k:k+t};Z_{k:k+t})
+        for iClock = 1:plannerClock.nT
+            gaussAll.I(iClock) = sum(gaussAll.Hbefore(1:iClock) - gaussAll.Hafter(1:iClock));
+        end
+        
+        gaussAll.hist.H(HbeforeIdx) = gaussAll.Hbefore;
+        gaussAll.hist.H(HafterIdx) = gaussAll.Hafter;
+        
+        gaussAll.hist.time(HbeforeIdx) = tIdx;
+        gaussAll.hist.time(HafterIdx) = tIdx;
+        %---------------------------------------------------------------------
+        
+    case 'pmSeparate'
+        %---------------------------------------------------------------------
+        % APPROACH #1: Sangwoo PM by computing MI = ?[?*I(X;Y)]
+        %
+        % compute information under the all possibilities: particle-method that
+        % considers measurement and communication separately
+        % MI = ?[P(MI_i(X;Y))*MI_i(X;Y)] : weighted sum of elements of MI with respect to probability of the element of communication tree
+        for iMeas = 1:nMeasSet
+            
+            for iComm = 1:nCommSet
+                
+                [HbeforeElement,HafterElement,commProb] = ...
+                    ComputeInformationByParticleMethodSeparateComm(iMeas,iComm,iClock,iAction,planner,flagSensor,flagComm,flagPdfCompute,bPdfDisp);
+                
+                % entropy and mutual information from particle method
+                pmSeparate.Hbefore = pmSeparate.Hbefore + prod(commProb)*sum(HbeforeElement,2);
+                pmSeparate.Hafter = pmSeparate.Hafter + prod(commProb)*sum(HafterElement,2);
+                %---
+                
+            end
+            
+        end
+        
+        % compute cost function, which is I(X_{k:k+t};Z_{k:k+t})
+        for iClock = 1:plannerClock.nT
+            pmSeparate.I(iClock) = sum(pmSeparate.Hbefore(1:iClock) - pmSeparate.Hafter(1:iClock));
+        end
+        
+        pmSeparate.hist.H(HbeforeIdx) = pmSeparate.Hbefore;
+        pmSeparate.hist.H(HafterIdx) = pmSeparate.Hafter;
+        
+        pmSeparate.hist.time(HbeforeIdx) = tIdx;
+        pmSeparate.hist.time(HafterIdx) = tIdx;
+        %---------------------------------------------------------------------
+        
+    case 'gaussRtilde'
+        %---------------------------------------------------------------------
+        % APPROACH #3: modified R matrix by Majcej's expected measurement approximation
+        %
+        % compute information using
+        % Linear-Gaussian Assumption (KF concept): Maicej's work, it does not
+        % consider all possibilities of communication event
+        %
+        % mutual information under Gaussian Assumption
+        % Refer "M.Stachura & E.Frew, Communication-Aware
+        %  Information-Gathering Experiments with an Unmanned Aircraft System"
+        %  to compute communication-aware Entropy
+        [gaussRtilde.Hbefore,gaussRtilde.Hafter] = ...
+            ComputeInformationByCovMatrixApproximation(iClock,iAction,planner,flagSensor,flagComm,bPdfDisp);
+        
+        gaussRtilde.Hbefore = sum(gaussRtilde.Hbefore,2);
+        gaussRtilde.Hafter = sum(gaussRtilde.Hafter,2);
+        
+        % compute cost function, which is I(X_{k:k+t};Z_{k:k+t})
+        for iClock = 1:plannerClock.nT
+            gaussRtilde.I(iClock) = sum(gaussRtilde.Hbefore(1:iClock) - gaussRtilde.Hafter(1:iClock));
+        end
+        
+        gaussRtilde.hist.H(HbeforeIdx) = gaussRtilde.Hbefore;
+        gaussRtilde.hist.H(HafterIdx) = gaussRtilde.Hafter;
+        
+        gaussRtilde.hist.time(HbeforeIdx) = tIdx;
+        gaussRtilde.hist.time(HafterIdx) = tIdx;
+        %---------------------------------------------------------------------
+        
+    case 'pmSample'
+        %---------------------------------------------------------------------
+        % APPROACH #2: PM with Sampled Communication Output MI = I(X;Z_sample)
+        %
+        % compute information using Paritcle filter-based approach using sampled
+        % communcation output prediction, its concept is from what Ryan did
+        %
+        % Refer "A. Ryan & J. Hedrick, Particle filter based information-theoretic
+        % active sensing"
+        
+        tic;
+        
+        % initialization
+        pmSample.Hbefore = 0;
+        pmSample.Hafter = 0;
+        nSample = planner.param.nSample; % MC-based sampled approach
+        
+        % take nSample smpling procedure
+        for iSample = 1 : nSample
+            [Hbefore,Hafter] = ...
+                ComputeInformationByParticleMethodSampledCommOutput(iSample,iClock,iAction,planner,flagSensor,flagComm,flagPdfCompute,bPdfDisp);
+            pmSample.Hbefore = pmSample.Hbefore + Hbefore;
+            pmSample.Hafter = pmSample.Hafter + Hafter;
+        end
+        
+        % take average procedure wrt nSample
+        pmSample.Hbefore = pmSample.Hbefore/nSample;
+        pmSample.Hafter = pmSample.Hafter/nSample;
+        
+        pmSample.Hbefore = sum(pmSample.Hbefore,2);
+        pmSample.Hafter = sum(pmSample.Hafter,2);
+        
+        pmSample.time = toc;
+        
+        % compute cost function, which is I(X_{k:k+t};Z_{k:k+t})
+        for iClock = 1:plannerClock.nT
+            pmSample.I(iClock) = sum(pmSample.Hbefore(1:iClock) - pmSample.Hafter(1:iClock));
+        end
+        
+        pmSample.hist.H(HbeforeIdx) = pmSample.Hbefore;
+        pmSample.hist.H(HafterIdx) = pmSample.Hafter;
+        
+        pmSample.hist.time(HbeforeIdx) = tIdx;
+        pmSample.hist.time(HafterIdx) = tIdx;
         %---------------------------------------------------------------------
         
 end
-
-if flagComm == 1
     
-    % select one approach based on the option
-    switch flagApproach
-        case 'pmSeparate'
-            %---------------------------------------------------------------------
-            % APPROACH #1: Sangwoo PM by computing MI = ?[?*I(X;Y)]
-            %
-            % compute information under the all possibilities: particle-method that
-            % considers measurement and communication separately
-            % MI = ?[P(MI_i(X;Y))*MI_i(X;Y)] : weighted sum of elements of MI with respect to probability of the element of communication tree
-            for iMeas = 1:nMeasSet
-                
-                for iComm = 1:nCommSet
-                    
-                    [HbeforeElement,HafterElement,commProb] = ...
-                        ComputeInformationByParticleMethodSeparateComm(iMeas,iComm,iClock,iAction,planner,flagSensor,flagComm,flagPdfCompute,bPdfDisp);
-                    
-                    % entropy and mutual information from particle method
-                    pmSeparate.Hbefore = pmSeparate.Hbefore + prod(commProb)*sum(HbeforeElement,2);
-                    pmSeparate.Hafter = pmSeparate.Hafter + prod(commProb)*sum(HafterElement,2);
-                    %---
-                    
-                end
-                
-            end
-            %---------------------------------------------------------------------
-            
-        case 'gaussRtilde'
-            %---------------------------------------------------------------------
-            % APPROACH #3: modified R matrix by Majcej's expected measurement approximation
-            %
-            % compute information using
-            % Linear-Gaussian Assumption (KF concept): Maicej's work, it does not
-            % consider all possibilities of communication event
-            %
-            % mutual information under Gaussian Assumption
-            % Refer "M.Stachura & E.Frew, Communication-Aware
-            %  Information-Gathering Experiments with an Unmanned Aircraft System"
-            %  to compute communication-aware Entropy
-            [gaussRtilde.Hbefore,gaussRtilde.Hafter] = ...
-                ComputeInformationByCovMatrixApproximation(iClock,iAction,planner,flagSensor,flagComm,bPdfDisp);
-            
-            gaussRtilde.Hbefore = sum(gaussRtilde.Hbefore,2);
-            gaussRtilde.Hafter = sum(gaussRtilde.Hafter,2);
-            %---------------------------------------------------------------------
-            
-        case 'pmSample'
-            %---------------------------------------------------------------------
-            % APPROACH #2: PM with Sampled Communication Output MI = I(X;Z_sample)
-            %
-            % compute information using Paritcle filter-based approach using sampled
-            % communcation output prediction, its concept is from what Ryan did
-            %
-            % Refer "A. Ryan & J. Hedrick, Particle filter based information-theoretic
-            % active sensing"
-            
-            tic;
-            
-            % initialization
-            pmSample.Hbefore = 0;
-            pmSample.Hafter = 0;
-            nSample = planner.param.nSample; % MC-based sampled approach
-            
-            % take nSample smpling procedure
-            for iSample = 1 : nSample
-                [Hbefore,Hafter] = ...
-                    ComputeInformationByParticleMethodSampledCommOutput(iSample,iClock,iAction,planner,flagSensor,flagComm,flagPdfCompute,bPdfDisp);
-                pmSample.Hbefore = pmSample.Hbefore + Hbefore;
-                pmSample.Hafter = pmSample.Hafter + Hafter;
-            end
-            
-            % take average procedure wrt nSample
-            pmSample.Hbefore = pmSample.Hbefore/nSample;
-            pmSample.Hafter = pmSample.Hafter/nSample;
-            
-            pmSample.Hbefore = sum(pmSample.Hbefore,2);
-            pmSample.Hafter = sum(pmSample.Hafter,2);
-            
-            pmSample.time = toc;
-            %---------------------------------------------------------------------
-            
-    end
-    
-end
 
-% compute cost function, which is I(X_{k:k+t};Z_{k:k+t})
-for iClock = 1:plannerClock.nT
-    pmAll.I(iClock) = sum(pmAll.Hbefore(1:iClock) - pmAll.Hafter(1:iClock));
-    gaussAll.I(iClock) = sum(gaussAll.Hbefore(1:iClock) - gaussAll.Hafter(1:iClock));
-    if flagComm == 1
-        pmSeparate.I(iClock) = sum(pmSeparate.Hbefore(1:iClock) - pmSeparate.Hafter(1:iClock));
-        pmSample.I(iClock) = sum(pmSample.Hbefore(1:iClock) - pmSample.Hafter(1:iClock));
-        gaussRtilde.I(iClock) = sum(gaussRtilde.Hbefore(1:iClock) - gaussRtilde.Hafter(1:iClock));
-    end
-end
-%---
 
-% make entropy history
-HbeforeIdx = 1:2:2*plannerClock.nT-1;
-HafterIdx = 2:2:2*plannerClock.nT;
 
-pmAll.hist.H(HbeforeIdx) = pmAll.Hbefore;
-pmAll.hist.H(HafterIdx) = pmAll.Hafter;
-
-gaussAll.hist.H(HbeforeIdx) = gaussAll.Hbefore;
-gaussAll.hist.H(HafterIdx) = gaussAll.Hafter;
-
-if flagComm == 1
-    
-    pmSample.hist.H(HbeforeIdx) = pmSample.Hbefore;
-    pmSample.hist.H(HafterIdx) = pmSample.Hafter;
-    
-    gaussRtilde.hist.H(HbeforeIdx) = gaussRtilde.Hbefore;
-    gaussRtilde.hist.H(HafterIdx) = gaussRtilde.Hafter;
-    
-    pmSeparate.hist.H(HbeforeIdx) = pmSeparate.Hbefore;
-    pmSeparate.hist.H(HafterIdx) = pmSeparate.Hafter;
-    
-end
-
-% make time history with respect to entropy change
-tIdx = 1:plannerClock.nT;
-
-pmAll.hist.time(HbeforeIdx) = tIdx;
-pmAll.hist.time(HafterIdx) = tIdx;
-
-gaussAll.hist.time(HbeforeIdx) = tIdx;
-gaussAll.hist.time(HafterIdx) = tIdx;
-
-if flagComm == 1
-    
-    pmSample.hist.time(HbeforeIdx) = tIdx;
-    pmSample.hist.time(HafterIdx) = tIdx;
-    
-    gaussRtilde.hist.time(HbeforeIdx) = tIdx;
-    gaussRtilde.hist.time(HafterIdx) = tIdx;
-
-    pmSeparate.hist.time(HbeforeIdx) = tIdx;
-    pmSeparate.hist.time(HafterIdx) = tIdx;
-    
-else
-    pmSample = [];
-    gaussRtilde = [];
-    pmSeparate = [];
-end
 
 end
 
@@ -737,6 +731,9 @@ for iTarget = 1:nTarget
             % is computed
             if flagComm == 1
                 beta = ComputeCommProb(plannerAgent(planner.id).s,plannerAgent(iAgent).s);
+                if beta == 0
+                    beta = 1e-5; % in order to prevent from singularity
+                end
                 paramSensor.R = planner.param.sensor.R/beta;
                 R = paramSensor.R;
                 % sample measurement prediction based on modified R
