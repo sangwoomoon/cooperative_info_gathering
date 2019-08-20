@@ -17,18 +17,17 @@ for jSim = 1 : mSim
         
         for iAgent = 1 : nAgent
             for iTarget = 1 : nTarget
-                rmse(jSim,:) = sqrt(sum(squeeze((sim(jSim,iSim).filter(iAgent,iTarget).hist.pt(1,:,:) - sim(jSim,iSim).target(iTarget).x(1)).^2) + ...
-                            squeeze((sim(jSim,iSim).filter(iAgent,iTarget).hist.pt(2,:,:) - sim(jSim,iSim).target(iTarget).x(2)).^2), 1)/nPt);
+                rmse(jSim,:) = rmse(jSim,:) + ...
+                            sqrt(sum(squeeze(sim(jSim,iSim).filter(iAgent,iTarget).hist.w(1,:,:)).*...
+                            squeeze((sim(jSim,iSim).filter(iAgent,iTarget).hist.pt(1,:,:) - sim(jSim,iSim).target(iTarget).x(1,:))).^2 + ...
+                            squeeze((sim(jSim,iSim).filter(iAgent,iTarget).hist.pt(2,:,:) - sim(jSim,iSim).target(iTarget).x(2,:))).^2, 1)/nPt);
                 Hmean(jSim,:) = Hmean(jSim,:) + sim(jSim,iSim).filter(iAgent,iTarget).hist.Hafter;
             end
         end
-        % devide wrt agents & targets
-        rmse(jSim,:) = rmse(jSim,:)./(nAgent*nTarget);
-        Hmean(jSim,:) = Hmean(jSim,:)./(nAgent*nTarget);
     end
-    % devide wrt MC simulation runs
-    rmse(jSim,:) = rmse(jSim,:)./nSim;
-    Hmean(jSim,:) = Hmean(jSim,:)./nSim;
+    % devide wrt agents, targets, and MC simulation runs
+    rmse(jSim,:) = rmse(jSim,:)./(nAgent*nTarget*nSim);
+    Hmean(jSim,:) = Hmean(jSim,:)./(nAgent*nTarget*nSim);
 end
 
 % results from planning: entropy variation

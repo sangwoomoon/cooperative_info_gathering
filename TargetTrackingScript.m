@@ -29,7 +29,7 @@ format compact;
 
 % --------------------------------------------------------------------
 % control parameters for comparison
-nSim = 1; % for Monte-Carlo approach with fixed independent condition
+nSim = 10; % for Monte-Carlo approach with fixed independent condition
 nPt = [100 500 1000 2000];
 dist = [200 400 600];
 nT = [1];
@@ -69,7 +69,7 @@ end
 
 % --------------------------------------------------------------------
 % time parameters
-nt = 50;
+nt = 200;
 dt = 1;
 % --------------------------------------------------------------------
 
@@ -88,7 +88,7 @@ for jSim = 1:mSim
         %----------------------
         % simulation structure
         % in order to allocate as the array of simulation
-        sim(jSim,iSim) = InitializeSim(   4,       1,     'MI',       1,           1,       'uniform',        0,         1,     'PosRF',  'unicycle',    'RF',   'PF',     jSim,     iSim    );
+        sim(jSim,iSim) = InitializeSim(   4,       1,     'MI',       1,           1,       'uniform',        0,         0,     'PosRF',  'unicycle',    'RF',   'PF',     jSim,     iSim    );
                                     % nAgent | nTarget | flagDM | flagComm | flagActComm | flagPdfCompute | flagLog | flagPlot | target |  agent     | sensor   | filter
         
         % flagDM         ||   'random': random decision | 'MI': mutual information-based decision | 'mean': particle mean following

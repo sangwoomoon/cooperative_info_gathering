@@ -1,11 +1,11 @@
 
 clear;
 
-load('sim_demo_rf.mat');
+load('sim_analysis_rf.mat');
 close all;
 
 
-jSim = 4; % take one condition of simulations (1: random, 2: mean, 3: MI, 4: MI_comm)
+jSim = 2; % take one condition of simulations (1: random, 2: w/o comm-aware, 3: separate, 4: Gaussian-based 5: combined)
 iSim = 1; % take one of simulations
 bMovie = 0; % movie making flag (as gif)
 fAgent = 1; % agent number to see communication & filtering results
