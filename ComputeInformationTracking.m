@@ -724,7 +724,7 @@ for iTarget = 1:nTarget
         
         
         % take mearurement prediction based on the estimator and update
-        for iAgent = 2: nAgent
+        for iAgent = 1: nAgent
             % when the planner consider communication, then the mofified noise
             % covariance (from M.Stachura & E.Frew, Communication-Aware
             % Information-Gathering Experiments with an Unmanned Aircraft System)
@@ -847,7 +847,7 @@ for iTarget = 1:nTarget
         commProbSinglePlan(planner.id) = planner.z(planner.id);
         
         ptAgent = 1;
-        for iAgent = 2: nAgent
+        for iAgent = 1: nAgent
             
             % take communication delivery from communication set
             % BEWARE OF BINARY REPRESENTATION: 0-null | 1-y

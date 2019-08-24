@@ -33,15 +33,16 @@ nSim = 20; % for Monte-Carlo approach with fixed independent condition
 nPt = [100 500 1000 2000];
 dist = [200 400 600];
 nT = [1];
-nA = [2 3 5 10 20];
+nA = [2 4 6 8 10];
 dRefPt = [1 5 10 25 50];
 nSample = [1 100 500 1000];
 commAware = [0 1];
 % planner = {'MI_comm'};
-planner = {'random','MI','MI_sepa','MI_gauss','MI_comm'};
+% planner = {'random','MI','MI_sepa','MI_gauss','MI_comm'};
+planner = {'random','MI','MI_gauss','MI_comm'};
 
 % comparison setting
-flagCondition  = 'planner';
+flagCondition  = 'nA';
 
 % simulation by changing independent condition
 switch flagCondition
@@ -88,7 +89,7 @@ for jSim = 1:mSim
         %----------------------
         % simulation structure
         % in order to allocate as the array of simulation
-        sim(jSim,iSim) = InitializeSim(   5,       3,     'MI',       1,           1,       'uniform',        0,         1,     'PosRF',  'unicycle',    'RF',   'PF',     jSim,     iSim    );
+        sim(jSim,iSim) = InitializeSim(   1,       1,     'MI',       1,           1,       'uniform',        0,         0,     'PosRF',  'unicycle',    'RF',   'PF',     jSim,     iSim    );
                                     % nAgent | nTarget | flagDM | flagComm | flagActComm | flagPdfCompute | flagLog | flagPlot | target |  agent     | sensor   | filter
         
         % flagDM         ||   'random': random decision | 'MI': mutual information-based decision | 'mean': particle mean following

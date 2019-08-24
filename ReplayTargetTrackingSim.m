@@ -1,11 +1,11 @@
 
 clear;
 
-load('sim_analysis_rf.mat');
+load('sim_demo_rf.mat');
 close all;
 
 
-jSim = 2; % take one condition of simulations (1: random, 2: w/o comm-aware, 3: separate, 4: Gaussian-based 5: combined)
+jSim = 4; % take one condition of simulations (1: random, 2: w/o comm-aware, 3: separate, 4: Gaussian-based 5: combined)
 iSim = 1; % take one of simulations
 bMovie = 0; % movie making flag (as gif)
 fAgent = 1; % agent number to see communication & filtering results
@@ -18,11 +18,12 @@ sim(jSim,iSim).plot.fieldView = figure(1); hold on;
 
 %----------------------
 % plotting setting
-figure(1)
+figure(1);
 set(gca,'xlim',[sim(jSim,iSim).field.boundary(1),sim(jSim,iSim).field.boundary(2)],...
     'ylim',[sim(jSim,iSim).field.boundary(3),sim(jSim,iSim).field.boundary(4)])
 set(sim(jSim,iSim).plot.fieldView,'color','w')
 xlabel('East [m]'); ylabel('North [m]'); axis equal;
+set(gcf,'Position',[500 500 462 420]);
 title(sprintf('t = %.1f [sec]', 0))
 %----------------------
 
@@ -141,6 +142,12 @@ if bMovie
     imwrite(gif.pf.imind,gif.pf.cm,gif.pf.file,'gif','Loopcount',inf);
 end
 
+% save screenshot for initial condition
+set(gcf,'Units','Inches');
+pos = get(gcf,'Position');
+set(gcf,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
+print(gcf,'snapshot_1(t=0,n=4,m=1,RF)','-dpdf','-r0')
+
 
 %% ---------------------------------
 % Replay Sim
@@ -170,7 +177,7 @@ for iClock = 2:sim(jSim,iSim).clock.nt+1
     for iAgent = 1:sim(jSim,iSim).nAgent
         
         % agent moving plot
-        figure(1)
+        
         % attitude adjusting
         R = [cos(sim(jSim,iSim).agent(iAgent).hist.s(3,iClock)) -sin(sim(jSim,iSim).agent(iAgent).hist.s(3,iClock));...
             sin(sim(jSim,iSim).agent(iAgent).hist.s(3,iClock))  cos(sim(jSim,iSim).agent(iAgent).hist.s(3,iClock))];
@@ -205,7 +212,6 @@ for iClock = 2:sim(jSim,iSim).clock.nt+1
     end
     
     % target moving plot
-    figure(1)
     for iTarget = 1:sim(jSim,iSim).nTarget
         % update plot
         set(sim(jSim,iSim).target(iTarget).plot.pos,'Xdata',sim(jSim,iSim).target(iTarget).hist.x(1,iClock),'Ydata',sim(jSim,iSim).target(iTarget).hist.x(2,iClock));
@@ -231,9 +237,17 @@ for iClock = 2:sim(jSim,iSim).clock.nt+1
         imwrite(gif.pf.imind,gif.pf.cm,gif.pf.file,'gif','WriteMode','append');
     end
     
-    if iClock == 101
-        iClock
+    % for capturing screenshot
+    if iClock == 71
+        % save screenshot at t = 70 sec
+        print(gcf,'snapshot_2(t=70,n=4,m=1,RF)','-dpdf','-r0')
+    elseif iClock == 141
+        % save screenshot at t = 140 sec
+        print(gcf,'snapshot_3(t=140,n=4,m=1,RF)','-dpdf','-r0')
     end
     
     
 end
+
+% save screenshot at final time step
+print(gcf,'snapshot_4(t=200,n=4,m=1,RF)','-dpdf','-r0')
