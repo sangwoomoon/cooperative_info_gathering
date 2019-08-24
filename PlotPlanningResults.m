@@ -1,6 +1,6 @@
 function PlotPlanningResults(sim,option)
 
-nSim = 9; %length(sim(1,:)); % number of MC simulation runs
+nSim = length(sim(1,:)); % number of MC simulation runs
 mSim = length(sim(:,1)); % number of planning scheme
 nPt = sim(1,1).filter(1,1).nPt; % number of particles
 nt = sim(1,1).clock.nt;
@@ -8,40 +8,32 @@ nt = sim(1,1).clock.nt;
 Hmean = zeros(mSim,nt+1);
 rmse = zeros(mSim,nt+1);
 
-% % compute statistical information for comparison between w/ and w/o
-% % communication awareness
-% 
-% % number of agents could be changed by condition
-% nAgent = sim(2,1).nAgent;
-% nTarget = sim(2,1).nTarget;
-% 
-% planErr.w = zeros(nAgent,nt+1);
-% planErr.wo = zeros(nAgent,nt+1);
-% 
-% for iSim = 1 : nSim
-%     
-%     for iAgent = 1 : nAgent
-%         
-%         % without comm planning
-%         I = zeros(size(sim(4,iSim).clock.hist.time));
-%         for iTarget = 1 : nTarget
-%             I = I + sim(4,iSim).filter(iAgent,iTarget).hist.I;
-%         end
-%         planErr.wo(iAgent,:) = planErr.wo(iAgent,:) + sim(4,iSim).planner(iAgent).hist.I-I;
-%         
-%         % with comm planning
-%         I = zeros(size(sim(5,iSim).clock.hist.time));
-%         for iTarget = 1 : nTarget
-%             I = I + sim(5,iSim).filter(iAgent,iTarget).hist.I;
-%         end
-%         planErr.w(iAgent,:) = planErr.w(iAgent,:) + sim(5,iSim).planner(iAgent).hist.I-I;
-%         
-%     end
-%     % average with respect to simulation runs
-%     planErr.w = planErr.w./iSim;
-%     planErr.wo = planErr.wo./iSim;
-%     
-% end
+% compute statistical information for comparison between w/ and w/o
+% communication awareness
+
+% number of agents could be changed by condition
+nAgent = sim(2,1).nAgent;
+nTarget = sim(2,1).nTarget;
+
+planErr = zeros(mSim,nt+1);
+
+for jSim = 2 : mSim % except random planning
+    
+    for iSim = 1 : nSim
+        
+        for iAgent = 1 : nAgent
+            
+%             I = zeros(size(sim(jSim,iSim).clock.hist.time));
+%             for iTarget = 1 : nTarget
+%                 I = I + sim(jSim,iSim).filter(iAgent,iTarget).hist.I;
+%             end
+            planErr(jSim,:) = planErr(jSim,:) + sim(jSim,iSim).planner(iAgent).hist.I; %-I;
+            
+        end
+        
+    end
+    planErr(jSim,:) = planErr(jSim,:)./(nAgent*nSim);
+end
 
 
 % compute statistical objective values for submodularity and scalablity
@@ -103,12 +95,12 @@ for jSim = 1 : mSim
     Hmean(jSim,:) = Hmean(jSim,:)./(nAgent*nTarget*nSim);
 end
 
-% % results from planning W/O communication
-% figure(10),
-% plot(sim(2,1).clock.hist.time,planErr.wo,'r-'); hold on;
-% 
-% % results from planning W/ communication
-% plot(sim(5,1).clock.hist.time,planErr.w,'b-');
+% results from planning W/O communication
+figure(10),
+plot(sim(1,1).clock.hist.time,planErr(2,:),'lineWidth',2,'linestyle','--'); hold on;
+plot(sim(1,1).clock.hist.time,planErr(3,:),'lineWidth',2,'linestyle','-.'); hold on;
+plot(sim(1,1).clock.hist.time,planErr(4,:),'lineWidth',2); hold on;
+
 
 % results from planning: entropy variation
 h11 = figure(11);
@@ -125,7 +117,7 @@ switch option
     case 'planner'
         legend('random','w/o comm-aware','Gaussian-based','combined');
     case 'nA'
-        legend('n=2','n=4','n=6','n=8');
+        legend('n=2','n=4','n=6','n=8','n=10');
 end
 xlabel('time [sec]');
 ylabel('entropy [nats]');
@@ -134,7 +126,7 @@ set(h11,'Units','Inches');
 pos = get(h11,'Position');
 set(h11,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
 set(gca,'FontSize',14);
-print(h11,'entropy(n=3,5,10,20,t=200,mc=100,RF)','-dpdf','-r0')
+print(h11,'entropy(n=2,4,6,8,10,t=200,mc=100,RF)','-dpdf','-r0')
 
 % results from planning: RMSE (estimation performance)
 h12 = figure(12);

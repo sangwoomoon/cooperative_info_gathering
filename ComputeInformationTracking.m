@@ -756,6 +756,10 @@ for iTarget = 1:nTarget
                     Phat = (eye(nState)-K*H)*Phat*(eye(nState)-K*H)' + K*R*K';
                 case 'range_bear'
                     Phat = (eye(nState)-K*H)*Phat;
+                case 'RF'
+                    Phat = (eye(nState)-K*H)*Phat;
+                case 'bear'
+                    Phat = (eye(nState)-K*H)*Phat;
             end
         end
         
