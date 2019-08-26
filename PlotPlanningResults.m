@@ -1,4 +1,4 @@
-function PlotPlanningResults(sim,option)
+function PlotPlanningResults(sim,option,flagSave)
 
 nSim = length(sim(1,:)); % number of MC simulation runs
 mSim = length(sim(:,1)); % number of planning scheme
@@ -11,28 +11,18 @@ rmse = zeros(mSim,nt+1);
 % compute statistical information for comparison between w/ and w/o
 % communication awareness
 
-% number of agents could be changed by condition
-nAgent = sim(2,1).nAgent;
-nTarget = sim(2,1).nTarget;
 
-planErr = zeros(mSim,nt+1);
+utility = zeros(mSim,nt+1);
 
 for jSim = 2 : mSim % except random planning
-    
+    % number of agents could be changed by condition
+    nAgent = sim(jSim,1).nAgent;
     for iSim = 1 : nSim
-        
         for iAgent = 1 : nAgent
-            
-%             I = zeros(size(sim(jSim,iSim).clock.hist.time));
-%             for iTarget = 1 : nTarget
-%                 I = I + sim(jSim,iSim).filter(iAgent,iTarget).hist.I;
-%             end
-            planErr(jSim,:) = planErr(jSim,:) + sim(jSim,iSim).planner(iAgent).hist.I; %-I;
-            
+            utility(jSim,:) = utility(jSim,:) + sim(jSim,iSim).planner(iAgent).hist.I; %-I;
         end
-        
     end
-    planErr(jSim,:) = planErr(jSim,:)./(nAgent*nSim);
+    utility(jSim,:) = utility(jSim,:)./(nAgent*nSim);
 end
 
 
@@ -59,14 +49,16 @@ if strcmp(option,'nA')
     end
     
     % results from planning: objective function
-    h10 = figure(10);
+    h9 = figure(9);
     boxplot(objVal','Labels',{'n_a = 2','n_a = 4','n_a = 6','n_a = 8','n_a = 10'})
     
-    set(h10,'Units','Inches');
-    pos = get(h10,'Position');
-    set(h10,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
-    set(gca,'FontSize',14);
-    print(h10,'utility(n=2,4,6,8,10,t=200,mc=100,RF)','-dpdf','-r0')
+    if flagSave
+        set(h9,'Units','Inches');
+        pos = get(h9,'Position');
+        set(h9,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
+        set(gca,'FontSize',14);
+        print(h9,'utility(n=2,4,6,8,10,t=200,mc=100,RF)','-dpdf','-r0')
+    end
     
 end
 
@@ -95,11 +87,18 @@ for jSim = 1 : mSim
     Hmean(jSim,:) = Hmean(jSim,:)./(nAgent*nTarget*nSim);
 end
 
-% results from planning W/O communication
-figure(10),
-plot(sim(1,1).clock.hist.time,planErr(2,:),'lineWidth',2,'linestyle','--'); hold on;
-plot(sim(1,1).clock.hist.time,planErr(3,:),'lineWidth',2,'linestyle','-.'); hold on;
-plot(sim(1,1).clock.hist.time,planErr(4,:),'lineWidth',2); hold on;
+% results from planning utility
+h10 = figure(10);
+plot(sim(1,1).clock.hist.time,utility(2,:),'lineWidth',2,'linestyle',':'); hold on;
+plot(sim(1,1).clock.hist.time,utility(3,:),'lineWidth',2,'linestyle','--'); hold on;
+plot(sim(1,1).clock.hist.time,utility(4,:),'lineWidth',2,'linestyle','-.'); hold on;
+plot(sim(1,1).clock.hist.time,utility(5,:),'lineWidth',2); hold on;
+switch option
+    case 'planner'
+        legend('w/o comm-aware','disjointed','Gaussian-based','combined');
+    case 'nA'
+        legend('n=2','n=4','n=6','n=8','n=10');
+end
 
 
 % results from planning: entropy variation
@@ -107,48 +106,50 @@ h11 = figure(11);
 plot(sim(1,1).clock.hist.time,Hmean(1,:),'lineWidth',2,'linestyle',':'); hold on;
 plot(sim(1,1).clock.hist.time,Hmean(2,:),'lineWidth',2,'linestyle','--'); hold on;
 plot(sim(1,1).clock.hist.time,Hmean(3,:),'lineWidth',2,'linestyle','-.'); hold on;
-plot(sim(1,1).clock.hist.time,Hmean(4,:),'lineWidth',2); hold on;
-if strcmp(option,'nA')
-    plot(sim(1,1).clock.hist.time,Hmean(5,:),'lineWidth',2); hold on;
-end
-%plot(sim(1,1).clock.hist.time,[Hmean(1:2,:);Hmean(4:5,:)],'lineWidth',2,'fontsize',14); hold on;
-%legend('location','southeast');
+plot(sim(1,1).clock.hist.time,Hmean(4,:),'lineWidth',2,'linestyle','-.'); hold on;
+plot(sim(1,1).clock.hist.time,Hmean(5,:),'lineWidth',2); hold on;
+legend('location','southeast');
 switch option
     case 'planner'
-        legend('random','w/o comm-aware','Gaussian-based','combined');
+        legend('random (no plan)','w/o comm-aware','disjointed','Gaussian-based','combined');
     case 'nA'
         legend('n=2','n=4','n=6','n=8','n=10');
 end
 xlabel('time [sec]');
 ylabel('entropy [nats]');
 
-set(h11,'Units','Inches');
-pos = get(h11,'Position');
-set(h11,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
-set(gca,'FontSize',14);
-print(h11,'entropy(n=2,4,6,8,10,t=200,mc=100,RF)','-dpdf','-r0')
+if flagSave
+    set(h11,'Units','Inches');
+    pos = get(h11,'Position');
+    set(h11,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
+    set(gca,'FontSize',14);
+    print(h11,'entropy(n=2,4,6,8,10,t=200,mc=100,RF)','-dpdf','-r0')
+end
 
 % results from planning: RMSE (estimation performance)
 h12 = figure(12);
 plot(sim(1,1).clock.hist.time,rmse(1,:),'lineWidth',2,'linestyle',':'); hold on;
 plot(sim(1,1).clock.hist.time,rmse(2,:),'lineWidth',2,'linestyle','--'); hold on;
 plot(sim(1,1).clock.hist.time,rmse(3,:),'lineWidth',2,'linestyle','-.'); hold on;
-plot(sim(1,1).clock.hist.time,rmse(4,:),'lineWidth',2); hold on;
+plot(sim(1,1).clock.hist.time,rmse(4,:),'lineWidth',2,'linestyle','-.'); hold on;
+plot(sim(1,1).clock.hist.time,rmse(5,:),'lineWidth',2); hold on;
 if strcmp(option,'nA')
     plot(sim(1,1).clock.hist.time,rmse(5,:),'lineWidth',2); hold on;
 end
 switch option
     case 'planner'
-        legend('random','w/o comm-aware','Gaussian-based','combined');
+        legend('random (no plan)','w/o comm-aware','disjointed','Gaussian-based','combined');
     case 'nA'
         legend('n=2','n=4','n=6','n=8','n=10');
 end
 xlabel('time [sec]');
 ylabel('RMSE [m]');
 
-set(h12,'Units','Inches');
-pos = get(h12,'Position');
-set(h12,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
-set(gca,'FontSize',14);
-print(h12,'rsme(n=2,4,6,8,10,t=200,mc=100,RF)','-dpdf','-r0')
+if flagSave
+    set(h12,'Units','Inches');
+    pos = get(h12,'Position');
+    set(h12,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
+    set(gca,'FontSize',14);
+    print(h12,'rsme(n=2,4,6,8,10,t=200,mc=100,RF)','-dpdf','-r0')
+end
 

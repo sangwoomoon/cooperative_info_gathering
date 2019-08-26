@@ -144,6 +144,8 @@ switch flagApproach
         % compute information under the all possibilities: particle-method that
         % considers measurement and communication separately
         % MI = ?[P(MI_i(X;Y))*MI_i(X;Y)] : weighted sum of elements of MI with respect to probability of the element of communication tree
+        
+        flagComm = 2; % to adjust for separate case
         for iMeas = 1:nMeasSet
             
             for iComm = 1:nCommSet
@@ -266,7 +268,7 @@ plannerAgent = planner.param.agent;
 plannerSensor = planner.param.sensor;
 plannerField = planner.param.field;
 plannerClock = planner.param.clock;
-plannerTarget = planner.param.target;
+% plannerTarget = planner.param.target;
 
 nAgent = length(plannerAgent);
 nTarget = length(planner.PTset);
@@ -290,7 +292,7 @@ for iPlan = 1:plannerClock.nT
         planner.y = nan(length(plannerSensor.R(:,1)),nAgent);
         
         % predicted target state by state update to take virtual measurement
-        plannerTarget(iTarget).x = UpdateTargetState(plannerTarget(iTarget).x,planner.param,plannerClock.dt);
+        xhat = UpdateTargetState(planner.PTset(iTarget).xhat,planner.param,plannerClock.dt);
         
         % Sum of prob. target evolution P(X_k|Z_{k-1})
         % in order to improve the computation for computing entropy from
@@ -330,7 +332,7 @@ for iPlan = 1:plannerClock.nT
                 % other agents/predicted by its own agent
                 for iAgent = 1: nAgent
                     if planner.z(iAgent)
-                        planner.y(:,iAgent) = TakeMeasurement(plannerTarget(iTarget).x,plannerAgent(iAgent).s,planner.param.sensor,flagSensor);
+                        planner.y(:,iAgent) = TakeMeasurement(xhat,plannerAgent(iAgent).s,planner.param.sensor,flagSensor);
                     else
                         planner.y(:,iAgent) = nan(length(plannerSensor.R(:,1)),1);
                     end
@@ -368,10 +370,8 @@ for iPlan = 1:plannerClock.nT
         
         % resample particle if connected
         % leave particle set if disconnected
-        if planner.z(2)
-            [planner.PTset(iTarget).pt,planner.PTset(iTarget).w] = ...
-                ResampleParticle(planner.PTset(iTarget).pt,planner.PTset(iTarget).w,plannerField);
-        end
+        [planner.PTset(iTarget).pt,planner.PTset(iTarget).w] = ...
+            ResampleParticle(planner.PTset(iTarget).pt,planner.PTset(iTarget).w,plannerField);
         
         
         % Plot P(X_k|y_k) if needed
@@ -407,7 +407,7 @@ plannerAgent = planner.param.agent;
 plannerSensor = planner.param.sensor;
 plannerField = planner.param.field;
 plannerClock = planner.param.clock;
-plannerTarget = planner.param.target;
+% plannerTarget = planner.param.target;
 
 nAgent = length(plannerAgent);
 nTarget = length(planner.PTset);
@@ -431,7 +431,7 @@ for iPlan = 1:plannerClock.nT
         planner.y = nan(length(plannerSensor.R(:,1)),nAgent);
         
         % predicted target state by state update to take virtual measurement
-        plannerTarget(iTarget).x = UpdateTargetState(plannerTarget(iTarget).x,planner.param,plannerClock.dt);
+        xhat = UpdateTargetState(planner.PTset(iTarget).xhat,planner.param,plannerClock.dt);
         
         
         % Sum of prob. target evolution P(X_k|Y_{k-1})
@@ -477,7 +477,7 @@ for iPlan = 1:plannerClock.nT
                 % communication (I = I(X;Y)), measurements are always
                 % taken regardless of Z.
                 for iAgent = 1: nAgent
-                    planner.y(:,iAgent) = TakeMeasurement(plannerTarget(iTarget).x,plannerAgent(iAgent).s,planner.param.sensor,flagSensor);
+                    planner.y(:,iAgent) = TakeMeasurement(xhat,plannerAgent(iAgent).s,planner.param.sensor,flagSensor);
                 end
                 
         end
@@ -548,7 +548,7 @@ plannerAgent = planner.param.agent;
 plannerSensor = planner.param.sensor;
 plannerField = planner.param.field;
 plannerClock = planner.param.clock;
-plannerTarget = planner.param.target;
+% plannerTarget = planner.param.target;
 
 nAgent = length(plannerAgent);
 nTarget = length(planner.PTset);
@@ -572,7 +572,7 @@ for iPlan = 1:plannerClock.nT
         planner.y = nan(length(plannerSensor.R(:,1)),nAgent);
         
         % predicted target state by state update to take virtual measurement
-        plannerTarget(iTarget).x = UpdateTargetState(plannerTarget(iTarget).x,planner.param,plannerClock.dt);
+        xhat = UpdateTargetState(planner.PTset(iTarget).xhat,planner.param,plannerClock.dt);
         
         
         % Sum of prob. target evolution P(X_k|Z_{k-1})
@@ -608,7 +608,7 @@ for iPlan = 1:plannerClock.nT
                 %
                 for iAgent = 1 : nAgent
                     if planner.z(iAgent)
-                        planner.y(:,iAgent) = TakeMeasurement(plannerTarget(iTarget).x,plannerAgent(iAgent).s,planner.param.sensor,flagSensor);
+                        planner.y(:,iAgent) = TakeMeasurement(xhat,plannerAgent(iAgent).s,planner.param.sensor,flagSensor);
                     else
                         planner.y(:,iAgent) = nan(length(plannerSensor.R(:,1)),1);
                     end
@@ -643,12 +643,9 @@ for iPlan = 1:plannerClock.nT
             axis([plannerField.boundary]);
         end
         
-        % resample particle when connected
-        % leave particle set when disconnected
-        if planner.z(2)
-            [planner.PTset(iTarget).pt,planner.PTset(iTarget).w] = ...
-                ResampleParticle(planner.PTset(iTarget).pt,planner.PTset(iTarget).w,plannerField);
-        end
+        % resample particle 
+        [planner.PTset(iTarget).pt,planner.PTset(iTarget).w] = ...
+            ResampleParticle(planner.PTset(iTarget).pt,planner.PTset(iTarget).w,plannerField);
         
         
         % Plot P(X_k|y_k) if needed

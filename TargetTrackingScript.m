@@ -29,17 +29,18 @@ format compact;
 
 % --------------------------------------------------------------------
 % control parameters for comparison
-nSim = 20; % for Monte-Carlo approach with fixed independent condition
+nSim = 1; % for Monte-Carlo approach with fixed independent condition
 nPt = [100 500 1000 2000];
 dist = [200 400 600];
 nT = [1];
 nA = [2 4 6 8 10];
-dRefPt = [1 5 10 25 50];
+dRefPt = [1 5 10 20 50];
 nSample = [1 100 500 1000];
 commAware = [0 1];
 % planner = {'MI_comm'};
-planner = {'random','MI','MI_sepa','MI_gauss','MI_comm'};
+% planner = {'random','MI','MI_sepa','MI_gauss','MI_comm'};
 % planner = {'random','MI','MI_gauss','MI_comm'};
+planner = {'MI_comm'};
 
 % comparison setting
 flagCondition  = 'planner';
@@ -75,7 +76,7 @@ dt = 1;
 % --------------------------------------------------------------------
 
 % fix random
-rng(1);
+% rng(1);
 
 % make array of simulation structure
 for jSim = 1:mSim
@@ -89,7 +90,7 @@ for jSim = 1:mSim
         %----------------------
         % simulation structure
         % in order to allocate as the array of simulation
-        sim(jSim,iSim) = InitializeSim(   5,       3,     'MI',       1,           1,       'uniform',        0,         0,     'PosRF',  'unicycle',    'RF',   'PF',     jSim,     iSim    );
+        sim(jSim,iSim) = InitializeSim(   3,       1,     'MI',       1,           1,       'uniform',        0,         1,     'Pos',  'unicycle',    'bear',   'PF',     jSim,     iSim    );
                                     % nAgent | nTarget | flagDM | flagComm | flagActComm | flagPdfCompute | flagLog | flagPlot | target |  agent     | sensor   | filter
         
         % flagDM         ||   'random': random decision | 'MI': mutual information-based decision | 'mean': particle mean following
@@ -197,9 +198,9 @@ for jSim = 1:mSim
         for iAgent = 1:sim(jSim,iSim).nAgent
             switch flagCondition
                 case 'dist'
-                    sim(jSim,iSim).agent(iAgent) = InitializeAgent(iAgent, sim(jSim,iSim), 10, dist(jSim));
+                    sim(jSim,iSim).agent(iAgent) = InitializeAgent(iAgent, sim(jSim,iSim), 4, dist(jSim));
                 otherwise
-                    sim(jSim,iSim).agent(iAgent) = InitializeAgent(iAgent, sim(jSim,iSim), 10, 0);
+                    sim(jSim,iSim).agent(iAgent) = InitializeAgent(iAgent, sim(jSim,iSim), 4, 0);
             end
         end
         %----------------------
@@ -285,10 +286,10 @@ for jSim = 1:mSim
                 otherwise
                     switch flagCondition
                         case 'nT'
-                            sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 10,  nT(jSim),  nPt(1), dRefPt(4), 5 );
+                            sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 20,  nT(jSim),  nPt(1), dRefPt(4), 5 );
                                                                                                     % dt |     nT   | nPt   | dRefPt   | nSample
                         otherwise
-                            sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 3,  nT(1),  nPt(1), dRefPt(4), 5 );
+                            sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 15,  nT(1),  nPt(1), dRefPt(4), 5 );
                                                                                                     % dt |   nT |    nPt | dRefPt   | nSample
                     end
             end
@@ -574,9 +575,11 @@ for jSim = 1:mSim
                     [sim(jSim,iSim).filter(iAgent,iTarget).pt,sim(jSim,iSim).filter(iAgent,iTarget).w] = ResampleParticle(sim(jSim,iSim).filter(iAgent,iTarget).pt,sim(jSim,iSim).filter(iAgent,iTarget).w,sim(jSim,iSim).field);
                     
                     % update planner initial info
-                    sim(jSim,iSim).planner(iAgent).PTset(iTarget).xhat = sim(jSim,iSim).filter(iAgent,iTarget).xhat;
                     sim(jSim,iSim).planner(iAgent).PTset(iTarget).w = sim(jSim,iSim).filter(iAgent,iTarget).w;
                     sim(jSim,iSim).planner(iAgent).PTset(iTarget).pt = sim(jSim,iSim).filter(iAgent,iTarget).pt;
+                    % for Gaussian-based approach
+                    sim(jSim,iSim).planner(iAgent).PTset(iTarget).xhat = sim(jSim,iSim).filter(iAgent,iTarget).xhat;
+                    sim(jSim,iSim).planner(iAgent).PTset(iTarget).Phat = diag(var(sim(jSim,iSim).filter(iAgent,iTarget).pt,sim(jSim,iSim).filter(iAgent,iTarget).w,2));
                     
                     % store optimized infomation data
                     sim(jSim,iSim).planner(iAgent).hist.actIdx(iClock+1) = sim(jSim,iSim).planner(iAgent).actIdx;
@@ -641,7 +644,7 @@ switch flagCondition
     case 'commAware'
         PlotCommAwarePlanningResults(sim);
     case 'planner'
-        PlotPlanningResults(sim,'planner');
+        PlotPlanningResults(sim,'planner',0);
     case 'nA'
         PlotPlanningResults(sim,'nA');
 end
