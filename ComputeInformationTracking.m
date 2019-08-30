@@ -349,10 +349,12 @@ for iPlan = 1:plannerClock.nT
         % probability of measurement update P(X_k|Z_k):
         % HERE IS THE MAJOR DIFFERENCE BY CONSIDERING COMMUNICATION
         % AWARENESS
-        [commProbSinglePlan,measUpdatePdf] = ...
-            ComputeCommAwareMeasUpdatePDF(targetUpdatePdf,planner.PTset(iTarget).pt,plannerAgent,planner.param,planner.y,planner.z,planner.id,flagComm,flagSensor,flagPdfCompute);
+        commProbSinglePlan = ComputeCommOutcomeProb(plannerAgent,planner.z,planner.id,flagComm);
+        %[commProbSinglePlan,~] = ...
+        %    ComputeCommAwareMeasUpdatePDF(targetUpdatePdf,planner.PTset(iTarget).pt,plannerAgent,planner.param,planner.y,planner.z,planner.id,flagComm,flagSensor,flagPdfCompute);
         
         % Entropy computation: H(X_k|Z_k):
+        measUpdatePdf = ComputePDFMixture(planner.PTset(iTarget).pt,planner.PTset(iTarget).w,planner.param,flagPdfCompute);        
         Hafter(iPlan,iTarget) = ComputeEntropy(measUpdatePdf,planner.PTset(iTarget).pt,planner.param,flagPdfCompute);
         
         
@@ -368,8 +370,7 @@ for iPlan = 1:plannerClock.nT
             axis([plannerField.boundary]);
         end
         
-        % resample particle if connected
-        % leave particle set if disconnected
+        % resample particle
         [planner.PTset(iTarget).pt,planner.PTset(iTarget).w] = ...
             ResampleParticle(planner.PTset(iTarget).pt,planner.PTset(iTarget).w,plannerField);
         
@@ -470,9 +471,6 @@ for iPlan = 1:plannerClock.nT
                 % respect to all agents, of which other agents' states are delivered from
                 % other agents/predicted by its own agent
                 %
-                % now, agent 1's delivered measurement from agent 2 is determined by
-                % communication set
-                %
                 % since the mutual information does not consider
                 % communication (I = I(X;Y)), measurements are always
                 % taken regardless of Z.
@@ -491,10 +489,12 @@ for iPlan = 1:plannerClock.nT
         % probability of measurement update P(X_k|Y_k):
         % HERE IS THE MAJOR DIFFERENCE BY CONSIDERING COMMUNICATION
         % AWARENESS
-        [commProbSinglePlan,measUpdatePdf] = ...
-            ComputeCommAwareMeasUpdatePDF(targetUpdatePdf,planner.PTset(iTarget).pt,plannerAgent,planner.param,planner.y,planner.z,planner.id,flagComm,flagSensor,flagPdfCompute);
+        commProbSinglePlan = ComputeCommOutcomeProb(plannerAgent,planner.z,planner.id,flagComm);
+%         [commProbSinglePlan,~] = ...
+%             ComputeCommAwareMeasUpdatePDF(targetUpdatePdf,planner.PTset(iTarget).pt,plannerAgent,planner.param,planner.y,planner.z,planner.id,flagComm,flagSensor,flagPdfCompute);
         
         % Entropy computation: H(X_k|Z_k):
+        measUpdatePdf = ComputePDFMixture(planner.PTset(iTarget).pt,planner.PTset(iTarget).w,planner.param,flagPdfCompute);
         Hafter(iPlan,iTarget) = ComputeEntropy(measUpdatePdf,planner.PTset(iTarget).pt,planner.param,flagPdfCompute);
         
         
@@ -581,6 +581,7 @@ for iPlan = 1:plannerClock.nT
         % compared with discretized domain
         targetUpdatePdf = ComputePDFMixture(planner.PTset(iTarget).pt,planner.PTset(iTarget).w,planner.param,flagPdfCompute);
         
+        
         % Entropy computation: H(X_k|Z_{k-1})
         Hbefore(iPlan,iTarget) = ComputeEntropy(targetUpdatePdf,planner.PTset(iTarget).pt,planner.param,flagPdfCompute);
         
@@ -624,10 +625,12 @@ for iPlan = 1:plannerClock.nT
         % probability of measurement update P(X_k|Z_k):
         % HERE IS THE MAJOR DIFFERENCE BY CONSIDERING COMMUNICATION
         % AWARENESS
-        [~,measUpdatePdf] = ...
-            ComputeCommAwareMeasUpdatePDF(targetUpdatePdf,planner.PTset(iTarget).pt,plannerAgent,planner.param,planner.y,planner.z,planner.id,flagComm,flagSensor,flagPdfCompute);
+        %[~,measUpdatePdf] = ...
+        %    ComputeCommAwareMeasUpdatePDF(targetUpdatePdf,planner.PTset(iTarget).pt,plannerAgent,planner.param,planner.y,planner.z,planner.id,flagComm,flagSensor,flagPdfCompute);
+        
         
         % Entropy computation: H(X_k|Z_k):
+        measUpdatePdf = ComputePDFMixture(planner.PTset(iTarget).pt,planner.PTset(iTarget).w,planner.param,flagPdfCompute);          
         Hafter(iPlan,iTarget) = ComputeEntropy(measUpdatePdf,planner.PTset(iTarget).pt,planner.param,flagPdfCompute);
         
         
@@ -641,12 +644,11 @@ for iPlan = 1:plannerClock.nT
             end
             ylabel(['t =',num2str(iPlan+iClock)],'fontsize',12);
             axis([plannerField.boundary]);
-        end
+        end        
         
-        % resample particle 
+        % resample particle
         [planner.PTset(iTarget).pt,planner.PTset(iTarget).w] = ...
-            ResampleParticle(planner.PTset(iTarget).pt,planner.PTset(iTarget).w,plannerField);
-        
+            ResampleParticle(planner.PTset(iTarget).pt,planner.PTset(iTarget).w,plannerField);        
         
         % Plot P(X_k|y_k) if needed
         if bPdfDisp.after == 1

@@ -14,7 +14,7 @@ rmse = zeros(mSim,nt+1);
 
 utility = zeros(mSim,nt+1);
 
-for jSim = 2 : mSim % except random planning
+for jSim = 1 : mSim % except random planning
     % number of agents could be changed by condition
     nAgent = sim(jSim,1).nAgent;
     for iSim = 1 : nSim
@@ -91,15 +91,18 @@ end
 h10 = figure(10);
 plot(sim(1,1).clock.hist.time,utility(2,:),'lineWidth',2,'linestyle',':'); hold on;
 plot(sim(1,1).clock.hist.time,utility(3,:),'lineWidth',2,'linestyle','--'); hold on;
-plot(sim(1,1).clock.hist.time,utility(4,:),'lineWidth',2,'linestyle','-.'); hold on;
+plot(sim(1,1).clock.hist.time,utility(4,:),'lineWidth',2,'linestyle','-'); hold on;
 plot(sim(1,1).clock.hist.time,utility(5,:),'lineWidth',2); hold on;
 switch option
     case 'planner'
-        legend('w/o comm-aware','disjointed','Gaussian-based','combined');
+%         legend('w/o comm-aware','Gaussian-based','combined');
+         legend('w/o comm-aware','disjointed','Gaussian-based','combined');
     case 'nA'
         legend('n=2','n=4','n=6','n=8','n=10');
 end
-
+xlabel('Time [sec]');
+ylabel('Utility per robot [nats]');
+title('Average Local Utility');
 
 % results from planning: entropy variation
 h11 = figure(11);
@@ -111,12 +114,14 @@ plot(sim(1,1).clock.hist.time,Hmean(5,:),'lineWidth',2); hold on;
 legend('location','southeast');
 switch option
     case 'planner'
-        legend('random (no plan)','w/o comm-aware','disjointed','Gaussian-based','combined');
+%         legend('random (no plan)','w/o comm-aware','Gaussian-based','combined');
+         legend('random (no plan)','w/o comm-aware','disjointed','Gaussian-based','combined');
     case 'nA'
         legend('n=2','n=4','n=6','n=8','n=10');
 end
-xlabel('time [sec]');
-ylabel('entropy [nats]');
+xlabel('Time [sec]');
+ylabel('Entropy per target [nats]');
+title('Average Target Entropy');
 
 if flagSave
     set(h11,'Units','Inches');
@@ -138,12 +143,14 @@ if strcmp(option,'nA')
 end
 switch option
     case 'planner'
-        legend('random (no plan)','w/o comm-aware','disjointed','Gaussian-based','combined');
+%         legend('random (no plan)','w/o comm-aware','Gaussian-based','combined');        
+         legend('random (no plan)','w/o comm-aware','disjointed','Gaussian-based','combined');
     case 'nA'
         legend('n=2','n=4','n=6','n=8','n=10');
 end
-xlabel('time [sec]');
-ylabel('RMSE [m]');
+xlabel('Time [sec]');
+ylabel('RMSE per target [m]');
+title('Average RSME over Time');
 
 if flagSave
     set(h12,'Units','Inches');
