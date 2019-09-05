@@ -1,13 +1,14 @@
 
 clear;
 
-load('sim_demo_rf.mat');
+load('sim_videoclip_RF.mat');
 close all;
 
 
-jSim = 4; % take one condition of simulations (1: random, 2: w/o comm-aware, 3: separate, 4: Gaussian-based 5: combined)
+jSim = 5; % take one condition of simulations (1: random, 2: w/o comm-aware, 3: separate, 4: Gaussian-based 5: combined)
 iSim = 1; % take one of simulations
-bMovie = 0; % movie making flag (as gif)
+bMovie = 1; % movie making flag (as gif)
+bScreen = 0; % save screenshot
 fAgent = 1; % agent number to see communication & filtering results
 
 %----------------------
@@ -129,25 +130,27 @@ end
 %----------------------
 % movie initialization
 if bMovie
-    gif.field.file = ['a',num2str(sim(1).nAgent),'t',num2str(sim(1).nTarget),'_fieldView.gif'];
+    gif.field.file = ['a',num2str(sim(1).nAgent),'t',num2str(sim(1).nTarget),'_combined_fieldView.gif'];
     gif.field.frame = getframe(sim(jSim,iSim).plot.fieldView);
     gif.field.im = frame2im(gif.field.frame);
     [gif.field.imind,gif.field.cm] = rgb2ind(gif.field.im,256);
-    imwrite(gif.field.imind,gif.field.cm,gif.field.file,'gif','Loopcount',inf);
+    imwrite(gif.field.imind,gif.field.cm,gif.field.file,'gif','DelayTime',0); % 'Loopcount',inf,
     
-    gif.pf.file = ['a',num2str(sim(1).nAgent),'t',num2str(sim(1).nTarget),'_PF.gif'];
-    gif.pf.frame = getframe(sim(jSim,iSim).plot.particle(1));
-    gif.pf.im = frame2im(gif.pf.frame);
-    [gif.pf.imind,gif.pf.cm] = rgb2ind(gif.pf.im,256);
-    imwrite(gif.pf.imind,gif.pf.cm,gif.pf.file,'gif','Loopcount',inf);
+%     gif.pf.file = ['a',num2str(sim(1).nAgent),'t',num2str(sim(1).nTarget),'_PF.gif'];
+%     gif.pf.frame = getframe(sim(jSim,iSim).plot.particle(1));
+%     gif.pf.im = frame2im(gif.pf.frame);
+%     [gif.pf.imind,gif.pf.cm] = rgb2ind(gif.pf.im,256);
+%     imwrite(gif.pf.imind,gif.pf.cm,gif.pf.file,'gif','Loopcount',inf);
 end
 
+%----------------------
 % save screenshot for initial condition
-set(gcf,'Units','Inches');
-pos = get(gcf,'Position');
-set(gcf,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
-print(gcf,'snapshot_1(t=0,n=4,m=1,RF)','-dpdf','-r0')
-
+if bScreen
+    set(gcf,'Units','Inches');
+    pos = get(gcf,'Position');
+    set(gcf,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
+    print(gcf,'snapshot_1(t=0,n=4,m=1,RF)','-dpdf','-r0')
+end
 
 %% ---------------------------------
 % Replay Sim
@@ -229,23 +232,24 @@ for iClock = 2:sim(jSim,iSim).clock.nt+1
         gif.field.frame = getframe(sim(jSim,iSim).plot.fieldView);
         gif.field.im = frame2im(gif.field.frame);
         [gif.field.imind,gif.field.cm] = rgb2ind(gif.field.im,256);
-        imwrite(gif.field.imind,gif.field.cm,gif.field.file,'gif','WriteMode','append');
+        imwrite(gif.field.imind,gif.field.cm,gif.field.file,'gif','WriteMode','append','DelayTime',0);
         
-        gif.pf.frame = getframe(sim(jSim,iSim).plot.particle(1));
-        gif.pf.im = frame2im(gif.pf.frame);
-        [gif.pf.imind,gif.pf.cm] = rgb2ind(gif.pf.im,256);
-        imwrite(gif.pf.imind,gif.pf.cm,gif.pf.file,'gif','WriteMode','append');
+%         gif.pf.frame = getframe(sim(jSim,iSim).plot.particle(1));
+%         gif.pf.im = frame2im(gif.pf.frame);
+%         [gif.pf.imind,gif.pf.cm] = rgb2ind(gif.pf.im,256);
+%         imwrite(gif.pf.imind,gif.pf.cm,gif.pf.file,'gif','WriteMode','append');
     end
     
     % for capturing screenshot
-    if iClock == 71
-        % save screenshot at t = 70 sec
-        print(gcf,'snapshot_2(t=70,n=4,m=1,RF)','-dpdf','-r0')
-    elseif iClock == 141
-        % save screenshot at t = 140 sec
-        print(gcf,'snapshot_3(t=140,n=4,m=1,RF)','-dpdf','-r0')
+    if bScreen
+        if iClock == 71
+            % save screenshot at t = 70 sec
+            print(gcf,'snapshot_2(t=70,n=4,m=1,RF)','-dpdf','-r0')
+        elseif iClock == 141
+            % save screenshot at t = 140 sec
+            print(gcf,'snapshot_3(t=140,n=4,m=1,RF)','-dpdf','-r0')
+        end
     end
-    
     
 end
 

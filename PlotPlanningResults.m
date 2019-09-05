@@ -1,4 +1,4 @@
-function PlotPlanningResults(sim,option,flagSave)
+function [rmseFinal,entropyFinal] = PlotPlanningResults(sim,option,flagSave)
 
 nSim = length(sim(1,:)); % number of MC simulation runs
 mSim = length(sim(:,1)); % number of planning scheme
@@ -7,6 +7,7 @@ nt = sim(1,1).clock.nt;
 
 Hmean = zeros(mSim,nt+1);
 rmse = zeros(mSim,nt+1);
+
 
 % compute statistical information for comparison between w/ and w/o
 % communication awareness
@@ -24,7 +25,6 @@ for jSim = 1 : mSim % except random planning
     end
     utility(jSim,:) = utility(jSim,:)./(nAgent*nSim);
 end
-
 
 % compute statistical objective values for submodularity and scalablity
 
@@ -62,6 +62,8 @@ if strcmp(option,'nA')
     
 end
 
+rmseFinalElement = nan(5,1);
+entropyFinalElement = nan(5,1);
 
 % computate statistical information
 for jSim = 1 : mSim
@@ -70,6 +72,7 @@ for jSim = 1 : mSim
     nAgent = sim(jSim,1).nAgent;
     nTarget = sim(jSim,1).nTarget;
     
+    pt = 1;
     for iSim = 1 : nSim
         
         for iAgent = 1 : nAgent
@@ -79,6 +82,12 @@ for jSim = 1 : mSim
                             squeeze((sim(jSim,iSim).filter(iAgent,iTarget).hist.pt(1,:,:) - sim(jSim,iSim).target(iTarget).x(1,:))).^2 + ...
                             squeeze((sim(jSim,iSim).filter(iAgent,iTarget).hist.pt(2,:,:) - sim(jSim,iSim).target(iTarget).x(2,:))).^2, 1)/nPt);
                 Hmean(jSim,:) = Hmean(jSim,:) + sim(jSim,iSim).filter(iAgent,iTarget).hist.Hafter;
+                
+                rmseFinalElement(jSim,pt) = sqrt(sum(squeeze(sim(jSim,iSim).filter(iAgent,iTarget).hist.w(1,:,end)).*...
+                            (sim(jSim,iSim).filter(iAgent,iTarget).hist.pt(1,:,end) - sim(jSim,iSim).target(iTarget).x(1,end)).^2 + ...
+                            (sim(jSim,iSim).filter(iAgent,iTarget).hist.pt(2,:,end) - sim(jSim,iSim).target(iTarget).x(2,end)).^2)/nPt);
+                entropyFinalElement(jSim,pt) = sim(jSim,iSim).filter(iAgent,iTarget).hist.Hafter(end);
+                pt = pt + 1;
             end
         end
     end
@@ -86,6 +95,12 @@ for jSim = 1 : mSim
     rmse(jSim,:) = rmse(jSim,:)./(nAgent*nTarget*nSim);
     Hmean(jSim,:) = Hmean(jSim,:)./(nAgent*nTarget*nSim);
 end
+
+% take mean and variance of entropy and RMSE at final time step
+rmseFinal.mean = mean(rmseFinalElement,2);
+entropyFinal.mean = mean(entropyFinalElement,2);
+rmseFinal.std = sqrt(var(rmseFinalElement,0,2));
+entropyFinal.std = sqrt(var(entropyFinalElement,0,2));
 
 % results from planning utility
 h10 = figure(10);
@@ -103,6 +118,13 @@ end
 xlabel('Time [sec]');
 ylabel('Utility per robot [nats]');
 title('Average Local Utility');
+if flagSave
+    set(h10,'Units','Inches');
+    pos = get(h10,'Position');
+    set(h10,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
+    set(gca,'FontSize',14);
+    print(h10,'utility(n=5,m=3,t=200,mc=100,bear)','-dpdf','-r0')
+end
 
 % results from planning: entropy variation
 h11 = figure(11);
@@ -128,7 +150,7 @@ if flagSave
     pos = get(h11,'Position');
     set(h11,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
     set(gca,'FontSize',14);
-    print(h11,'entropy(n=2,4,6,8,10,t=200,mc=100,RF)','-dpdf','-r0')
+    print(h11,'entropy(n=5,m=3,t=200,mc=100,bear)','-dpdf','-r0')
 end
 
 % results from planning: RMSE (estimation performance)
@@ -138,9 +160,7 @@ plot(sim(1,1).clock.hist.time,rmse(2,:),'lineWidth',2,'linestyle','--'); hold on
 plot(sim(1,1).clock.hist.time,rmse(3,:),'lineWidth',2,'linestyle','-.'); hold on;
 plot(sim(1,1).clock.hist.time,rmse(4,:),'lineWidth',2,'linestyle','-.'); hold on;
 plot(sim(1,1).clock.hist.time,rmse(5,:),'lineWidth',2); hold on;
-if strcmp(option,'nA')
-    plot(sim(1,1).clock.hist.time,rmse(5,:),'lineWidth',2); hold on;
-end
+
 switch option
     case 'planner'
 %         legend('random (no plan)','w/o comm-aware','Gaussian-based','combined');        
@@ -157,6 +177,6 @@ if flagSave
     pos = get(h12,'Position');
     set(h12,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
     set(gca,'FontSize',14);
-    print(h12,'rsme(n=2,4,6,8,10,t=200,mc=100,RF)','-dpdf','-r0')
+    print(h12,'rmse(n=5,m=3,t=200,mc=100,bear)','-dpdf','-r0')
 end
 

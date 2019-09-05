@@ -29,8 +29,8 @@ format compact;
 
 % --------------------------------------------------------------------
 % control parameters for comparison
-nSim = 10; % for Monte-Carlo approach with fixed independent condition
-nPt = [300 500 1000 2000];
+nSim = 1; % for Monte-Carlo approach with fixed independent condition
+nPt = [1000 500 1000 2000];
 dist = [200 400 600];
 nT = [1];
 nA = [2 4 6 8 10];
@@ -70,7 +70,7 @@ end
 
 % --------------------------------------------------------------------
 % time parameters
-nt = 200;
+nt = 100;
 dt = 1;
 % --------------------------------------------------------------------
 
@@ -89,7 +89,7 @@ for jSim = 1:mSim
         %----------------------
         % simulation structure
         % in order to allocate as the array of simulation
-        sim(jSim,iSim) = InitializeSim(   5,       3,     'MI',       1,           1,       'uniform',        0,         0,     'PosRF',  'unicycle',    'RF',   'PF',     jSim,     iSim    );
+        sim(jSim,iSim) = InitializeSim(   4,       1,     'MI',       1,           1,       'uniform',        0,         1,     'PosRF',  'unicycle',    'RF',   'PF',     jSim,     iSim    );
                                     % nAgent | nTarget | flagDM | flagComm | flagActComm | flagPdfCompute | flagLog | flagPlot | target |  agent     | sensor   | filter
         
         % flagDM         ||   'random': random decision | 'MI': mutual information-based decision | 'mean': particle mean following
@@ -174,7 +174,7 @@ for jSim = 1:mSim
         
         %----------------------
         % field structure
-        sim(jSim,iSim).field = InitializeField(sim(jSim,iSim), [-2000 2000],[-2000 2000]); % overloaded by the number of boundaries (2D)
+        sim(jSim,iSim).field = InitializeField(sim(jSim,iSim), [-1000 1000],[-1000 1000]); % overloaded by the number of boundaries (2D)
         % sim(jSim,iSim).field = InitializeField(sim(jSim,iSim), [-300 300],[-300 300],[-300,300]); % overloaded by the number of boundaries (3D)
         %----------------------
         
@@ -210,7 +210,7 @@ for jSim = 1:mSim
             % make heterogeneous sensor
             for iTarget = 1:sim(jSim,iSim).nTarget
                 sim(jSim,iSim).sensor(iAgent,iTarget) = ...
-                    InitializeSensor(sim(jSim,iSim),iAgent,iTarget,   40,    0.9,  sim(jSim,iSim).agent(iAgent), sim(jSim,iSim).target(iTarget), diag([20^2,20^2,20^2]'), diag([5^2,(pi/18)^2]'),  9 );
+                    InitializeSensor(sim(jSim,iSim),iAgent,iTarget,   40,    0.9,  sim(jSim,iSim).agent(iAgent), sim(jSim,iSim).target(iTarget), diag([20^2,20^2,20^2]'), diag([5^2,(pi/180*25)^2]'),  9 );
                                                                     % range | beta |                                                                      R              |       R_rangebear    |  R_rf
             end
         end
@@ -239,7 +239,7 @@ for jSim = 1:mSim
                                 % Target Localization with a Communication-Aware Unmanned
                                 % Aircraft System, Stachura, Maciej and Frew, Eric W.
                                 Phat = diag([2e4,2e4,1e-7,2e-4]);
-                                Q = diag([100e2 100e2 5e-20 5e-9]);
+                                Q = diag([20^2 20^2 5e-20 5e-9]);
                                 sim(jSim,iSim).filter(iAgent,iTarget) = InitializeFilter(sim(jSim,iSim),iAgent,iTarget,  xhat,  Phat,  Q, nPt(jSim));
                                                                                                                       %  xhat | Phat|  Q | nPt
                             otherwise
@@ -255,7 +255,7 @@ for jSim = 1:mSim
                                 % Target Localization with a Communication-Aware Unmanned
                                 % Aircraft System, Stachura, Maciej and Frew, Eric W.
                                 Phat = diag([2e4,2e4,1e-7,2e-4]);
-                                Q = diag([100^2 100^2 5e-20 5e-9]);
+                                Q = diag([20^2 20^2 5e-20 5e-9]);
                                 sim(jSim,iSim).filter(iAgent,iTarget) = InitializeFilter(sim(jSim,iSim),iAgent,iTarget,  xhat,  Phat,   Q,  nPt(1));
                                                                                                                       %  xhat | Phat  | Q | nPt
                             otherwise

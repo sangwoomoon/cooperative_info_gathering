@@ -8,3 +8,6 @@ dr = 1;
 beta = max(0.5*erfc((sqrt(x.^2+y.^2)-461)/195)-0.085,0);
 
 surf(x,y,beta,'edgecolor','none'), axis equal, xlabel('East [m]'), ylabel('North [m]')
+view(0,90)
+colormap(flipud(jet));
+colorbar
