@@ -1,11 +1,11 @@
 
 clear;
 
-load('sim_videoclip_RF.mat');
+load('sim_videoclip_bear.mat');
 close all;
 
 
-jSim = 5; % take one condition of simulations (1: random, 2: w/o comm-aware, 3: separate, 4: Gaussian-based 5: combined)
+jSim = 4; % take one condition of simulations (1: random, 2: w/o comm-aware, 3: separate, 4: Gaussian-based 5: combined)
 iSim = 1; % take one of simulations
 bMovie = 1; % movie making flag (as gif)
 bScreen = 0; % save screenshot
@@ -130,7 +130,7 @@ end
 %----------------------
 % movie initialization
 if bMovie
-    gif.field.file = ['a',num2str(sim(1).nAgent),'t',num2str(sim(1).nTarget),'_combined_fieldView.gif'];
+    gif.field.file = ['a',num2str(sim(1).nAgent),'t',num2str(sim(1).nTarget),'_combined_fieldView_bear.gif'];
     gif.field.frame = getframe(sim(jSim,iSim).plot.fieldView);
     gif.field.im = frame2im(gif.field.frame);
     [gif.field.imind,gif.field.cm] = rgb2ind(gif.field.im,256);

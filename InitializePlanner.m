@@ -1,4 +1,4 @@
-function planner = InitializePlanner(iAgent,sim, dt, nT, nPt, dRefPt, nSample )
+function planner = InitializePlanner(iAgent,sim, dt, nT, nPt, dRefPt, nSample, action )
 
 D2R = pi/180;
 
@@ -22,7 +22,7 @@ planner.param.nSample = nSample; % sampled specific measurements set
 %         planner(iPlanner).param.sA = 3; % sampled action
 
 % action profile setting
-[planner.action,planner.actionNum,planner.actionSetNum,planner.actionSet] = GenerateOutcomeProfile([-20,0,20]*D2R,planner.param.clock.nT);
+[planner.action,planner.actionNum,planner.actionSetNum,planner.actionSet] = GenerateOutcomeProfile(action,planner.param.clock.nT);
 
 % measurement profile setting
 switch flagSensor

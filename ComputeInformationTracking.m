@@ -17,6 +17,7 @@ planner = sim.planner(iAgent);
 plannerClock = planner.param.clock;
 
 bPdfDisp = sim.flagDisp;
+flagAgent = sim.flagAgent;
 flagComm = sim.flagComm;
 flagPdfCompute = sim.flagPdfCompute;
 flagSensor = sim.flagSensor;
@@ -78,7 +79,7 @@ switch flagApproach
             for iComm = 1:nCommSet
                 
                 [HbeforeElement,HafterElement,commProb] = ...
-                    ComputeInformationByParticleMethod(iMeas,iComm,iClock,iAction,planner,flagSensor,flagComm,flagPdfCompute,bPdfDisp);
+                    ComputeInformationByParticleMethod(iMeas,iComm,iClock,iAction,planner,flagAgent,flagSensor,flagComm,flagPdfCompute,bPdfDisp);
                 
                 % entropy and mutual information from particle method
                 pmAll.Hbefore = pmAll.Hbefore + prod(commProb)*sum(HbeforeElement,2);
@@ -114,7 +115,7 @@ switch flagApproach
             for iComm = 1:nCommSet
                 
                 [HbeforeElement,HafterElement,commProb] = ...
-                    ComputeInformationByGaussianCommAware(iMeas,iComm,iClock,iAction,planner,bPdfDisp,flagSensor,flagComm);
+                    ComputeInformationByGaussianCommAware(iMeas,iComm,iClock,iAction,planner,bPdfDisp,flagAgent,flagSensor,flagComm);
                 
                 % entropy and mutual information under Gaussian Assumption
                 gaussAll.Hbefore = gaussAll.Hbefore + prod(commProb)*sum(HbeforeElement,2);
@@ -151,7 +152,7 @@ switch flagApproach
             for iComm = 1:nCommSet
                 
                 [HbeforeElement,HafterElement,commProb] = ...
-                    ComputeInformationByParticleMethodSeparateComm(iMeas,iComm,iClock,iAction,planner,flagSensor,flagComm,flagPdfCompute,bPdfDisp);
+                    ComputeInformationByParticleMethodSeparateComm(iMeas,iComm,iClock,iAction,planner,flagAgent,flagSensor,flagComm,flagPdfCompute,bPdfDisp);
                 
                 % entropy and mutual information from particle method
                 pmSeparate.Hbefore = pmSeparate.Hbefore + prod(commProb)*sum(HbeforeElement,2);
@@ -187,7 +188,7 @@ switch flagApproach
         %  Information-Gathering Experiments with an Unmanned Aircraft System"
         %  to compute communication-aware Entropy
         [gaussRtilde.Hbefore,gaussRtilde.Hafter] = ...
-            ComputeInformationByCovMatrixApproximation(iClock,iAction,planner,flagSensor,flagComm,bPdfDisp);
+            ComputeInformationByCovMatrixApproximation(iClock,iAction,planner,flagAgent,flagSensor,flagComm,bPdfDisp);
         
         gaussRtilde.Hbefore = sum(gaussRtilde.Hbefore,2);
         gaussRtilde.Hafter = sum(gaussRtilde.Hafter,2);
@@ -224,7 +225,7 @@ switch flagApproach
         % take nSample smpling procedure
         for iSample = 1 : nSample
             [Hbefore,Hafter] = ...
-                ComputeInformationByParticleMethodSampledCommOutput(iSample,iClock,iAction,planner,flagSensor,flagComm,flagPdfCompute,bPdfDisp);
+                ComputeInformationByParticleMethodSampledCommOutput(iSample,iClock,iAction,planner,flagAgent,flagSensor,flagComm,flagPdfCompute,bPdfDisp);
             pmSample.Hbefore = pmSample.Hbefore + Hbefore;
             pmSample.Hafter = pmSample.Hafter + Hafter;
         end
@@ -261,7 +262,7 @@ end
 
 % Particle Method
 function [Hbefore,Hafter,commProb] = ...
-    ComputeInformationByParticleMethod(iMeas,iComm,iClock,iAction,planner,flagSensor,flagComm,flagPdfCompute,bPdfDisp)
+    ComputeInformationByParticleMethod(iMeas,iComm,iClock,iAction,planner,flagAgent,flagSensor,flagComm,flagPdfCompute,bPdfDisp)
 
 
 plannerAgent = planner.param.agent;
@@ -284,7 +285,7 @@ for iPlan = 1:plannerClock.nT
     
     % predicted agent state by given planner's action:
     % THE PLANNER ONLY MOVES ITS OWN AGENT ONLY
-    plannerAgent(planner.id).s = UpdateAgentState(plannerAgent(planner.id).s,planner.actionSet(iPlan,iAction),plannerClock.dt);
+    plannerAgent(planner.id).s = UpdateAgentState(plannerAgent(planner.id).s,planner.actionSet(iPlan,iAction),plannerClock.dt,flagAgent);
     
     for iTarget = 1:nTarget
         
@@ -401,7 +402,7 @@ end
 % Particle Method by taking measurement and communication model
 % separatively
 function [Hbefore,Hafter,commProb] = ...
-    ComputeInformationByParticleMethodSeparateComm(iMeas,iComm,iClock,iAction,planner,flagSensor,flagComm,flagPdfCompute,bPdfDisp)
+    ComputeInformationByParticleMethodSeparateComm(iMeas,iComm,iClock,iAction,planner,flagAgent,flagSensor,flagComm,flagPdfCompute,bPdfDisp)
 
 
 plannerAgent = planner.param.agent;
@@ -424,7 +425,7 @@ for iPlan = 1:plannerClock.nT
     
     % predicted agent state by given planner's action:
     % THE PLANNER ONLY MOVES ITS OWN AGENT ONLY
-    plannerAgent(planner.id).s = UpdateAgentState(plannerAgent(planner.id).s,planner.actionSet(iPlan,iAction),plannerClock.dt);
+    plannerAgent(planner.id).s = UpdateAgentState(plannerAgent(planner.id).s,planner.actionSet(iPlan,iAction),plannerClock.dt,flagAgent);
     
     for iTarget = 1:nTarget
         
@@ -541,7 +542,7 @@ end
 % Sampled Concept of Ryan's approach: sample communication output
 % z_sampled ~ P_co(z|y)
 function [Hbefore,Hafter] = ...
-    ComputeInformationByParticleMethodSampledCommOutput(iMeas,iClock,iAction,planner,flagSensor,flagComm,flagPdfCompute,bPdfDisp)
+    ComputeInformationByParticleMethodSampledCommOutput(iMeas,iClock,iAction,planner,flagAgent,flagSensor,~,flagPdfCompute,bPdfDisp) % flagComm -> ~ (not available now)
 
 
 plannerAgent = planner.param.agent;
@@ -564,7 +565,7 @@ for iPlan = 1:plannerClock.nT
     
     % predicted agent state by given planner's action:
     % THE PLANNER ONLY MOVES ITS OWN AGENT ONLY
-    plannerAgent(planner.id).s = UpdateAgentState(plannerAgent(planner.id).s,planner.actionSet(iPlan,iAction),plannerClock.dt);
+    plannerAgent(planner.id).s = UpdateAgentState(plannerAgent(planner.id).s,planner.actionSet(iPlan,iAction),plannerClock.dt,flagAgent);
     
     for iTarget = 1:nTarget
         
@@ -673,7 +674,7 @@ end
 
 % Maicej's approach: modify measurement covariance matrix by beta
 function [Hbefore,Hafter] = ...
-    ComputeInformationByCovMatrixApproximation(iClock,iAction,planner,flagSensor,flagComm,bPdfDisp)
+    ComputeInformationByCovMatrixApproximation(iClock,iAction,planner,flagAgent,flagSensor,flagComm,bPdfDisp)
 
 plannerClock = planner.param.clock;
 
@@ -705,7 +706,7 @@ for iTarget = 1:nTarget
             
         % predicted agent state by given planner's action:
         % THE PLANNER ONLY MOVES ITS OWN AGENT ONLY
-        plannerAgent(planner.id).s = UpdateAgentState(plannerAgent(planner.id).s,planner.actionSet(iPlan,iAction),plannerClock.dt);
+        plannerAgent(planner.id).s = UpdateAgentState(plannerAgent(planner.id).s,planner.actionSet(iPlan,iAction),plannerClock.dt,flagAgent);
         
         % state update
         xhat = F*xhat;
@@ -786,7 +787,7 @@ end
 % exact approach: consider all posssible events for communication-awareness
 % under linear-Gaussian distribution
 function [Hbefore,Hafter,commProb] = ...
-    ComputeInformationByGaussianCommAware(iMeas,iComm,iClock,iAction,planner,bPdfDisp,flagSensor,flagComm)
+    ComputeInformationByGaussianCommAware(iMeas,iComm,iClock,iAction,planner,bPdfDisp,flagAgent,flagSensor,flagComm)
 
 plannerClock = planner.param.clock;
 
@@ -825,7 +826,7 @@ for iTarget = 1:nTarget
         
         % predicted agent state by given planner's action:
         % THE PLANNER ONLY MOVES ITS OWN AGENT ONLY
-        plannerAgent(planner.id).s = UpdateAgentState(plannerAgent(planner.id).s,planner.actionSet(iPlan,iAction),plannerClock.dt);
+        plannerAgent(planner.id).s = UpdateAgentState(plannerAgent(planner.id).s,planner.actionSet(iPlan,iAction),plannerClock.dt,flagAgent);
                 
         % state update
         xhat = F*xhat;

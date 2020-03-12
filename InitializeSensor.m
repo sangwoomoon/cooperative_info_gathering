@@ -12,7 +12,7 @@ switch property
         sensor.hist.y(:,1) = sensor.y;
         
         sensor.param.H = eye(dimension); % directly observe (linear/gaussian)
-        sensor.param.Rpos = Rpos(1:dimension,1:dimension);
+        sensor.param.R = Rpos(1:dimension,1:dimension);
         
         if flagPlot
             if dimension == 2 % 2D     

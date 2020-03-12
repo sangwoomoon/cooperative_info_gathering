@@ -1,6 +1,6 @@
 
 % Target Localization Problem Script
-% Particle Method based Mutual Information
+% Utility Analysis: CDC 2020
 %
 %
 %
@@ -17,9 +17,13 @@
 % - 5th revision: 1/17/2019
 % - 6th revision: 8/ 9/2019
 %
+% CDC 2020 Version
+% - 1st revision: 3/10/2020
+%
+%
 %   X(t+1) = X(t) + W                               : 2D-static Linear Gaussian
-%   Y(t) = {0,1} with respect to Sensing Region     : 2D on the ground, circle region for target detection
-%   s(t+1) = f(s(t),u(t))                           : u(t) = [0 -omega +omega]
+%   Y(t) = X(t) + V                                 : linear-Gaussian
+%   s(t+1) = f(s(t),u(t))                           : u(t) = [stop, right, left, forward, backward]
 
 
 close all;
@@ -38,11 +42,10 @@ dRefPt = [1 5 10 100 50];
 nSample = [1 100 500 1000];
 commAware = [0 1];
 planner = {'random','MI','MI_sepa','MI_gauss','MI_comm'};
-% planner = {'random','MI','MI_gauss','MI_comm'};
-% planner = {'MI_comm'};
+optimization = {'div','cond','mc'}; % division-based utility, conditional mutual information-based utility, marginal contribution based utility
 
 % comparison setting
-flagCondition  = 'planner';
+flagCondition  = 'optimization';
 
 % simulation by changing independent condition
 switch flagCondition
@@ -62,6 +65,8 @@ switch flagCondition
         mSim = length(commAware);
     case 'planner'
         mSim = length(planner);
+    case 'optimization'
+        mSim = length(optimization);
     otherwise
         mSim = 1;
 end
@@ -89,16 +94,17 @@ for jSim = 1:mSim
         %----------------------
         % simulation structure
         % in order to allocate as the array of simulation
-        sim(jSim,iSim) = InitializeSim(   4,       1,     'MI',       1,           1,       'uniform',        0,         1,     'PosRF',  'unicycle',    'RF',   'PF',     jSim,     iSim    );
+        sim(jSim,iSim) = InitializeSim(   4,       1,     'MI',       1,           1,       'uniform',        0,         1,     'Pos',  'quadrotor', 'PosLinear',   'KF',     jSim,     iSim    );
                                     % nAgent | nTarget | flagDM | flagComm | flagActComm | flagPdfCompute | flagLog | flagPlot | target |  agent     | sensor   | filter
         
         % flagDM         ||   'random': random decision | 'MI': mutual information-based decision | 'mean': particle mean following
         % flagComm       ||   0: perfect communication | 1: imperfect communication and communication awareness
+        % flagActComm    ||   0: perfect communication | 1: imperfect communication in ACTUAL SCENARIO
         % flagPdfCompute ||   'uniform': uniformly discretized domain | 'cylinder': cylinder based computation w.r.t particle set
         % flagLog        ||   0: skip logging | 1: log data
         % flagPlot       ||   flag for the display of trajectories and particles evolution
         % target         ||   'Pos': position only | 'PosVel': position and velocity | 'PosRF': position with RF properties (referred by Maciej's JCSD paper)
-        % sensor         ||   'linear', 'range_bear', 'detection', 'bear', 'RF'
+        % sensor         ||   'PosLinear', 'range_bear', 'detection', 'bear', 'RF'
         %----------------------
         
     end
@@ -107,7 +113,7 @@ end
 
 for jSim = 1:mSim
     
-    
+    % print simulation condition at the cmd window
     switch flagCondition
         case 'dist'
             % with respect to distance between agents
@@ -130,11 +136,14 @@ for jSim = 1:mSim
         case 'planner'
             % with respect to planner scheme: random, mean-following, MI w/o communcation-aware, MI w/ comm-aware
             fprintf('\njSim = %d, planner = %s\n',jSim,planner{jSim});
+        case 'optimization'
+            % with respect to distributed optimization utility: division-based utility, conditional mutual information-based utility, marginal contribution based utility
+            fprintf('\njSim = %d, planner = %s\n',jSim,optimization{jSim});
         case 'nA'
             % with respect to number of agents
             fprintf('\njSim = %d, nA = %d\n',jSim,nA(jSim));
     end
-    
+        
     for iSim = 1:nSim
         
         % hard-coded because it should be inside of sim initialization
@@ -162,8 +171,13 @@ for jSim = 1:mSim
                 end
             case 'nA'
                 sim(jSim,iSim).nAgent = nA(jSim);
+                sim(jSim,iSim).flagComm = 0; % no communication consideration for sub-modularity check
+                planner{jSim} = 'guassAll'; % linear-Gaussian based MI computation
+            case 'optimization'
+                sim(jSim,iSim).flagDM = 'MI';
                 sim(jSim,iSim).flagComm = 1;
-                planner{jSim} = 'MI_comm';
+                sim(jSim,iSim).flagOpt = optimization{jSim};
+                planner{jSim} = 'gaussAll'; % linear-Gaussian based MI computation
         end
         
         %----------------------
@@ -270,26 +284,33 @@ for jSim = 1:mSim
         
         %----------------------
         % planner structure
+        switch sim(jSim,iSim).flagAgent
+            case 'unicycle'
+                action = [-20,0,20]*D2R; % psi_dot
+            case 'quadrotor'
+                action = ['N','E','W','S','T']; % move North, East, West, South, Stop
+        end
+        
         for iAgent = 1:sim(jSim,iSim).nAgent
             
             switch flagCondition
                 case 'nPt'
-                    sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 3,  nT(2),  nPt(jSim), dRefPt(4), 100 );
-                                                                                             % dt | nT |     nPt    | dRefPt   | nSample
+                    sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 3,  nT(2),  nPt(jSim), dRefPt(4),    100,     action );
+                                                                                             % dt | nT |     nPt    | dRefPt   | nSample | actionSet
                 case 'dRefPt'
-                    sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 3,  nT(2),  nPt(1),    dRefPt(jSim), 100 );
-                                                                                            % dt | nT |     nPt    | dRefPt      | nSample
+                    sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 3,  nT(2),  nPt(1),    dRefPt(jSim),   100,     action );
+                                                                                            % dt | nT |     nPt    | dRefPt      | nSample | actionSet
                 case 'nSample'
-                    sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 3,  nT(2),  nPt(1),    dRefPt(4), nSample(jSim) );
-                                                                                            % dt | nT |     nPt    | dRefPt      | nSample
+                    sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 3,  nT(2),  nPt(1),    dRefPt(4), nSample(jSim), action );
+                                                                                            % dt | nT |     nPt    | dRefPt      | nSample | actionSet
                 otherwise
                     switch flagCondition
                         case 'nT'
-                            sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 20,  nT(jSim),  nPt(1), dRefPt(4), 5 );
-                                                                                                    % dt |     nT   | nPt   | dRefPt   | nSample
+                            sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 20,  nT(jSim),  nPt(1), dRefPt(4),    5,      action );
+                                                                                                    % dt |     nT   | nPt   | dRefPt   | nSample | actionSet
                         otherwise
-                            sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 5,  nT(1),  nPt(1), dRefPt(4), 5 );
-                                                                                                    % dt |   nT |    nPt | dRefPt   | nSample
+                            sim(jSim,iSim).planner(iAgent) = InitializePlanner(iAgent,sim(jSim,iSim), 5,  nT(1),  nPt(1), dRefPt(4),      5,      action );
+                                                                                                    % dt |   nT |    nPt | dRefPt   | nSample | actionSet
                     end
             end
         end
@@ -356,7 +377,7 @@ for jSim = 1:mSim
                         for iAction = 1 : sim(jSim,iSim).planner(iAgent).actionSetNum
                             
                             % check whether decision has feasibility in terms of geofence
-                            state = UpdateAgentState(sim(jSim,iSim).agent(iAgent).s,sim(jSim,iSim).planner(iAgent).actionSet(iAction),sim(jSim,iSim).clock.dt);
+                            state = UpdateAgentState(sim(jSim,iSim).agent(iAgent).s,sim(jSim,iSim).planner(iAgent).actionSet(iAction),sim(jSim,iSim).clock.dt,sim(jSim,iSim).flagAgent);
                             if (state(1) > sim(jSim,iSim).field.bufferZone(1) && state(1) < sim(jSim,iSim).field.bufferZone(2)) ...
                                     && (state(2) > sim(jSim,iSim).field.bufferZone(3) && state(2) < sim(jSim,iSim).field.bufferZone(4)) % inside geofence
                                 
@@ -381,6 +402,8 @@ for jSim = 1:mSim
                                             [~, ~, ~, pm, ~] = ComputeInformationTracking(iAgent,iAction,iClock,sim(jSim,iSim),'gaussRtilde');
                                         case 'MI_comm'
                                             [~, pm, ~, ~, ~] = ComputeInformationTracking(iAgent,iAction,iClock,sim(jSim,iSim),'pmSample');
+                                        case 'gaussAll'
+                                            [~, ~, ~, ~, pm] = ComputeInformationTracking(iAgent,iAction,iClock,sim(jSim,iSim),'gaussAll');
                                     end
                                 else
                                     [pm, ~, ~, ~, ~] = ComputeInformationTracking(iAgent,iAction,iClock,sim(jSim,iSim),'pmAll');
@@ -451,7 +474,7 @@ for jSim = 1:mSim
             % agent moving
             % agent dynamics/store data
             for iAgent = 1:sim(jSim,iSim).nAgent
-                sim(jSim,iSim).agent(iAgent).s = UpdateAgentState(sim(jSim,iSim).agent(iAgent).s,sim(jSim,iSim).planner(iAgent).input(1),sim(jSim,iSim).clock.dt);
+                sim(jSim,iSim).agent(iAgent).s = UpdateAgentState(sim(jSim,iSim).agent(iAgent).s,sim(jSim,iSim).planner(iAgent).input(1),sim(jSim,iSim).clock.dt,sim(jSim,iSim).flagAgent);
                 sim(jSim,iSim).agent(iAgent).hist.s(:,iClock+1) = sim(jSim,iSim).agent(iAgent).s;
                 
                 % update plot
